@@ -26,7 +26,7 @@ Built with **React**, **Node.js**, and **MongoDB**.
 |-------|------------|
 | Frontend | React, React Router, Axios |
 | Backend | Node.js, Express.js |
-| Database | MongoDB, Mongoose |
+| Database | to be decided |
 | Version Control | GitHub |
 
 ---

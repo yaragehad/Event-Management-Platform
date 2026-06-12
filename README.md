@@ -4,7 +4,7 @@ Full-stack Event Management Platform built with React, Node.js, and DB for venue
 
 A full-stack web application for managing events end-to-end — from venue booking and vendor coordination to guest management and day-of operations.
 
-Built with **React**, **Node.js**, and **MongoDB**.
+Built with **React**, **Node.js**, and **DB**.
 
 ---
 
@@ -69,7 +69,7 @@ event-management-platform/
 Make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) (v18 or higher)
-- [MongoDB](https://www.mongodb.com/) (local or Atlas)
+- ....
 - [Git](https://git-scm.com/)
 
 ---
@@ -93,7 +93,7 @@ npm install
 Create a `.env` file inside the `backend/` folder:
 
 ```
-MONGO_URI=mongodb://localhost:27017/event-platform
+
 JWT_SECRET=your_secret_key_here
 PORT=5000
 ```
@@ -170,7 +170,7 @@ to be updated
 - [x] Frontend implemented using React
 - [x] Backend implemented using Node.js and Express
 - [x] Frontend communicates with backend through API requests
-- [x] MongoDB database created and populated with dummy data
+- [x] Database created and populated with dummy data
 - [x] Seed script included and documented
 - [x] GitHub repository contains all project code and documentation
 - [x] Each team member has at least one meaningful commit

@@ -1,0 +1,322 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── USERS ───────────────────────────────────────────────────────────────────
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STAFF)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  // Relations
+  organizedEvents  Event[]          @relation("OrganizerEvents")
+  staffAssignments StaffAssignment[]
+  guestProfile     Guest?
+  vendorProfile    Vendor?
+}
+
+enum Role {
+  ORGANIZER
+  STAFF
+  VENDOR
+  GUEST
+  VENUE_OWNER
+}
+
+// ─── VENUES ──────────────────────────────────────────────────────────────────
+
+model Venue {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  location    String
+  city        String
+  capacity    Int
+  areaM2      Float?
+  amenities   String?
+  pricePerDay Float
+  isActive    Boolean  @default(true)
+  ownerId     Int
+  createdAt   DateTime @default(now())
+
+  // Relations
+  bookings    Booking[]
+}
+
+// ─── BOOKINGS ─────────────────────────────────────────────────────────────────
+
+model Booking {
+  id          Int           @id @default(autoincrement())
+  venueId     Int
+  organizerId Int
+  eventDate   DateTime
+  status      BookingStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime      @default(now())
+
+  // Relations
+  venue  Venue  @relation(fields: [venueId], references: [id])
+  event  Event?
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+// ─── EVENTS ──────────────────────────────────────────────────────────────────
+
+model Event {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  date        DateTime
+  organizerId Int
+  bookingId   Int?        @unique
+  status      EventStatus @default(UPCOMING)
+  createdAt   DateTime    @default(now())
+
+  // Relations
+  organizer        User              @relation("OrganizerEvents", fields: [organizerId], references: [id])
+  booking          Booking?          @relation(fields: [bookingId], references: [id])
+  tasks            Task[]
+  budget           Budget?
+  guests           Guest[]
+  staffAssignments StaffAssignment[]
+  vendorRequests   SourcingRequest[]
+  feedbacks        Feedback[]
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+// ─── TASKS ───────────────────────────────────────────────────────────────────
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  eventId     Int
+  title       String
+  description String?
+  status      TaskStatus @default(PENDING)
+  dueDate     DateTime?
+  assigneeId  Int?
+  createdAt   DateTime   @default(now())
+
+  // Relations
+  event    Event            @relation(fields: [eventId], references: [id])
+  assignee StaffAssignment? @relation(fields: [assigneeId], references: [id])
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+// ─── STAFF ASSIGNMENTS ───────────────────────────────────────────────────────
+
+model StaffAssignment {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  eventId    Int
+  specialty  String?
+  employmentType String? // part-time, full-time
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  event  Event  @relation(fields: [eventId], references: [id])
+  tasks  Task[]
+}
+
+// ─── BUDGET ──────────────────────────────────────────────────────────────────
+
+model Budget {
+  id            Int      @id @default(autoincrement())
+  eventId       Int      @unique
+  totalPlanned  Float
+  createdAt     DateTime @default(now())
+
+  // Relations
+  event    Event          @relation(fields: [eventId], references: [id])
+  items    BudgetItem[]
+  expenses Expense[]
+}
+
+model BudgetItem {
+  id          Int    @id @default(autoincrement())
+  budgetId    Int
+  category    String
+  description String?
+  plannedAmount Float
+
+  // Relations
+  budget Budget @relation(fields: [budgetId], references: [id])
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  budgetId    Int
+  category    String
+  description String?
+  amount      Float
+  date        DateTime @default(now())
+
+  // Relations
+  budget Budget @relation(fields: [budgetId], references: [id])
+}
+
+// ─── VENDORS ─────────────────────────────────────────────────────────────────
+
+model Vendor {
+  id            Int     @id @default(autoincrement())
+  userId        Int     @unique
+  companyName   String
+  suppliesOffered String
+  location      String
+  contactEmail  String
+  contactPhone  String?
+
+  // Relations
+  user     User              @relation(fields: [userId], references: [id])
+  requests SourcingRequest[]
+  invoices Invoice[]
+}
+
+// ─── SOURCING REQUESTS ───────────────────────────────────────────────────────
+
+model SourcingRequest {
+  id           Int                   @id @default(autoincrement())
+  eventId      Int
+  vendorId     Int
+  items        String
+  quantity     String?
+  deliveryDate DateTime
+  status       SourcingRequestStatus @default(PENDING)
+  notes        String?
+  createdAt    DateTime              @default(now())
+
+  // Relations
+  event    Event    @relation(fields: [eventId], references: [id])
+  vendor   Vendor   @relation(fields: [vendorId], references: [id])
+  delivery Delivery?
+}
+
+enum SourcingRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+// ─── DELIVERIES ──────────────────────────────────────────────────────────────
+
+model Delivery {
+  id               Int            @id @default(autoincrement())
+  sourcingRequestId Int           @unique
+  status           DeliveryStatus @default(PREPARING)
+  updatedAt        DateTime       @updatedAt
+
+  // Relations
+  sourcingRequest SourcingRequest @relation(fields: [sourcingRequestId], references: [id])
+}
+
+enum DeliveryStatus {
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+}
+
+// ─── INVOICES ────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id          Int           @id @default(autoincrement())
+  vendorId    Int
+  amount      Float
+  status      InvoiceStatus @default(PENDING_REVIEW)
+  description String?
+  createdAt   DateTime      @default(now())
+
+  // Relations
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+}
+
+enum InvoiceStatus {
+  PENDING_REVIEW
+  APPROVED
+  PAID
+}
+
+// ─── GUESTS ──────────────────────────────────────────────────────────────────
+
+model Guest {
+  id                Int         @id @default(autoincrement())
+  userId            Int         @unique
+  dietaryPreference String?
+  checkInStatus     Boolean     @default(false)
+
+  // Relations
+  user   User    @relation(fields: [userId], references: [id])
+  events Event[]
+  rsvps  RSVP[]
+}
+
+// ─── RSVP ────────────────────────────────────────────────────────────────────
+
+model RSVP {
+  id        Int        @id @default(autoincrement())
+  guestId   Int
+  eventId   Int
+  status    RSVPStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+
+  // Relations
+  guest Guest @relation(fields: [guestId], references: [id])
+}
+
+enum RSVPStatus {
+  ATTENDING
+  NOT_ATTENDING
+  MAYBE
+  PENDING
+}
+
+// ─── FEEDBACK ────────────────────────────────────────────────────────────────
+
+model Feedback {
+  id           Int      @id @default(autoincrement())
+  eventId      Int
+  guestName    String
+  overall      Int      // 1-5
+  food         Int?
+  venue        Int?
+  organization Int?
+  comments     String?
+  createdAt    DateTime @default(now())
+
+  // Relations
+  event Event @relation(fields: [eventId], references: [id])
+}
+
+// ─── MESSAGES ────────────────────────────────────────────────────────────────
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  eventId    Int
+  senderId   Int
+  content    String
+  sentAt     DateTime @default(now())
+  seenByIds  Int[]
+}

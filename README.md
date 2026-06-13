@@ -19,6 +19,217 @@ Built with **React**, **Node.js**, and **DB**.
 | Member 5 | Staff Portal & Integration Lead — Staff, Check-In, Docs | `feature/member5-staff-integration` |
 
 ---
+## Detailed Roles
+
+## Member 1 – Organizer Portal Lead
+
+Responsible for:
+
+GitHub repository setup
+Authentication system
+User roles and permissions
+Organizer dashboard
+Event creation and management
+Venue search
+Venue booking
+Budget management
+Task management
+
+Features:
+
+Login/Register
+Role-based authentication
+Organizer Dashboard
+Event CRUD
+Venue Search
+Venue Booking Requests
+Budget Tracking
+Task Assignment
+Task Tracking
+
+Backend Responsibilities:
+
+Authentication APIs
+Organizer APIs
+Event APIs
+Budget APIs
+Task APIs
+Venue Search APIs
+
+Frontend Responsibilities:
+
+Organizer Dashboard
+Event Pages
+Budget Pages
+Task Pages
+Venue Search Pages
+
+
+## Member 2 – Venue Management & Venue Owner Portal
+
+Responsible for:
+
+Venue Owner Portal
+Venue listing management
+Venue booking request management
+Venue booking calendar
+Venue availability management
+Venue performance dashboard
+Venue layout designer
+Floor plan management
+Drag-and-drop layout editor
+Layout export functionality
+Layout sharing with staff
+
+Features:
+
+Venue Owner Features:
+
+Venue Owner Registration/Login
+Create Venue Listings
+Edit Venue Listings
+Upload Venue Photos
+Upload Floor Plans
+Manage Availability Calendar
+Approve Booking Requests
+Reject Booking Requests
+Booking History
+Confirmed Bookings Dashboard
+Venue Performance Dashboard
+Revenue Reports
+
+Venue Design Features:
+
+Digital Floor Plan Viewer
+Drag-and-Drop Layout Designer
+Save Layout
+Edit Layout
+Export Layout as PDF/Image
+Share Layout with Staff
+
+Backend Responsibilities:
+
+Venue APIs
+Venue Listing CRUD
+Booking Approval APIs
+Calendar APIs
+Layout APIs
+
+Frontend Responsibilities:
+
+Venue Owner Dashboard
+Venue Listing Pages
+Booking Management Pages
+Calendar Views
+Layout Designer Pages
+
+
+## Member 3 – Vendor Portal & Database Lead
+
+Responsible for:
+
+Vendor portal
+Sourcing requests
+Delivery tracking
+Invoice management
+Database schema design
+Database relationships
+Dummy data generation
+Seed scripts
+
+Features:
+
+Vendor Dashboard
+Vendor Requests
+Delivery Status Tracking
+Invoice Submission
+Database Models
+Seed Data Scripts
+
+Backend Responsibilities:
+
+Vendor APIs
+Delivery APIs
+Invoice APIs
+Database Design
+Seed Scripts
+
+Frontend Responsibilities:
+
+Vendor Dashboard
+Vendor Management Pages
+Invoice Pages
+
+
+## Member 4 – Guest Experience & Communication
+
+Responsible for:
+
+Guest portal
+RSVP management
+Invitations
+Guest check-in system
+Day-of operations dashboard
+Messaging and notifications
+
+Features:
+
+Guest Dashboard
+RSVP System
+Invitations
+Check-In Flow
+Live Event Dashboard
+Notifications
+Messaging System
+
+Backend Responsibilities:
+
+Guest APIs
+RSVP APIs
+Messaging APIs
+
+Frontend Responsibilities:
+
+Guest Dashboard
+RSVP Pages
+Invitation Pages
+Messaging Pages
+
+
+## Member 5 – Staff Portal & Integration Lead
+
+Responsible for:
+
+Staff portal
+Staff task management
+Guest check-in support
+Vendor arrival tracking
+Frontend-backend integration
+API testing
+README documentation
+Deployment documentation
+
+Features:
+
+Staff Dashboard
+Task Tracking
+Guest Check-In
+Vendor Arrival Management
+API Integration
+Project Documentation
+
+Backend Responsibilities:
+
+Staff APIs
+Integration Testing
+
+Frontend Responsibilities:
+
+Staff Dashboard
+Staff Task Pages
+Check-In Pages
+
+---
 
 ## Technologies Used
 

@@ -8,7 +8,7 @@ async function main() {
 
   // ─── USERS ───────────────────────────────────────────────────────────────
   const organizer1 = await prisma.user.create({
-    data: { name: 'Sara Ahmed', email: 'sara@eventpro.com', password: 'hashed_password_1', role: 'ORGANIZER' }
+    data: { name: 'Noran Mohamed', email: 'Noran@eventpro.com', password: 'hashed_password_1', role: 'ORGANIZER' }
   })
   const organizer2 = await prisma.user.create({
     data: { name: 'Omar Khalil', email: 'omar@eventpro.com', password: 'hashed_password_2', role: 'ORGANIZER' }

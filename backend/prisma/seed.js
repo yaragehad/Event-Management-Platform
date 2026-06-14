@@ -1,7 +1,10 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') })
 
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { PrismaPg } = require('@prisma/adapter-pg')
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   console.log('🌱 Seeding database...')
@@ -44,14 +47,14 @@ async function main() {
     data: { name: 'Youssef Adel', email: 'youssef@gmail.com', password: 'hashed_password_12', role: 'GUEST' }
   })
   const venueOwner1 = await prisma.user.create({
-  data: { name: 'Yara Gehad', email: 'yara@venues.com', password: 'hashed_password_13', role: 'VENUE_OWNER' }
-})
-const venueOwner2 = await prisma.user.create({
-  data: { name: 'Eissa Gehad', email: 'eissa@venues.com', password: 'hashed_password_14', role: 'VENUE_OWNER' }
-})
-const venueOwner3 = await prisma.user.create({
-  data: { name: 'Dalia Eissa', email: 'dalia@venues.com', password: 'hashed_password_15', role: 'VENUE_OWNER' }
-})
+    data: { name: 'Yara Gehad', email: 'yara@venues.com', password: 'hashed_password_13', role: 'VENUE_OWNER' }
+  })
+  const venueOwner2 = await prisma.user.create({
+    data: { name: 'Eissa Gehad', email: 'eissa@venues.com', password: 'hashed_password_14', role: 'VENUE_OWNER' }
+  })
+  const venueOwner3 = await prisma.user.create({
+    data: { name: 'Dalia Eissa', email: 'dalia@venues.com', password: 'hashed_password_15', role: 'VENUE_OWNER' }
+  })
 
   console.log('✅ Users created')
 

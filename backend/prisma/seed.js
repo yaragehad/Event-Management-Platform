@@ -1,9 +1,7 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') })
-const { PrismaClient } = require('@prisma/client')
-const { PrismaPg } = require('@prisma/adapter-pg')
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
-const prisma = new PrismaClient({ adapter })
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding database...')
@@ -45,6 +43,15 @@ async function main() {
   const guestUser4 = await prisma.user.create({
     data: { name: 'Youssef Adel', email: 'youssef@gmail.com', password: 'hashed_password_12', role: 'GUEST' }
   })
+  const venueOwner1 = await prisma.user.create({
+  data: { name: 'Yara Gehad', email: 'yara@venues.com', password: 'hashed_password_13', role: 'VENUE_OWNER' }
+})
+const venueOwner2 = await prisma.user.create({
+  data: { name: 'Eissa Gehad', email: 'eissa@venues.com', password: 'hashed_password_14', role: 'VENUE_OWNER' }
+})
+const venueOwner3 = await prisma.user.create({
+  data: { name: 'Dalia Eissa', email: 'dalia@venues.com', password: 'hashed_password_15', role: 'VENUE_OWNER' }
+})
 
   console.log('✅ Users created')
 
@@ -59,7 +66,7 @@ async function main() {
       areaM2: 800,
       amenities: 'Parking, WiFi, Kitchen, Stage, AV Equipment',
       pricePerDay: 5000,
-      ownerId: organizer1.id
+      ownerId: venueOwner1.id
     }
   })
   const venue2 = await prisma.venue.create({
@@ -72,7 +79,7 @@ async function main() {
       areaM2: 350,
       amenities: 'Outdoor Seating, WiFi, Bar, Lighting',
       pricePerDay: 3000,
-      ownerId: organizer1.id
+      ownerId: venueOwner2.id
     }
   })
   const venue3 = await prisma.venue.create({
@@ -85,7 +92,7 @@ async function main() {
       areaM2: 500,
       amenities: 'Projectors, WiFi, Catering Area, Parking',
       pricePerDay: 4000,
-      ownerId: organizer2.id
+      ownerId: venueOwner3.id
     }
   })
 

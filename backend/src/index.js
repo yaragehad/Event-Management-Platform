@@ -1,10 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const venueRoutes = require('./routes/venue')
-const bookingRoutes = require('./routes/booking')
-const layoutRoutes = require('./routes/layout')
-const analyticsRoutes = require('./routes/analytics')
 
 
 const app = express();
@@ -21,6 +17,7 @@ app.use(express.json());
 const venueRoutes = require('./routes/venue')
 const bookingRoutes = require('./routes/booking')
 const layoutRoutes = require('./routes/layout')
+const analyticsRoutes = require('./routes/analytics')
 const vendorRoutes = require('./routes/vendorRoutes')
 const sourcingRequestRoutes = require('./routes/sourcingRequestRoutes')
 const deliveryRoutes = require('./routes/deliveryRoutes')

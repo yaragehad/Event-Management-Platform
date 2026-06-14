@@ -3,6 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import VenueLayout, { COLORS } from './VenueLayout'
 import { createVenue } from '../../services/venueService'
 
+const inputStyle = {
+  width: '100%', padding: '0.7rem 1rem',
+  border: `1px solid ${COLORS.border}`, borderRadius: '8px',
+  fontSize: '14px', color: COLORS.text, background: COLORS.white,
+  outline: 'none', boxSizing: 'border-box'
+}
+
+const labelStyle = {
+  display: 'block', marginBottom: '0.4rem',
+  fontSize: '13px', fontWeight: '600', color: COLORS.text
+}
+
 export default function CreateVenuePage() {
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
@@ -12,12 +24,14 @@ export default function CreateVenuePage() {
     capacity: '', areaM2: '', amenities: '', pricePerDay: '', ownerId: 1
   })
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value })
+  const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
 
   const handlePhotoChange = (index, value) => {
-    const updated = [...photoUrls]
-    updated[index] = value
-    setPhotoUrls(updated)
+    setPhotoUrls(prev => {
+      const updated = [...prev]
+      updated[index] = value
+      return updated
+    })
   }
 
   const handleSubmit = async () => {
@@ -43,33 +57,9 @@ export default function CreateVenuePage() {
     }
   }
 
-  const inputStyle = {
-    width: '100%', padding: '0.7rem 1rem',
-    border: `1px solid ${COLORS.border}`, borderRadius: '8px',
-    fontSize: '14px', color: COLORS.text, background: COLORS.white,
-    outline: 'none', boxSizing: 'border-box'
-  }
-
-  const labelStyle = {
-    display: 'block', marginBottom: '0.4rem',
-    fontSize: '13px', fontWeight: '600', color: COLORS.text
-  }
-
-  const Field = ({ label, name, type = 'text', placeholder, span }) => (
-    <div style={{ gridColumn: span ? 'span 2' : 'span 1' }}>
-      <label style={labelStyle}>{label}</label>
-      <input
-        name={name} type={type} value={form[name]}
-        onChange={handleChange} placeholder={placeholder}
-        style={inputStyle}
-      />
-    </div>
-  )
-
   return (
     <VenueLayout title="Create New Listing">
       <div style={{ maxWidth: '720px' }}>
-
         <div style={{
           background: COLORS.white, border: `1px solid ${COLORS.border}`,
           borderRadius: '12px', padding: '2rem'
@@ -80,7 +70,10 @@ export default function CreateVenuePage() {
             Basic Information
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-            <Field label="Venue Name *" name="name" placeholder="e.g. The Grand Hall" span />
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={labelStyle}>Venue Name *</label>
+              <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. The Grand Hall" style={inputStyle} />
+            </div>
             <div style={{ gridColumn: 'span 2' }}>
               <label style={labelStyle}>Description</label>
               <textarea
@@ -89,8 +82,14 @@ export default function CreateVenuePage() {
                 style={{ ...inputStyle, height: '90px', resize: 'vertical' }}
               />
             </div>
-            <Field label="Street Address *" name="location" placeholder="e.g. 15 Tahrir Square" />
-            <Field label="City *" name="city" placeholder="e.g. Cairo" />
+            <div>
+              <label style={labelStyle}>Street Address *</label>
+              <input name="location" value={form.location} onChange={handleChange} placeholder="e.g. 15 Tahrir Square" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>City *</label>
+              <input name="city" value={form.city} onChange={handleChange} placeholder="e.g. Cairo" style={inputStyle} />
+            </div>
           </div>
 
           {/* Capacity & Pricing */}
@@ -139,7 +138,7 @@ export default function CreateVenuePage() {
               />
             ))}
             <button
-              onClick={() => setPhotoUrls([...photoUrls, ''])}
+              onClick={() => setPhotoUrls(prev => [...prev, ''])}
               style={{
                 background: 'none', border: `1px dashed ${COLORS.border}`,
                 padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer',
@@ -175,6 +174,7 @@ export default function CreateVenuePage() {
               {submitting ? 'Creating...' : 'Create Venue'}
             </button>
           </div>
+
         </div>
       </div>
     </VenueLayout>

@@ -31,3 +31,6 @@ export const getLayout = (venueId) =>
 
 export const saveLayout = (data) =>
   API.post('/layouts', data)
+
+export const getVenueAnalytics = (ownerId) =>
+  API.get(`/analytics/venue/${ownerId}`)

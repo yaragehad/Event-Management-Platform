@@ -9,11 +9,13 @@ const vendorRoutes = require('./routes/vendorRoutes')
 const sourcingRequestRoutes = require('./routes/sourcingRequestRoutes')
 const deliveryRoutes = require('./routes/deliveryRoutes')
 const invoiceRoutes = require('./routes/invoiceRoutes')
+const guestRoutes = require('./routes/guestRoutes')
 
 app.use('/api/vendors', vendorRoutes)
 app.use('/api/sourcing-requests', sourcingRequestRoutes)
 app.use('/api/deliveries', deliveryRoutes)
 app.use('/api/invoices', invoiceRoutes)
+app.use('/api/guests', guestRoutes)
 
 app.get('/', (req, res) => {
   res.send('Event Management Platform API');

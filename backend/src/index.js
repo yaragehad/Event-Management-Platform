@@ -5,7 +5,6 @@ const venueRoutes = require('./routes/venue')
 const bookingRoutes = require('./routes/booking')
 const layoutRoutes = require('./routes/layout')
 const analyticsRoutes = require('./routes/analytics')
-const analyticsRoutes = require('./routes/analytics')
 
 
 const app = express();

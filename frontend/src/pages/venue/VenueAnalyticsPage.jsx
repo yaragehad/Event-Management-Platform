@@ -58,6 +58,10 @@ export default function VenueAnalyticsPage() {
       'Approved': d.approved,
       'Revenue (EGP)': d.revenue
     }))
+    if (rows.length === 0) {
+    alert('No monthly booking data to export yet. Create and approve some bookings first.')
+    return
+  }
     exportToCSV(rows, 'monthly-bookings-report.csv')
   }
 

@@ -237,7 +237,7 @@ Check-In Pages
 |-------|------------|
 | Frontend | React, React Router, Axios |
 | Backend | Node.js, Express.js |
-| Database | to be decided |
+| Database | PostgreSQL + Prisma ORM |
 | Version Control | GitHub |
 
 ---
@@ -280,7 +280,7 @@ event-management-platform/
 Make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/) (v18 or higher)
-- ....
+- [PostgreSQL](https://www.postgresql.org/download/) (v14 or higher)
 - [Git](https://git-scm.com/)
 
 ---
@@ -301,12 +301,25 @@ cd backend
 npm install
 ```
 
-Create a `.env` file inside the `backend/` folder:
+Create a `.env` file inside the `backend/` folder by copying `.env.example`:
 
+```bash
+copy .env.example .env
 ```
 
-JWT_SECRET=your_secret_key_here
-PORT=5000
+Update `.env` values if needed:
+
+```
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/event_management_platform?schema=public"
+PORT=3001
+JWT_SECRET="change-me-in-dev"
+```
+
+Apply migrations and seed the database:
+
+```bash
+npx prisma migrate dev --name init
+node prisma/seed.js
 ```
 
 Start the backend server:
@@ -315,7 +328,7 @@ Start the backend server:
 npm start
 ```
 
-The backend will run on `http://localhost:5000`.
+The backend will run on `http://localhost:3001`.
 
 ---
 
@@ -328,10 +341,16 @@ cd frontend
 npm install
 ```
 
-Create a `.env` file inside the `frontend/` folder:
+Create a `.env` file inside the `frontend/` folder by copying `.env.example`:
+
+```bash
+copy .env.example .env
+```
+
+Set API URL:
 
 ```
-REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_API_URL=http://localhost:3001/api
 ```
 
 Start the frontend:
@@ -346,7 +365,24 @@ The frontend will run on `http://localhost:3000`.
 
 ### 4. Database Setup & Dummy Data
 
-to be updated
+1. Make sure PostgreSQL is running.
+2. Create a database named `event_management_platform`.
+3. Confirm `DATABASE_URL` in `backend/.env` points to this database.
+4. Run migrations and seed data:
+
+```bash
+cd backend
+npx prisma migrate dev --name init
+node prisma/seed.js
+```
+
+If seeding fails because data already exists, reset and reseed:
+
+```bash
+npx prisma migrate reset
+```
+
+This will recreate the schema and run seed again.
 
 ## Implemented User Journeys
 

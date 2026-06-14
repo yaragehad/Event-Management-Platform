@@ -1,57 +1,66 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') })
-
+const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { PrismaPg } = require('@prisma/adapter-pg');
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
+
 
 async function main() {
   console.log('🌱 Seeding database...')
+  // 1. Create a salt
+  const salt = await bcrypt.genSalt(10);
+  
+  // 2. Hash the specific password you want to use
+  const hashed = await bcrypt.hash('your_secret_password', salt);
 
   // ─── USERS ───────────────────────────────────────────────────────────────
   const organizer1 = await prisma.user.create({
-    data: { name: 'Noran Mohamed', email: 'Noran@eventpro.com', password: 'hashed_password_1', role: 'ORGANIZER' }
+    data: { name: 'Noran Mohamed', email: 'Noran@eventpro.com', password: hashed, role: 'ORGANIZER' }
   })
   const organizer2 = await prisma.user.create({
-    data: { name: 'Omar Khalil', email: 'omar@eventpro.com', password: 'hashed_password_2', role: 'ORGANIZER' }
+    data: { name: 'Omar Khalil', email: 'omar@eventpro.com', password: hashed, role: 'ORGANIZER' }
   })
   const staff1 = await prisma.user.create({
-    data: { name: 'Ahmed Hassan', email: 'ahmed@staff.com', password: 'hashed_password_3', role: 'STAFF' }
+    data: { name: 'Ahmed Hassan', email: 'ahmed@staff.com', password: hashed, role: 'STAFF' }
   })
   const staff2 = await prisma.user.create({
-    data: { name: 'Nour Sami', email: 'nour@staff.com', password: 'hashed_password_4', role: 'STAFF' }
+    data: { name: 'Nour Sami', email: 'nour@staff.com', password: hashed, role: 'STAFF' }
   })
   const staff3 = await prisma.user.create({
-    data: { name: 'Karim Youssef', email: 'karim@staff.com', password: 'hashed_password_5', role: 'STAFF' }
+    data: { name: 'Karim Youssef', email: 'karim@staff.com', password: hashed, role: 'STAFF' }
   })
   const vendorUser1 = await prisma.user.create({
-    data: { name: 'Mona Catering', email: 'mona@catering.com', password: 'hashed_password_6', role: 'VENDOR' }
+    data: { name: 'Mona Catering', email: 'mona@catering.com', password: hashed, role: 'VENDOR' }
   })
   const vendorUser2 = await prisma.user.create({
-    data: { name: 'Elite Decor', email: 'info@elitedecor.com', password: 'hashed_password_7', role: 'VENDOR' }
+    data: { name: 'Elite Decor', email: 'info@elitedecor.com', password: hashed, role: 'VENDOR' }
   })
   const vendorUser3 = await prisma.user.create({
-    data: { name: 'Sound & Light Co', email: 'contact@soundlight.com', password: 'hashed_password_8', role: 'VENDOR' }
+    data: { name: 'Sound & Light Co', email: 'contact@soundlight.com', password: hashed, role: 'VENDOR' }
   })
   const guestUser1 = await prisma.user.create({
-    data: { name: 'Layla Ibrahim', email: 'layla@gmail.com', password: 'hashed_password_9', role: 'GUEST' }
+    data: { name: 'Layla Ibrahim', email: 'layla@gmail.com', password: hashed, role: 'GUEST' }
   })
   const guestUser2 = await prisma.user.create({
-    data: { name: 'Tarek Mostafa', email: 'tarek@gmail.com', password: 'hashed_password_10', role: 'GUEST' }
+    data: { name: 'Tarek Mostafa', email: 'tarek@gmail.com', password: hashed, role: 'GUEST' }
   })
   const guestUser3 = await prisma.user.create({
-    data: { name: 'Dina Fawzy', email: 'dina@gmail.com', password: 'hashed_password_11', role: 'GUEST' }
+    data: { name: 'Dina Fawzy', email: 'dina@gmail.com', password: hashed, role: 'GUEST' }
   })
   const guestUser4 = await prisma.user.create({
-    data: { name: 'Youssef Adel', email: 'youssef@gmail.com', password: 'hashed_password_12', role: 'GUEST' }
+    data: { name: 'Youssef Adel', email: 'youssef@gmail.com', password: hashed, role: 'GUEST' }
   })
   const venueOwner1 = await prisma.user.create({
-  data: { name: 'Yara Gehad', email: 'yara@venues.com', password: 'hashed_password_13', role: 'VENUE_OWNER' }
-})
-const venueOwner2 = await prisma.user.create({
-  data: { name: 'Eissa Gehad', email: 'eissa@venues.com', password: 'hashed_password_14', role: 'VENUE_OWNER' }
-})
-const venueOwner3 = await prisma.user.create({
-  data: { name: 'Dalia Eissa', email: 'dalia@venues.com', password: 'hashed_password_15', role: 'VENUE_OWNER' }
-})
+    data: { name: 'Yara Gehad', email: 'yara@venues.com', password: hashed, role: 'VENUE_OWNER' }
+  })
+  const venueOwner2 = await prisma.user.create({
+    data: { name: 'Eissa Gehad', email: 'eissa@venues.com', password: hashed, role: 'VENUE_OWNER' }
+  })
+  const venueOwner3 = await prisma.user.create({
+    data: { name: 'Dalia Eissa', email: 'dalia@venues.com', password: hashed, role: 'VENUE_OWNER' }
+  })
 
   console.log('✅ Users created')
 

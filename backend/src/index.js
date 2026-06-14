@@ -9,15 +9,24 @@ const analyticsRoutes = require('./routes/analytics')
 
 const app = express();
 const port = process.env.PORT || 3001;
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 
 app.use(cors())
 app.use(express.json());
 
+const venueRoutes = require('./routes/venue')
+const bookingRoutes = require('./routes/booking')
+const layoutRoutes = require('./routes/layout')
 const vendorRoutes = require('./routes/vendorRoutes')
 const sourcingRequestRoutes = require('./routes/sourcingRequestRoutes')
 const deliveryRoutes = require('./routes/deliveryRoutes')
 const invoiceRoutes = require('./routes/invoiceRoutes')
 
+app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/vendors', vendorRoutes)
 app.use('/api/sourcing-requests', sourcingRequestRoutes)
 app.use('/api/deliveries', deliveryRoutes)

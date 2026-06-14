@@ -4,6 +4,9 @@ const cors = require('cors');
 const venueRoutes = require('./routes/venue')
 const bookingRoutes = require('./routes/booking')
 const layoutRoutes = require('./routes/layout')
+const analyticsRoutes = require('./routes/analytics')
+const analyticsRoutes = require('./routes/analytics')
+
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -23,6 +26,7 @@ app.use('/api/invoices', invoiceRoutes)
 app.use('/api/venues', venueRoutes)
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/layouts', layoutRoutes)
+app.use('/api/analytics', analyticsRoutes)
 app.use(cors())
 
 app.get('/', (req, res) => {

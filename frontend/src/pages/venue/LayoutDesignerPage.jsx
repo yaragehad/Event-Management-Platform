@@ -508,7 +508,7 @@ export default function LayoutDesignerPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button
-            onClick={() => navigate('/venue/dashboard')}
+            onClick={() => navigate('/organizer/dashboard')}
             style={{
               padding: '0.45rem 0.9rem', background: COLORS.cream,
               border: `1px solid ${COLORS.border}`, borderRadius: '7px',

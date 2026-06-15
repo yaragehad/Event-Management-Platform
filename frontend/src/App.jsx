@@ -17,14 +17,18 @@ import OrganizerCreateBookingPage from './pages/organizer/OrganizerCreateBooking
 import OrganizerBookingStatusPage from './pages/organizer/OrganizerBookingStatusPage';
 import OrganizerDashboard from './pages/organizer/OrganizerDashboard';
 
-// Redirects to the correct dashboard based on role, or /login if not authenticated
 function RootRedirect() {
-  const { user, loading } = useContext(AuthContext);
-  if (loading) return null; // Wait for localStorage to be read
+  const { user } = useContext(AuthContext);
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'ORGANIZER') return <Navigate to="/organizer/dashboard" replace />;
   if (user.role === 'VENUE_OWNER') return <Navigate to="/venue/dashboard" replace />;
   return <Navigate to="/login" replace />;
+}
+
+function ProtectedRoute({ children }) {
+  const { user } = useContext(AuthContext);
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
 }
 
 function App() {
@@ -40,22 +44,22 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           {/* --- VENUE OWNER ROUTES --- */}
-          <Route path="/venue/dashboard" element={<VenueOwnerDashboard />} />
-          <Route path="/venue/listings" element={<VenueListingsPage />} />
-          <Route path="/venue/create" element={<CreateVenuePage />} />
-          <Route path="/venue/edit/:id" element={<EditVenuePage />} />
-          <Route path="/venue/calendar/:id" element={<VenueCalendarPage />} />
-          <Route path="/venue/bookings" element={<BookingRequestsPage />} />
-          <Route path="/venue/layout/:venueId" element={<LayoutDesignerPage />} />
-          <Route path="/venue/layout" element={<LayoutDesignerPage />} />
-          <Route path="/venue/analytics" element={<VenueAnalyticsPage />} />
-
+          <Route path="/venue/dashboard" element={<ProtectedRoute><VenueOwnerDashboard /></ProtectedRoute>} />
+          <Route path="/venue/listings" element={<ProtectedRoute><VenueListingsPage /></ProtectedRoute>} />
+          <Route path="/venue/create" element={<ProtectedRoute><CreateVenuePage /></ProtectedRoute>} />
+          <Route path="/venue/edit/:id" element={<ProtectedRoute><EditVenuePage /></ProtectedRoute>} />
+          <Route path="/venue/calendar/:id" element={<ProtectedRoute><VenueCalendarPage /></ProtectedRoute>} />
+          <Route path="/venue/bookings" element={<ProtectedRoute><BookingRequestsPage /></ProtectedRoute>} />
+          <Route path="/organizer/layout/:venueId" element={<ProtectedRoute><LayoutDesignerPage /></ProtectedRoute>} />
+          <Route path="/organizer/layout" element={<ProtectedRoute><LayoutDesignerPage /></ProtectedRoute>} />
+          <Route path="/venue/analytics" element={<ProtectedRoute><VenueAnalyticsPage /></ProtectedRoute>} />
+          <Route path="/venue/profile" element={<ProtectedRoute><VenueOwnerProfilePage /></ProtectedRoute>} />
 
           {/* --- ORGANIZER ROUTES --- */}
-          <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
-          <Route path="/organizer/venues" element={<OrganizerVenueSearchPage />} />
-          <Route path="/organizer/bookings/new" element={<OrganizerCreateBookingPage />} />
-          <Route path="/organizer/bookings" element={<OrganizerBookingStatusPage />} />
+          <Route path="/organizer/dashboard" element={<ProtectedRoute><OrganizerDashboard /></ProtectedRoute>} />
+          <Route path="/organizer/venues" element={<ProtectedRoute><OrganizerVenueSearchPage /></ProtectedRoute>} />
+          <Route path="/organizer/bookings/new" element={<ProtectedRoute><OrganizerCreateBookingPage /></ProtectedRoute>} />
+          <Route path="/organizer/bookings" element={<ProtectedRoute><OrganizerBookingStatusPage /></ProtectedRoute>} />
         </Routes>
       </Router>
     </AuthProvider>

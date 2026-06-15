@@ -15,8 +15,7 @@ function getStoredUser() {
 
 // 2. Create the Provider
 export const AuthProvider = ({ children }) => {
-  // Read localStorage synchronously on first render — no async loading needed
-  const [user, setUser] = useState(() => getStoredUser());
+  const [user, setUser] = useState(null);
 
   // The function to run when they successfully log in
   const login = (userData, token) => {

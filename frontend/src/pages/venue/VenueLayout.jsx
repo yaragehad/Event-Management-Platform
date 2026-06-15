@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState, useRef, useContext } from 'react'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { AuthContext } from '../../context/AuthContext'
 
 const COLORS = {
   sidebar: '#6B2D0E',
@@ -20,7 +21,6 @@ const navItems = [
   { label: 'Dashboard', path: '/venue/dashboard', icon: '⊞' },
   { label: 'My Venues', path: '/venue/listings', icon: '🏛' },
   { label: 'Bookings', path: '/venue/bookings', icon: '📅' },
-  { label: 'Layout Designer', path: '/venue/layout', icon: '✏️' },
   { label: 'Analytics', path: '/venue/analytics', icon: '📊' },
   { label: 'My Profile', path: '/venue/profile', icon: '👤' },
 ]
@@ -28,6 +28,7 @@ const navItems = [
 export default function VenueLayout({ children, title }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user, logout } = useContext(AuthContext)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [logoOpen, setLogoOpen] = useState(false)
   const [logoHovered, setLogoHovered] = useState(false)
@@ -78,7 +79,7 @@ export default function VenueLayout({ children, title }) {
                 fontSize: '18px', flexShrink: 0
               }}>🏛</div>
               <div>
-                <div style={{ color: COLORS.white, fontWeight: '700', fontSize: '16px', whiteSpace: 'nowrap' }}>EventHub</div>
+                <div style={{ color: COLORS.white, fontWeight: '700', fontSize: '16px', whiteSpace: 'nowrap' }}>VenueHub</div>
                 <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>Manager</div>
               </div>
               <div style={{
@@ -101,6 +102,43 @@ export default function VenueLayout({ children, title }) {
                   zIndex: 200, overflow: 'hidden'
                 }}
               >
+                <div style={{ padding: '12px 14px', borderBottom: `1px solid ${COLORS.border}` }}>
+                  <div style={{ fontWeight: 700, color: COLORS.text, fontSize: 14 }}>{user?.name}</div>
+                  <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>{user?.email}</div>
+                </div>
+                <div style={{ padding: '6px' }}>
+                  {[
+                    { icon: '🏛', label: 'My Venues', to: '/venue/listings' },
+                    { icon: '📅', label: 'My Bookings', to: '/venue/bookings' },
+                    { icon: '➕', label: 'New Listing', to: '/venue/create' },
+                  ].map(item => (
+                    <Link key={item.to} to={item.to}
+                      onClick={() => { setLogoOpen(false); setLogoHovered(false) }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '9px 12px', color: COLORS.text, textDecoration: 'none',
+                        fontSize: 14, borderRadius: 8,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = COLORS.cream}
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                      <span>{item.icon}</span> {item.label}
+                    </Link>
+                  ))}
+                  <div style={{ borderTop: `1px solid ${COLORS.border}`, margin: '4px 0' }} />
+                  <button
+                    onClick={() => { logout(); navigate('/login') }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                      padding: '9px 12px', background: 'none', border: 'none', cursor: 'pointer',
+                      fontSize: 14, color: COLORS.red, borderRadius: 8, textAlign: 'left',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = COLORS.redBg}
+                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                  >
+                    🚪 Log out
+                  </button>
+                </div>
               </div>
             )}
           </div>

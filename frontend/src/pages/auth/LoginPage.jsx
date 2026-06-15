@@ -6,7 +6,7 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -29,7 +29,7 @@ function LoginPage() {
         if (data.user.role === 'VENUE_OWNER') {
           navigate('/venue/dashboard');
         } else if (data.user.role === 'ORGANIZER') {
-          navigate('/organizer/venues');
+          navigate('/organizer/dashboard');
         } else {
           navigate('/login'); // Default fallback
         }
@@ -44,7 +44,7 @@ function LoginPage() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#FBF7F4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ backgroundColor: '#FFFFFF', padding: '40px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px', border: '1px solid #EDE0D9' }}>
-        
+
         <h2 style={{ color: '#6B2D0E', textAlign: 'center', marginBottom: '24px', fontSize: '24px', fontWeight: 'bold' }}>
           Welcome Back
         </h2>
@@ -54,19 +54,19 @@ function LoginPage() {
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <label style={{ display: 'block', color: '#2C1810', marginBottom: '8px', fontSize: '14px' }}>Email Address</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #EDE0D9', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
-          
+
           <div>
             <label style={{ display: 'block', color: '#2C1810', marginBottom: '8px', fontSize: '14px' }}>Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -74,8 +74,8 @@ function LoginPage() {
             />
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             style={{ backgroundColor: '#C4622D', color: '#FFFFFF', padding: '12px', border: 'none', borderRadius: '4px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }}
           >
             Login to Dashboard

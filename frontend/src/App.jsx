@@ -26,6 +26,17 @@ function RootRedirect() {
   return <Navigate to="/login" replace />;
 }
 
+function ProtectedRoute({ children, allowedRole }) {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (allowedRole && user.role !== allowedRole) {
+    // If they have the wrong role, send them back to root which will redirect to their correct dashboard
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -39,20 +50,20 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           {/* --- VENUE OWNER ROUTES --- */}
-          <Route path="/venue/dashboard" element={<VenueOwnerDashboard />} />
-          <Route path="/venue/listings" element={<VenueListingsPage />} />
-          <Route path="/venue/create" element={<CreateVenuePage />} />
-          <Route path="/venue/edit/:id" element={<EditVenuePage />} />
-          <Route path="/venue/calendar/:id" element={<VenueCalendarPage />} />
-          <Route path="/venue/bookings" element={<BookingRequestsPage />} />
-          <Route path="/venue/layout" element={<LayoutDesignerPage />} />
-          <Route path="/venue/analytics" element={<VenueAnalyticsPage />} />
+          <Route path="/venue/dashboard" element={<ProtectedRoute allowedRole="VENUE_OWNER"><VenueOwnerDashboard /></ProtectedRoute>} />
+          <Route path="/venue/listings" element={<ProtectedRoute allowedRole="VENUE_OWNER"><VenueListingsPage /></ProtectedRoute>} />
+          <Route path="/venue/create" element={<ProtectedRoute allowedRole="VENUE_OWNER"><CreateVenuePage /></ProtectedRoute>} />
+          <Route path="/venue/edit/:id" element={<ProtectedRoute allowedRole="VENUE_OWNER"><EditVenuePage /></ProtectedRoute>} />
+          <Route path="/venue/calendar/:id" element={<ProtectedRoute allowedRole="VENUE_OWNER"><VenueCalendarPage /></ProtectedRoute>} />
+          <Route path="/venue/bookings" element={<ProtectedRoute allowedRole="VENUE_OWNER"><BookingRequestsPage /></ProtectedRoute>} />
+          <Route path="/venue/layout" element={<ProtectedRoute allowedRole="VENUE_OWNER"><LayoutDesignerPage /></ProtectedRoute>} />
+          <Route path="/venue/analytics" element={<ProtectedRoute allowedRole="VENUE_OWNER"><VenueAnalyticsPage /></ProtectedRoute>} />
 
           {/* --- ORGANIZER ROUTES --- */}
-          <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
-          <Route path="/organizer/venues" element={<OrganizerVenueSearchPage />} />
-          <Route path="/organizer/bookings/new" element={<OrganizerCreateBookingPage />} />
-          <Route path="/organizer/bookings" element={<OrganizerBookingStatusPage />} />
+          <Route path="/organizer/dashboard" element={<ProtectedRoute allowedRole="ORGANIZER"><OrganizerDashboard /></ProtectedRoute>} />
+          <Route path="/organizer/venues" element={<ProtectedRoute allowedRole="ORGANIZER"><OrganizerVenueSearchPage /></ProtectedRoute>} />
+          <Route path="/organizer/bookings/new" element={<ProtectedRoute allowedRole="ORGANIZER"><OrganizerCreateBookingPage /></ProtectedRoute>} />
+          <Route path="/organizer/bookings" element={<ProtectedRoute allowedRole="ORGANIZER"><OrganizerBookingStatusPage /></ProtectedRoute>} />
         </Routes>
       </Router>
     </AuthProvider>

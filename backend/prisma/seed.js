@@ -11,9 +11,9 @@ async function main() {
   console.log('🌱 Seeding database...')
   // 1. Create a salt
   const salt = await bcrypt.genSalt(10);
-  
+
   // 2. Hash the specific password you want to use
-  const hashed = await bcrypt.hash('your_secret_password', salt);
+  const hashed = await bcrypt.hash('test12345', salt);
 
   // ─── USERS ───────────────────────────────────────────────────────────────
   const organizer1 = await prisma.user.create({
@@ -41,6 +41,7 @@ async function main() {
     data: { name: 'Sound & Light Co', email: 'contact@soundlight.com', password: hashed, role: 'VENDOR' }
   })
   const guestUser1 = await prisma.user.create({
+
     data: { name: 'Layla Ibrahim', email: 'layla@gmail.com', password: hashed, role: 'GUEST' }
   })
   const guestUser2 = await prisma.user.create({

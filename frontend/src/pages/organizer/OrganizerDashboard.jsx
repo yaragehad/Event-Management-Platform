@@ -665,7 +665,7 @@ export default function OrganizerDashboard() {
                 fontSize: '18px', flexShrink: 0,
               }}>🏛</div>
               <div>
-                <div style={{ color: C.white, fontWeight: '700', fontSize: '16px', whiteSpace: 'nowrap' }}>VenueHub</div>
+                <div style={{ color: C.white, fontWeight: '700', fontSize: '16px', whiteSpace: 'nowrap' }}>EventHub</div>
                 <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>Organizer</div>
               </div>
               <div style={{

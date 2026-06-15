@@ -77,7 +77,7 @@ export default function VenueLayout({ children, title }) {
                 fontSize: '18px', flexShrink: 0
               }}>🏛</div>
               <div>
-                <div style={{ color: COLORS.white, fontWeight: '700', fontSize: '16px', whiteSpace: 'nowrap' }}>VenueHub</div>
+                <div style={{ color: COLORS.white, fontWeight: '700', fontSize: '16px', whiteSpace: 'nowrap' }}>EventHub</div>
                 <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>Manager</div>
               </div>
               <div style={{

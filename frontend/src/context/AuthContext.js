@@ -1,23 +1,22 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState } from 'react';
 
-// 1. Create the Context (The empty memory bank)
+// 1. Create the Context
 export const AuthContext = createContext();
 
-// 2. Create the Provider (The manager that updates the memory)
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // When the app first loads, check if they already have a VIP pass saved
-  useEffect(() => {
+// Helper: safely parse stored user
+function getStoredUser() {
+  try {
     const savedUser = localStorage.getItem('user');
     const savedToken = localStorage.getItem('token');
+    if (savedUser && savedToken) return JSON.parse(savedUser);
+  } catch { /* ignore parse errors */ }
+  return null;
+}
 
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
-  }, []);
+// 2. Create the Provider
+export const AuthProvider = ({ children }) => {
+  // Read localStorage synchronously on first render — no async loading needed
+  const [user, setUser] = useState(() => getStoredUser());
 
   // The function to run when they successfully log in
   const login = (userData, token) => {
@@ -34,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading: false }}>
       {children}
     </AuthContext.Provider>
   );

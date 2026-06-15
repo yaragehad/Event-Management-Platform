@@ -14,6 +14,7 @@ import VenueOwnerDashboard from './pages/venue/VenueOwnerDashboard';
 import OrganizerVenueSearchPage from './pages/organizer/OrganizerVenueSearchPage';
 import OrganizerCreateBookingPage from './pages/organizer/OrganizerCreateBookingPage';
 import OrganizerBookingStatusPage from './pages/organizer/OrganizerBookingStatusPage';
+import OrganizerDashboard from './pages/organizer/OrganizerDashboard';
 
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
           <Route path="/venue/layout" element={<LayoutDesignerPage />} />
           <Route path="/venue/analytics" element={<VenueAnalyticsPage />} />
           {/* --- ORGANIZER ROUTES --- */}
+          <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
           <Route path="/organizer/venues" element={<OrganizerVenueSearchPage />} />
           <Route path="/organizer/bookings/new" element={<OrganizerCreateBookingPage />} />
           <Route path="/organizer/bookings" element={<OrganizerBookingStatusPage />} />

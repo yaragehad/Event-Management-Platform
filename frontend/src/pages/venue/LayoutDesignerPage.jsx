@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { saveLayout } from '../../services/venueService'
 
 const COLORS = {
@@ -253,6 +253,8 @@ function ElementCanvas({ type, color, rotation = 0, width, height, isActive, isD
 
 export default function LayoutDesignerPage() {
   const navigate = useNavigate()
+  const { venueId: venueIdParam } = useParams()
+  const currentVenueId = venueIdParam ? parseInt(venueIdParam) : 1
   const canvasAreaRef = useRef(null)
   const [placed, setPlaced] = useState([])
   const [selected, setSelected] = useState('Round Table')
@@ -341,7 +343,7 @@ export default function LayoutDesignerPage() {
   if (!placed.length) { alert('Add some elements first.'); return }
   setSaving(true)
   try {
-    await saveLayout({ venueId: 3, elements: placed })
+    await saveLayout({ venueId: currentVenueId, elements: placed })
     setSaved(true)
   } catch {
     alert('Failed to save layout. Make sure the backend is running.')
@@ -547,6 +549,24 @@ export default function LayoutDesignerPage() {
             fontSize: '12px', color: placed.length ? COLORS.white : '#aaa', fontWeight: '700'
           }}>
             {saving ? '...' : saved ? '✓ Saved' : '💾 Save'}
+          </button>
+          <button
+          onClick={() => {
+            const url = `${window.location.origin}/staff/layout/${currentVenueId}`
+            navigator.clipboard.writeText(url).then(() => {
+              alert('Staff link copied!\n\n' + url + '\n\nShare this with your staff members.')
+            })
+          }}
+          disabled={!saved}
+          style={{
+            padding: '0.45rem 1rem',
+            background: saved ? COLORS.accentLight : '#f5f5f5',
+            border: `1px solid ${saved ? COLORS.accent : '#e5e5e5'}`,
+            borderRadius: '7px', cursor: saved ? 'pointer' : 'not-allowed',
+            fontSize: '12px', color: saved ? COLORS.accent : '#aaa', fontWeight: '700'
+          }}
+        >
+          🔗 Share with Staff
           </button>
         </div>
       </div>

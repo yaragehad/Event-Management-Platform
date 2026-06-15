@@ -49,7 +49,7 @@ function App() {
           <Route path="/venue/layout/:venueId" element={<LayoutDesignerPage />} />
           <Route path="/venue/layout" element={<LayoutDesignerPage />} />
           <Route path="/venue/analytics" element={<VenueAnalyticsPage />} />
-          <Route path="/venue/profile" element={<VenueOwnerProfilePage />} />
+
 
           {/* --- ORGANIZER ROUTES --- */}
           <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />

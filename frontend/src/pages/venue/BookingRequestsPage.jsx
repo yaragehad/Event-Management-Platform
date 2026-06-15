@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import VenueLayout, { COLORS } from './VenueLayout'
+import { AuthContext } from '../../context/AuthContext'
 import { getBookings, updateBookingStatus } from '../../services/venueService'
 
 function Badge({ status }) {
@@ -20,13 +21,15 @@ export default function BookingRequestsPage() {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('ALL')
+  const { user } = useContext(AuthContext)
 
   useEffect(() => {
-    getBookings({}).then(res => {
+    if (!user?.id) return
+    getBookings({ ownerId: user.id }).then(res => {
       setBookings(res.data)
       setLoading(false)
     })
-  }, [])
+  }, [user?.id])
 
   const handleStatus = async (id, status) => {
     await updateBookingStatus(id, status)

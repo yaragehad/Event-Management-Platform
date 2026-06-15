@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import VenueLayout, { COLORS } from './VenueLayout'
-import { getAllVenues, deleteVenue } from '../../services/venueService'
+import { AuthContext } from '../../context/AuthContext'
+import { getAllVenues, deleteVenue, permanentlyDeleteVenue } from '../../services/venueService'
 
 export default function VenueListingsPage() {
   const [venues, setVenues] = useState([])
@@ -9,10 +10,12 @@ export default function VenueListingsPage() {
   const [cityFilter, setCityFilter] = useState('')
   const [capacityFilter, setCapacityFilter] = useState('')
   const navigate = useNavigate()
+  const { user } = useContext(AuthContext)
 
   const fetchVenues = async () => {
+    if (!user?.id) return
     setLoading(true)
-    const filters = {}
+    const filters = { ownerId: user.id }
     if (cityFilter) filters.city = cityFilter
     if (capacityFilter) filters.minCapacity = capacityFilter
     const res = await getAllVenues(filters)
@@ -20,11 +23,17 @@ export default function VenueListingsPage() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchVenues() }, [])
+  useEffect(() => { fetchVenues() }, [user?.id])
 
   const handleDeactivate = async (id) => {
-    if (!window.confirm('Deactivate this venue?')) return
+    if (!window.confirm('Deactivate this venue? It will be hidden from organizers but stay in the database.')) return
     await deleteVenue(id)
+    setVenues(venues.map(v => v.id === id ? { ...v, isActive: false } : v))
+  }
+
+  const handlePermanentDelete = async (id, name) => {
+    if (!window.confirm(`Permanently delete "${name}"? This cannot be undone — all bookings and layouts for this venue will also be removed.`)) return
+    await permanentlyDeleteVenue(id)
     setVenues(venues.filter(v => v.id !== id))
   }
 
@@ -148,6 +157,12 @@ export default function VenueListingsPage() {
                   style={{ padding: '0.5rem 1rem', background: COLORS.redBg, border: `1px solid #f5c6c2`, borderRadius: '7px', cursor: 'pointer', fontSize: '13px', color: COLORS.red, fontWeight: '500' }}
                 >
                   Deactivate
+                </button>
+                <button
+                  onClick={() => handlePermanentDelete(venue.id, venue.name)}
+                  style={{ padding: '0.5rem 1rem', background: COLORS.red, border: 'none', borderRadius: '7px', cursor: 'pointer', fontSize: '13px', color: COLORS.white, fontWeight: '600' }}
+                >
+                  Remove
                 </button>
               </div>
             </div>

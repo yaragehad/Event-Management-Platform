@@ -14,6 +14,7 @@ app.use(cors({
 app.use(cors())
 app.use(express.json());
 
+const userRoutes = require('./routes/userRoutes')
 const venueRoutes = require('./routes/venue')
 const bookingRoutes = require('./routes/booking')
 const layoutRoutes = require('./routes/layout')
@@ -24,6 +25,7 @@ const deliveryRoutes = require('./routes/deliveryRoutes')
 const invoiceRoutes = require('./routes/invoiceRoutes')
 
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', userRoutes);
 app.use('/api/vendors', vendorRoutes)
 app.use('/api/sourcing-requests', sourcingRequestRoutes)
 app.use('/api/deliveries', deliveryRoutes)

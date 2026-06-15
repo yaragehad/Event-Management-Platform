@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import VenueLayout, { COLORS } from './VenueLayout'
+import { AuthContext } from '../../context/AuthContext'
 import { getAllVenues, getBookings } from '../../services/venueService'
 
 function StatCard({ icon, value, label, sub, trend }) {
@@ -25,13 +26,15 @@ function StatCard({ icon, value, label, sub, trend }) {
 
 export default function VenueOwnerDashboard() {
   const navigate = useNavigate()
+  const { user } = useContext(AuthContext)
   const [venues, setVenues] = useState([])
   const [bookings, setBookings] = useState([])
 
   useEffect(() => {
-    getAllVenues({}).then(res => setVenues(res.data)).catch(() => {})
-    getBookings({}).then(res => setBookings(res.data)).catch(() => {})
-  }, [])
+    if (!user?.id) return
+    getAllVenues({ ownerId: user.id }).then(res => setVenues(res.data)).catch(() => {})
+    getBookings({ ownerId: user.id }).then(res => setBookings(res.data)).catch(() => {})
+  }, [user?.id])
 
   const pending = bookings.filter(b => b.status === 'PENDING').length
   const approved = bookings.filter(b => b.status === 'APPROVED').length

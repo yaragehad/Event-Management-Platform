@@ -22,6 +22,7 @@ const navItems = [
   { label: 'Bookings', path: '/venue/bookings', icon: '📅' },
   { label: 'Layout Designer', path: '/venue/layout', icon: '✏️' },
   { label: 'Analytics', path: '/venue/analytics', icon: '📊' },
+  { label: 'My Profile', path: '/venue/profile', icon: '👤' },
 ]
 
 export default function VenueLayout({ children, title }) {
@@ -179,12 +180,16 @@ export default function VenueLayout({ children, title }) {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ fontSize: '20px', cursor: 'pointer', color: COLORS.textMuted }}>🔔</div>
-            <div style={{
-              width: '36px', height: '36px', borderRadius: '50%',
-              background: COLORS.accent, color: COLORS.white,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '13px', fontWeight: '700', cursor: 'pointer'
-            }}>YG</div>
+            <div
+              onClick={() => navigate('/venue/profile')}
+              title="My Profile"
+              style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: COLORS.accent, color: COLORS.white,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '18px', cursor: 'pointer'
+              }}
+            >👤</div>
           </div>
         </div>
 

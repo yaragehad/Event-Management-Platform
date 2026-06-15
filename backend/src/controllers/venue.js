@@ -1,10 +1,12 @@
 const prisma = require('../lib/prismaClient');
 const getAllVenues = async (req, res) => {
   try {
-    const { city, minCapacity } = req.query
-    const filters = { isActive: true }
+    const { city, minCapacity, ownerId } = req.query
+    const filters = {}
+    if (!ownerId) filters.isActive = true
     if (city) filters.city = { contains: city, mode: 'insensitive' }
     if (minCapacity) filters.capacity = { gte: parseInt(minCapacity) }
+    if (ownerId) filters.ownerId = parseInt(ownerId)
 
     const venues = await prisma.venue.findMany({ where: filters, orderBy: { createdAt: 'desc' } })
     res.json(venues)
@@ -77,4 +79,24 @@ const deleteVenue = async (req, res) => {
   }
 }
 
-module.exports = { getAllVenues, getVenueById, createVenue, updateVenue, deleteVenue }
+const permanentDeleteVenue = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id)
+    await prisma.$transaction(async (tx) => {
+      const bookings = await tx.booking.findMany({ where: { venueId: id }, select: { id: true } })
+      const bookingIds = bookings.map(b => b.id)
+      if (bookingIds.length > 0) {
+        await tx.event.updateMany({ where: { bookingId: { in: bookingIds } }, data: { bookingId: null } })
+        await tx.booking.deleteMany({ where: { venueId: id } })
+      }
+      await tx.layout.deleteMany({ where: { venueId: id } })
+      await tx.venue.delete({ where: { id } })
+    })
+    res.json({ message: 'Venue permanently deleted' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Failed to permanently delete venue' })
+  }
+}
+
+module.exports = { getAllVenues, getVenueById, createVenue, updateVenue, deleteVenue, permanentDeleteVenue }

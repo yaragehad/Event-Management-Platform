@@ -56,7 +56,8 @@ const NAV_ITEMS = [
   { key: 'staff', icon: '👥', label: 'Staff' },
   { key: 'vendors', icon: '🏪', label: 'Vendors' },
   { key: 'sourcing', icon: '📦', label: 'Sourcing' },
-  { key: 'guests', icon: '🏟️', label: 'Guests' },
+  { key: 'guests', icon: '🎟️', label: 'Guests' },
+  { key: 'layout', icon: '✏️', label: 'Layout Designer', route: '/organizer/layout' },
   { key: 'dayof', icon: '📡', label: 'Day-Of Ops' },
   { key: 'reports', icon: '📈', label: 'Reports' },
   { key: 'accounts', icon: '👤', label: 'Accounts' },
@@ -1521,7 +1522,7 @@ export default function OrganizerDashboard() {
                 <div
                   key={item.key}
                   id={`nav-${item.key}`}
-                  onClick={() => setActiveSection(item.key)}
+                  onClick={() => item.route ? navigate(item.route) : setActiveSection(item.key)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '0.75rem',
                     padding: '0.7rem 1rem', borderRadius: '8px', marginBottom: '0.25rem',

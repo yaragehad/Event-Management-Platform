@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import VenueLayout, { COLORS } from './VenueLayout'
+import { AuthContext } from '../../context/AuthContext'
 import { createVenue } from '../../services/venueService'
 
 const inputStyle = {
@@ -17,11 +18,12 @@ const labelStyle = {
 
 export default function CreateVenuePage() {
   const navigate = useNavigate()
+  const { user } = useContext(AuthContext)
   const [submitting, setSubmitting] = useState(false)
   const [photoUrls, setPhotoUrls] = useState([''])
   const [form, setForm] = useState({
     name: '', description: '', location: '', city: '',
-    capacity: '', areaM2: '', amenities: '', pricePerDay: '', ownerId: 1
+    capacity: '', areaM2: '', amenities: '', pricePerDay: ''
   })
 
   const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -43,6 +45,7 @@ export default function CreateVenuePage() {
     try {
       await createVenue({
         ...form,
+        ownerId: user.id,
         capacity: parseInt(form.capacity),
         areaM2: form.areaM2 ? parseFloat(form.areaM2) : null,
         pricePerDay: parseFloat(form.pricePerDay),

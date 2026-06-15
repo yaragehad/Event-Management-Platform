@@ -2,10 +2,11 @@ const prisma = require('../lib/prismaClient');
 
 const getAllBookings = async (req, res) => {
   try {
-    const { organizerId, venueId } = req.query
+    const { organizerId, venueId, ownerId } = req.query
     const filters = {}
     if (organizerId) filters.organizerId = parseInt(organizerId)
     if (venueId) filters.venueId = parseInt(venueId)
+    if (ownerId) filters.venue = { ownerId: parseInt(ownerId) }
 
     const bookings = await prisma.booking.findMany({
       where: filters,

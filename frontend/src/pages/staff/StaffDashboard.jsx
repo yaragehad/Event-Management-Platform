@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const colors = {
   sidebar: '#6B2D0E',
@@ -16,22 +17,32 @@ const colors = {
 };
 
 const StaffDashboard = () => {
-  const [events] = useState([
-    { id: 1, name: 'Corporate Gala', date: '2026-06-20', location: 'Cairo', role: 'Catering' },
-    { id: 2, name: 'Wedding Reception', date: '2026-06-25', location: 'Alexandria', role: 'Logistics' },
-    { id: 3, name: 'Product Launch', date: '2026-07-01', location: 'Cairo', role: 'Seating' },
-  ]);
-
+  const [events, setEvents] = useState([]);
   const [filterDate, setFilterDate] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/staff/events/3');
+        setEvents(response.data);
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   const filteredEvents = filterDate
-    ? events.filter(e => e.date === filterDate)
+    ? events.filter(e => new Date(e.date).toISOString().split('T')[0] === filterDate)
     : events;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: 'sans-serif' }}>
-      
+
       {/* Sidebar */}
       {sidebarOpen && (
         <div style={{
@@ -55,7 +66,7 @@ const StaffDashboard = () => {
 
       {/* Main Content */}
       <div style={{ flex: 1 }}>
-        
+
         {/* Topbar */}
         <div style={{
           backgroundColor: colors.white,
@@ -67,13 +78,7 @@ const StaffDashboard = () => {
         }}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '20px',
-              cursor: 'pointer',
-              color: colors.text
-            }}
+            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: colors.text }}
           >
             ☰
           </button>
@@ -82,7 +87,7 @@ const StaffDashboard = () => {
 
         {/* Page Content */}
         <div style={{ padding: '24px' }}>
-          
+
           {/* Filter */}
           <div style={{
             backgroundColor: colors.white,
@@ -134,15 +139,17 @@ const StaffDashboard = () => {
             <div style={{ padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
               <h2 style={{ color: colors.text, margin: 0 }}>My Events</h2>
             </div>
-            {filteredEvents.length === 0 ? (
-              <p style={{ padding: '20px', color: colors.textMuted }}>No events found for this date.</p>
+            {loading ? (
+              <p style={{ padding: '20px', color: colors.textMuted }}>Loading events...</p>
+            ) : filteredEvents.length === 0 ? (
+              <p style={{ padding: '20px', color: colors.textMuted }}>No events found.</p>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ backgroundColor: colors.accentLight }}>
                     <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Event Name</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Date</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Location</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Status</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>My Role</th>
                   </tr>
                 </thead>
@@ -150,8 +157,8 @@ const StaffDashboard = () => {
                   {filteredEvents.map((event, index) => (
                     <tr key={event.id} style={{ backgroundColor: index % 2 === 0 ? colors.white : colors.cream }}>
                       <td style={{ padding: '12px 16px', color: colors.text }}>{event.name}</td>
-                      <td style={{ padding: '12px 16px', color: colors.textMuted }}>{event.date}</td>
-                      <td style={{ padding: '12px 16px', color: colors.textMuted }}>{event.location}</td>
+                      <td style={{ padding: '12px 16px', color: colors.textMuted }}>{new Date(event.date).toLocaleDateString()}</td>
+                      <td style={{ padding: '12px 16px', color: colors.textMuted }}>{event.status}</td>
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{
                           backgroundColor: colors.accentLight,

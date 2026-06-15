@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const colors = {
   sidebar: '#6B2D0E',
@@ -16,25 +17,39 @@ const colors = {
 };
 
 const StaffTaskList = () => {
-  const [tasks] = useState([
-    { id: 1, title: 'Set up catering tables', event: 'Corporate Gala', status: 'In Progress', category: 'Catering' },
-    { id: 2, title: 'Arrange seating plan', event: 'Corporate Gala', status: 'Pending', category: 'Seating' },
-    { id: 3, title: 'Check AV equipment', event: 'Wedding Reception', status: 'Done', category: 'Logistics' },
-    { id: 4, title: 'Coordinate vendor delivery', event: 'Product Launch', status: 'Pending', category: 'Logistics' },
-    { id: 5, title: 'Prepare welcome drinks', event: 'Wedding Reception', status: 'In Progress', category: 'Catering' },
-  ]);
-
+  const [tasks, setTasks] = useState([]);
   const [filterStatus, setFilterStatus] = useState('All');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/staff/tasks/3');
+        setTasks(response.data);
+      } catch (err) {
+        console.error('Failed to fetch tasks:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTasks();
+  }, []);
 
   const filteredTasks = filterStatus === 'All'
     ? tasks
-    : tasks.filter(t => t.status === filterStatus);
+    : tasks.filter(t => t.status === filterStatus.toUpperCase().replace(' ', '_'));
 
   const getStatusStyle = (status) => {
-    if (status === 'Done') return { backgroundColor: colors.greenBg, color: colors.green };
-    if (status === 'In Progress') return { backgroundColor: colors.accentLight, color: colors.accent };
+    if (status === 'DONE') return { backgroundColor: colors.greenBg, color: colors.green };
+    if (status === 'IN_PROGRESS') return { backgroundColor: colors.accentLight, color: colors.accent };
     return { backgroundColor: colors.redBg, color: colors.red };
+  };
+
+  const formatStatus = (status) => {
+    if (status === 'IN_PROGRESS') return 'In Progress';
+    if (status === 'DONE') return 'Done';
+    return 'Pending';
   };
 
   return (
@@ -82,7 +97,6 @@ const StaffTaskList = () => {
           <span style={{ fontWeight: 'bold', color: colors.text, fontSize: '18px' }}>My Tasks</span>
         </div>
 
-        {/* Page Content */}
         <div style={{ padding: '24px' }}>
 
           {/* Filter */}
@@ -126,7 +140,9 @@ const StaffTaskList = () => {
             <div style={{ padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
               <h2 style={{ color: colors.text, margin: 0 }}>Assigned Tasks</h2>
             </div>
-            {filteredTasks.length === 0 ? (
+            {loading ? (
+              <p style={{ padding: '20px', color: colors.textMuted }}>Loading tasks...</p>
+            ) : filteredTasks.length === 0 ? (
               <p style={{ padding: '20px', color: colors.textMuted }}>No tasks found.</p>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -152,7 +168,7 @@ const StaffTaskList = () => {
                           fontSize: '13px',
                           fontWeight: 'bold'
                         }}>
-                          {task.status}
+                          {formatStatus(task.status)}
                         </span>
                       </td>
                     </tr>

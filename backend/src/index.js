@@ -5,7 +5,7 @@ const venueRoutes = require('./routes/venue')
 const bookingRoutes = require('./routes/booking')
 const layoutRoutes = require('./routes/layout')
 const analyticsRoutes = require('./routes/analytics')
-
+const staffRoutes = require('./routes/staff')
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -26,6 +26,7 @@ app.use('/api/venues', venueRoutes)
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/layouts', layoutRoutes)
 app.use('/api/analytics', analyticsRoutes)
+app.use('/api/staff', staffRoutes)
 app.use(cors())
 
 app.get('/', (req, res) => {
@@ -35,5 +36,3 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-
-

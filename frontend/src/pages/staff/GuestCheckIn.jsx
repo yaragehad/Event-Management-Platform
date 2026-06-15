@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const colors = {
   sidebar: '#6B2D0E',
@@ -16,21 +17,35 @@ const colors = {
 };
 
 const GuestCheckIn = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [guests, setGuests] = useState([]);
   const [filterStatus, setFilterStatus] = useState('All');
-  const [guests, setGuests] = useState([
-    { id: 1, name: 'Ahmed Hassan', event: 'Corporate Gala', rsvp: 'Attending', checkedIn: false },
-    { id: 2, name: 'Sara Mohamed', event: 'Corporate Gala', rsvp: 'Attending', checkedIn: true },
-    { id: 3, name: 'Omar Khalil', event: 'Corporate Gala', rsvp: 'Attending', checkedIn: false },
-    { id: 4, name: 'Nour Ali', event: 'Wedding Reception', rsvp: 'Attending', checkedIn: true },
-    { id: 5, name: 'Youssef Tarek', event: 'Wedding Reception', rsvp: 'Attending', checkedIn: false },
-    { id: 6, name: 'Layla Ibrahim', event: 'Product Launch', rsvp: 'Attending', checkedIn: false },
-  ]);
-
   const [search, setSearch] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const handleCheckIn = (id) => {
-    setGuests(guests.map(g => g.id === id ? { ...g, checkedIn: !g.checkedIn } : g));
+  useEffect(() => {
+    const fetchGuests = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/staff/guests/1');
+        setGuests(response.data);
+      } catch (err) {
+        console.error('Failed to fetch guests:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGuests();
+  }, []);
+
+  const handleCheckIn = async (id, currentStatus) => {
+    try {
+      await axios.patch(`http://localhost:3001/api/staff/guests/${id}/checkin`, {
+        checkedIn: !currentStatus
+      });
+      setGuests(guests.map(g => g.id === id ? { ...g, checkedIn: !currentStatus } : g));
+    } catch (err) {
+      console.error('Failed to update check-in:', err);
+    }
   };
 
   const filteredGuests = guests.filter(g => {
@@ -66,10 +81,8 @@ const GuestCheckIn = () => {
         </div>
       )}
 
-      {/* Main Content */}
       <div style={{ flex: 1 }}>
 
-        {/* Topbar */}
         <div style={{
           backgroundColor: colors.white,
           borderBottom: `1px solid ${colors.border}`,
@@ -78,19 +91,15 @@ const GuestCheckIn = () => {
           alignItems: 'center',
           gap: '16px'
         }}>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: colors.text }}
-          >
+          <button onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: colors.text }}>
             ☰
           </button>
           <span style={{ fontWeight: 'bold', color: colors.text, fontSize: '18px' }}>Guest Check-In</span>
         </div>
 
-        {/* Page Content */}
         <div style={{ padding: '24px' }}>
 
-          {/* Search and Filter */}
           <div style={{
             backgroundColor: colors.white,
             border: `1px solid ${colors.border}`,
@@ -118,9 +127,7 @@ const GuestCheckIn = () => {
             />
             <label style={{ color: colors.text, fontWeight: 'bold' }}>Filter:</label>
             {['All', 'Checked In', 'Not Checked In'].map(status => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
+              <button key={status} onClick={() => setFilterStatus(status)}
                 style={{
                   padding: '6px 14px',
                   borderRadius: '20px',
@@ -129,67 +136,34 @@ const GuestCheckIn = () => {
                   backgroundColor: filterStatus === status ? colors.accent : colors.white,
                   color: filterStatus === status ? colors.white : colors.text,
                   fontWeight: filterStatus === status ? 'bold' : 'normal'
-                }}
-              >
+                }}>
                 {status}
               </button>
             ))}
           </div>
 
-          {/* Stats */}
           <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-            <div style={{
-              backgroundColor: colors.greenBg,
-              border: `1px solid ${colors.green}`,
-              borderRadius: '8px',
-              padding: '16px 24px',
-              flex: 1,
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.green }}>
-                {guests.filter(g => g.checkedIn).length}
-              </div>
+            <div style={{ backgroundColor: colors.greenBg, border: `1px solid ${colors.green}`, borderRadius: '8px', padding: '16px 24px', flex: 1, textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.green }}>{guests.filter(g => g.checkedIn).length}</div>
               <div style={{ color: colors.green, fontSize: '13px' }}>Checked In</div>
             </div>
-            <div style={{
-              backgroundColor: colors.redBg,
-              border: `1px solid ${colors.red}`,
-              borderRadius: '8px',
-              padding: '16px 24px',
-              flex: 1,
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.red }}>
-                {guests.filter(g => !g.checkedIn).length}
-              </div>
+            <div style={{ backgroundColor: colors.redBg, border: `1px solid ${colors.red}`, borderRadius: '8px', padding: '16px 24px', flex: 1, textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.red }}>{guests.filter(g => !g.checkedIn).length}</div>
               <div style={{ color: colors.red, fontSize: '13px' }}>Not Checked In</div>
             </div>
-            <div style={{
-              backgroundColor: colors.accentLight,
-              border: `1px solid ${colors.accent}`,
-              borderRadius: '8px',
-              padding: '16px 24px',
-              flex: 1,
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.accent }}>
-                {guests.length}
-              </div>
+            <div style={{ backgroundColor: colors.accentLight, border: `1px solid ${colors.accent}`, borderRadius: '8px', padding: '16px 24px', flex: 1, textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.accent }}>{guests.length}</div>
               <div style={{ color: colors.accent, fontSize: '13px' }}>Total Guests</div>
             </div>
           </div>
 
-          {/* Guest Table */}
-          <div style={{
-            backgroundColor: colors.white,
-            border: `1px solid ${colors.border}`,
-            borderRadius: '8px',
-            overflow: 'hidden'
-          }}>
+          <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '8px', overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
               <h2 style={{ color: colors.text, margin: 0 }}>Guest List</h2>
             </div>
-            {filteredGuests.length === 0 ? (
+            {loading ? (
+              <p style={{ padding: '20px', color: colors.textMuted }}>Loading guests...</p>
+            ) : filteredGuests.length === 0 ? (
               <p style={{ padding: '20px', color: colors.textMuted }}>No guests found.</p>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -212,28 +186,19 @@ const GuestCheckIn = () => {
                         <span style={{
                           backgroundColor: guest.checkedIn ? colors.greenBg : colors.redBg,
                           color: guest.checkedIn ? colors.green : colors.red,
-                          padding: '4px 10px',
-                          borderRadius: '12px',
-                          fontSize: '13px',
-                          fontWeight: 'bold'
+                          padding: '4px 10px', borderRadius: '12px', fontSize: '13px', fontWeight: 'bold'
                         }}>
                           {guest.checkedIn ? 'Checked In' : 'Not Checked In'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
-                        <button
-                          onClick={() => handleCheckIn(guest.id)}
+                        <button onClick={() => handleCheckIn(guest.id, guest.checkedIn)}
                           style={{
                             backgroundColor: guest.checkedIn ? colors.redBg : colors.greenBg,
                             color: guest.checkedIn ? colors.red : colors.green,
                             border: `1px solid ${guest.checkedIn ? colors.red : colors.green}`,
-                            borderRadius: '6px',
-                            padding: '6px 12px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '13px'
-                          }}
-                        >
+                            borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px'
+                          }}>
                           {guest.checkedIn ? 'Undo Check-In' : 'Check In'}
                         </button>
                       </td>

@@ -1,8 +1,10 @@
 import { useEffect, useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
+import OrganizerLayout from './OrganizerLayout'
 import { getAllVenues } from '../../services/venueService'
 
+// ─── Color Palette ────────────────────────────────────────────────────────────
 const C = {
   sidebar: '#6B2D0E', accent: '#C4622D', accentLight: '#F5EDE8',
   cream: '#FBF7F4', border: '#EDE0D9', text: '#2C1810',
@@ -10,6 +12,17 @@ const C = {
   green: '#2D7A4F', greenBg: '#E8F5EE',
 }
 
+// ─── Shared input style ───────────────────────────────────────────────────────
+const inputStyle = {
+  padding: '0.45rem 0.75rem',
+  borderRadius: 8,
+  border: `1px solid ${C.border}`,
+  fontSize: 13,
+  color: C.text,
+  outline: 'none',
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function OrganizerVenueSearchPage() {
   const navigate = useNavigate()
   const { user } = useContext(AuthContext)
@@ -49,171 +62,179 @@ export default function OrganizerVenueSearchPage() {
   const hasFilters = city || minCapacity || minArea || date
 
   return (
-    <div style={{ minHeight: '100vh', background: C.cream, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem' }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: '1.75rem' }}>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: C.text }}>Browse Venues</h1>
-          <p style={{ margin: '4px 0 0', fontSize: 14, color: C.textMuted }}>
-            Search and discover available event spaces
-          </p>
+    <OrganizerLayout
+      title="Venue Search"
+      subtitle="Search and discover available event spaces."
+    >
+      {/* ── Filter bar ──────────────────────────────────────────────────── */}
+      <div style={{
+        background: C.white, border: `1px solid ${C.border}`, borderRadius: 12,
+        padding: '1rem 1.25rem', marginBottom: '1.5rem',
+        display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end',
+        boxShadow: '0 2px 8px rgba(107,45,14,0.06)',
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Location</label>
+          <input
+            value={city} onChange={e => setCity(e.target.value)}
+            placeholder="e.g. Cairo"
+            style={{ ...inputStyle, minWidth: 150 }}
+          />
         </div>
 
-        {/* Filter bar */}
-        <div style={{
-          background: C.white, border: `1px solid ${C.border}`, borderRadius: 12,
-          padding: '1rem 1.25rem', marginBottom: '1.5rem',
-          display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end'
-        }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Min. Capacity</label>
+          <input
+            type="number" min="0" value={minCapacity} onChange={e => setMinCapacity(e.target.value)}
+            placeholder="e.g. 100"
+            style={{ ...inputStyle, minWidth: 130 }}
+          />
+        </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Location</label>
-            <input
-              value={city} onChange={e => setCity(e.target.value)}
-              placeholder="e.g. Cairo"
-              style={{ padding: '0.45rem 0.75rem', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 13, color: C.text, minWidth: 150, outline: 'none' }}
-            />
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Min. Size (m²)</label>
+          <input
+            type="number" min="0" value={minArea} onChange={e => setMinArea(e.target.value)}
+            placeholder="e.g. 200"
+            style={{ ...inputStyle, minWidth: 130 }}
+          />
+        </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Min. Capacity</label>
-            <input
-              type="number" min="0" value={minCapacity} onChange={e => setMinCapacity(e.target.value)}
-              placeholder="e.g. 100"
-              style={{ padding: '0.45rem 0.75rem', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 13, color: C.text, minWidth: 130, outline: 'none' }}
-            />
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Available On</label>
+          <input
+            type="date" value={date} onChange={e => setDate(e.target.value)}
+            style={inputStyle}
+          />
+        </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Min. Size (m²)</label>
-            <input
-              type="number" min="0" value={minArea} onChange={e => setMinArea(e.target.value)}
-              placeholder="e.g. 200"
-              style={{ padding: '0.45rem 0.75rem', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 13, color: C.text, minWidth: 130, outline: 'none' }}
-            />
-          </div>
+        <button
+          onClick={fetchVenues}
+          style={{
+            padding: '0.5rem 1.2rem', background: C.accent, color: C.white,
+            border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700,
+            cursor: 'pointer', alignSelf: 'flex-end',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >
+          🔍 Search
+        </button>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Available On</label>
-            <input
-              type="date" value={date} onChange={e => setDate(e.target.value)}
-              style={{ padding: '0.45rem 0.75rem', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 13, color: C.text, outline: 'none' }}
-            />
-          </div>
-
+        {hasFilters && (
           <button
-            onClick={fetchVenues}
+            onClick={clearFilters}
             style={{
-              padding: '0.5rem 1.2rem', background: C.accent, color: C.white,
-              border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', alignSelf: 'flex-end'
+              padding: '0.5rem 0.9rem', background: C.cream, color: C.textMuted,
+              border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13,
+              cursor: 'pointer', alignSelf: 'flex-end',
             }}
           >
-            Search
+            ✕ Clear
           </button>
-
-          {hasFilters && (
-            <button
-              onClick={clearFilters}
-              style={{
-                padding: '0.5rem 0.9rem', background: C.cream, color: C.textMuted,
-                border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13,
-                cursor: 'pointer', alignSelf: 'flex-end'
-              }}
-            >
-              ✕ Clear
-            </button>
-          )}
-        </div>
-
-        {/* Results summary */}
-        {!loading && (
-          <p style={{ margin: '0 0 1rem', fontSize: 13, color: C.textMuted }}>
-            {venues.length === 0 ? 'No venues found.' : `${venues.length} venue${venues.length !== 1 ? 's' : ''} found${date ? ' — available on selected date' : ''}`}
-          </p>
-        )}
-
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '3rem', color: C.textMuted }}>Loading venues...</div>
-        )}
-
-        {/* Venue cards */}
-        {!loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-            {venues.map(venue => (
-              <div
-                key={venue.id}
-                onClick={() => setSelectedVenue(venue)}
-                style={{
-                  background: C.white, border: `1px solid ${C.border}`,
-                  borderRadius: 12, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem',
-                  transition: 'box-shadow 0.15s, transform 0.15s', cursor: 'pointer',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(107,45,14,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }}
-              >
-                {/* Venue icon + name */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: 10, background: C.accentLight,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0
-                  }}>🏛</div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: C.text }}>{venue.name}</div>
-                    <div style={{ fontSize: 12, color: C.textMuted }}>📍 {venue.location}, {venue.city}</div>
-                  </div>
-                </div>
-
-                {/* Details */}
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span style={{ padding: '3px 10px', background: C.accentLight, borderRadius: 20, fontSize: 12, color: C.accent, fontWeight: 600 }}>
-                    👥 {venue.capacity} guests
-                  </span>
-                  {venue.areaM2 && (
-                    <span style={{ padding: '3px 10px', background: C.cream, borderRadius: 20, fontSize: 12, color: C.textMuted, fontWeight: 600, border: `1px solid ${C.border}` }}>
-                      📐 {venue.areaM2} m²
-                    </span>
-                  )}
-                </div>
-
-                {venue.description && (
-                  <p style={{ margin: 0, fontSize: 13, color: C.textMuted, lineHeight: 1.5 }}>
-                    {venue.description.length > 90 ? venue.description.slice(0, 90) + '…' : venue.description}
-                  </p>
-                )}
-
-                {venue.amenities && (
-                  <div style={{ fontSize: 12, color: C.textMuted }}>
-                    ✨ {venue.amenities}
-                  </div>
-                )}
-
-                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: C.text }}>
-                    EGP {Number(venue.pricePerDay || 0).toLocaleString()}
-                    <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}> / day</span>
-                  </div>
-                  <button
-                    onClick={() => navigate(`/organizer/bookings/new?venueId=${venue.id}`)}
-                    style={{
-                      padding: '0.45rem 1rem', background: C.accent, color: C.white,
-                      border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                  >
-                    Book Now
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
         )}
       </div>
 
-      {/* Venue detail modal */}
+      {/* ── Results summary ─────────────────────────────────────────────── */}
+      <div style={{ marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: C.text, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>🏛️</span> Available Venues
+            {!loading && (
+              <span style={{
+                background: C.accentLight, color: C.accent,
+                fontSize: 12, fontWeight: 700, padding: '2px 10px', borderRadius: 999,
+              }}>{venues.length}</span>
+            )}
+          </h2>
+          {!loading && (
+            <p style={{ margin: 0, fontSize: 13, color: C.textMuted }}>
+              {venues.length === 0 ? 'No venues found.' : `${venues.length} venue${venues.length !== 1 ? 's' : ''} found${date ? ' — available on selected date' : ''}`}
+            </p>
+          )}
+        </div>
+        <div style={{ height: 2, background: `linear-gradient(90deg, ${C.accent}, transparent)`, marginTop: 10, borderRadius: 2 }} />
+      </div>
+
+      {/* ── Loading ─────────────────────────────────────────────────────── */}
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '3rem', color: C.textMuted }}>
+          Loading venues...
+        </div>
+      )}
+
+      {/* ── Venue cards ─────────────────────────────────────────────────── */}
+      {!loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+          {venues.map(venue => (
+            <div
+              key={venue.id}
+              onClick={() => setSelectedVenue(venue)}
+              style={{
+                background: C.white, border: `1px solid ${C.border}`,
+                borderRadius: 12, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem',
+                transition: 'box-shadow 0.15s, transform 0.15s', cursor: 'pointer',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(107,45,14,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' }}
+            >
+              {/* Venue icon + name */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: 42, height: 42, borderRadius: 10, background: C.accentLight,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
+                }}>🏛</div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: C.text }}>{venue.name}</div>
+                  <div style={{ fontSize: 12, color: C.textMuted }}>📍 {venue.location}, {venue.city}</div>
+                </div>
+              </div>
+
+              {/* Details badges */}
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ padding: '3px 10px', background: C.accentLight, borderRadius: 20, fontSize: 12, color: C.accent, fontWeight: 600 }}>
+                  👥 {venue.capacity} guests
+                </span>
+                {venue.areaM2 && (
+                  <span style={{ padding: '3px 10px', background: C.cream, borderRadius: 20, fontSize: 12, color: C.textMuted, fontWeight: 600, border: `1px solid ${C.border}` }}>
+                    📐 {venue.areaM2} m²
+                  </span>
+                )}
+              </div>
+
+              {venue.description && (
+                <p style={{ margin: 0, fontSize: 13, color: C.textMuted, lineHeight: 1.5 }}>
+                  {venue.description.length > 90 ? venue.description.slice(0, 90) + '…' : venue.description}
+                </p>
+              )}
+
+              {venue.amenities && (
+                <div style={{ fontSize: 12, color: C.textMuted }}>✨ {venue.amenities}</div>
+              )}
+
+              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                <div style={{ fontWeight: 800, fontSize: 16, color: C.text }}>
+                  EGP {Number(venue.pricePerDay || 0).toLocaleString()}
+                  <span style={{ fontSize: 11, fontWeight: 400, color: C.textMuted }}> / day</span>
+                </div>
+                <button
+                  onClick={e => { e.stopPropagation(); navigate(`/organizer/bookings/new?venueId=${venue.id}`) }}
+                  style={{
+                    padding: '0.45rem 1rem', background: C.accent, color: C.white,
+                    border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                >
+                  Book Now
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Venue detail modal ──────────────────────────────────────────── */}
       {selectedVenue && (
         <div
           onClick={() => setSelectedVenue(null)}
@@ -284,6 +305,6 @@ export default function OrganizerVenueSearchPage() {
           </div>
         </div>
       )}
-    </div>
+    </OrganizerLayout>
   )
 }

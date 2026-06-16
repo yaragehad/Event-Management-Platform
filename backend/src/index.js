@@ -24,6 +24,7 @@ const sourcingRequestRoutes = require('./routes/sourcingRequestRoutes')
 const deliveryRoutes = require('./routes/deliveryRoutes')
 const invoiceRoutes = require('./routes/invoiceRoutes')
 const organizerRoutes = require('./routes/organizerRoutes')
+const notificationRoutes = require('./routes/notification')
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', userRoutes);
@@ -36,6 +37,7 @@ app.use('/api/bookings', bookingRoutes)
 app.use('/api/layouts', layoutRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/organizer', organizerRoutes)
+app.use('/api/notifications', notificationRoutes)
 app.use(cors())
 
 app.get('/', (req, res) => {

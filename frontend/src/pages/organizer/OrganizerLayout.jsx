@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 // ─── Color Palette (matches OrganizerDashboard) ───────────────────────────────
 const C = {
@@ -25,9 +25,10 @@ const NAV_LINKS = [
 
 export default function OrganizerLayout({ title, subtitle, children }) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: C.cream, fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: C.cream, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
 
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       <aside style={{
@@ -46,7 +47,7 @@ export default function OrganizerLayout({ title, subtitle, children }) {
           borderBottom: 'rgba(255,255,255,0.1) 1px solid',
         }}>
           <div style={{ fontSize: 22, fontWeight: 800, color: C.white, letterSpacing: '-0.5px' }}>
-            🎪 EventFlow
+            📅 EventHub
           </div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 3, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 1 }}>
             Venue Management
@@ -84,10 +85,20 @@ export default function OrganizerLayout({ title, subtitle, children }) {
         <div style={{
           padding: '16px 20px',
           borderTop: '1px solid rgba(255,255,255,0.1)',
-          fontSize: 11, color: 'rgba(255,255,255,0.35)',
-          textAlign: 'center',
+          display: 'flex', justifyContent: 'center'
         }}>
-          © 2025 EventFlow Platform
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer',
+              fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
+              borderRadius: 8, transition: 'background 0.15s, color 0.15s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = C.white; e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}
+          >
+            ← Go Back
+          </button>
         </div>
       </aside>
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { VendorSidebar } from '../components/Sidebar';
 import { getDeliveries, updateDeliveryStatus } from '../services/api';
+import { sendMessage } from '../services/api';
 
 const styles = {
   container: { display: 'flex', minHeight: '100vh', backgroundColor: '#FBF7F4' },
@@ -67,10 +68,29 @@ function DeliveryManagement() {
     }
   };
 
-  const handleNotify = (id) => {
+const handleNotify = async (id) => {
+  const reason = prompt('Enter reason for delay:');
+  if (!reason) return;
+  try {
+    const delivery = deliveries.find(d => d.id === id);
+    console.log('delivery found:', JSON.stringify(delivery));
+    const eventId = delivery?.sourcingRequest?.event?.id;
+    console.log('eventId:', eventId);
+    if (!eventId) {
+      alert('Could not find event for this delivery');
+      return;
+    }
+    await sendMessage({
+      senderId: user.id,
+      content: `Delay notification: ${reason}`,
+      eventId: eventId,
+    });
     setSuccess(`Organizer notified about delay for delivery #${id}`);
     setTimeout(() => setSuccess(''), 3000);
-  };
+  } catch {
+    alert('Failed to notify organizer');
+  }
+};
 
   const handleConfirm = (id) => {
     handleStatusUpdate(id, 'DELIVERED');

@@ -24,3 +24,7 @@ export const getInvoices = (params) => API.get('/invoices', { params });
 export const getInvoiceById = (id) => API.get(`/invoices/${id}`);
 export const createInvoice = (data) => API.post('/invoices', data);
 export const updateInvoiceStatus = (id, status) => API.patch(`/invoices/${id}/status`, { status });
+
+// Messages
+export const sendMessage = (data) => API.post('/messages', data);
+export const getMessages = (eventId) => API.get(`/messages/event/${eventId}`);

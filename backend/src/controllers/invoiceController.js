@@ -1,6 +1,5 @@
 const prisma = require('../lib/prismaClient')
 
-// GET /api/invoices - list all invoices (filter by vendorId or status)
 const getAllInvoices = async (req, res) => {
   try {
     const { vendorId, status } = req.query
@@ -19,7 +18,6 @@ const getAllInvoices = async (req, res) => {
   }
 }
 
-// GET /api/invoices/:id - get single invoice
 const getInvoiceById = async (req, res) => {
   try {
     const invoice = await prisma.invoice.findUnique({
@@ -33,10 +31,9 @@ const getInvoiceById = async (req, res) => {
   }
 }
 
-// POST /api/invoices - vendor submits an invoice
 const createInvoice = async (req, res) => {
   try {
-    const { vendorId, amount, description } = req.body
+    const { vendorId, amount, description, documentName, documentData } = req.body
     if (!vendorId || !amount) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
@@ -46,15 +43,17 @@ const createInvoice = async (req, res) => {
         amount: parseFloat(amount),
         description,
         status: 'PENDING_REVIEW',
+        documentName: documentName || null,
+        documentData: documentData || null,
       },
     })
     res.status(201).json(invoice)
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create invoice' })
+    console.error('Full error:', err)
+    res.status(500).json({ error: 'Failed to create invoice', details: err.message, code: err.code })
   }
 }
 
-// PATCH /api/invoices/:id/status - organizer updates invoice status
 const updateInvoiceStatus = async (req, res) => {
   try {
     const { status } = req.body

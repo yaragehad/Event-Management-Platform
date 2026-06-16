@@ -77,7 +77,18 @@ function OrganizerInvoices() {
             </div>
             <div style={styles.cardMeta}>Vendor: {i.vendor?.companyName}</div>
             <div style={styles.cardMeta}>Contact: {i.vendor?.contactEmail}</div>
-            {i.description && <div style={styles.cardMeta}>Description: {i.description}</div>}
+           {i.description && <div style={styles.cardMeta}>Description: {i.description}</div>}
+{i.documentName && (
+  <div style={{ marginTop: '8px' }}>
+    <a 
+      href={i.documentData} 
+      download={i.documentName}
+      style={{ color: '#C4622D', fontSize: '13px', textDecoration: 'none' }}
+    >
+      📎 {i.documentName}
+    </a>
+  </div>
+)}
             {i.status === 'PENDING_REVIEW' && (
               <div style={styles.btnRow}>
                 <button style={styles.approveBtn} onClick={() => handleStatusUpdate(i.id, 'APPROVED')}>✓ Approve</button>

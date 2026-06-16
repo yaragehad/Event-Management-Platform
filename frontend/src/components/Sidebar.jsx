@@ -58,7 +58,7 @@ const VendorSidebar = () => {
 
   return (
     <div style={styles.sidebar}>
-      <div style={styles.logo}>🏢 VenueHub</div>
+      <div style={styles.logo}>🏢 VendorHub</div>
       <nav style={styles.nav}>
         <Link style={styles.link} to="/vendor/dashboard">Dashboard</Link>
         <Link style={styles.link} to="/vendor/profile">My Profile</Link>
@@ -82,7 +82,7 @@ const OrganizerSidebar = () => {
 
   return (
     <div style={styles.sidebar}>
-      <div style={styles.logo}>🏢 VenueHub</div>
+      <div style={styles.logo}>🏢 VendorHub</div>
       <nav style={styles.nav}>
         <Link style={styles.link} to="/organizer/vendors">Vendors</Link>
         <Link style={styles.link} to="/organizer/invoices">Invoices</Link>

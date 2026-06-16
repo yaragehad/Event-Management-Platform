@@ -29,22 +29,40 @@ function CreateInvoice() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSuccess('');
-    setError('');
-    if (!form.amount) {
-      setError('Amount is required');
-      return;
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSuccess('');
+  setError('');
+  if (!form.amount) {
+    setError('Amount is required');
+    return;
+  }
+  try {
+    let documentName = null;
+    let documentData = null;
+
+    if (file) {
+      documentName = file.name;
+      documentData = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
     }
-    try {
-      await createInvoice({ vendorId: user.vendorId, amount: form.amount, description: form.description });
-      setSuccess('Invoice submitted successfully!');
-      setTimeout(() => navigate('/vendor/invoices'), 1500);
-    } catch {
-      setError('Failed to submit invoice');
-    }
-  };
+
+    await createInvoice({
+      vendorId: user.vendorId,
+      amount: form.amount,
+      description: form.description,
+      documentName,
+      documentData,
+    });
+    setSuccess('Invoice submitted successfully!');
+    setTimeout(() => navigate('/vendor/invoices'), 1500);
+  } catch {
+    setError('Failed to submit invoice');
+  }
+};
 
   return (
     <div style={styles.container}>

@@ -78,6 +78,17 @@ function InvoiceList() {
               <span style={styles.badge(i.status)}>{i.status.replace('_', ' ')}</span>
             </div>
             {i.description && <div style={styles.cardMeta}>{i.description}</div>}
+            {i.documentName && (
+              <div style={{ marginTop: '8px' }}>
+                <a
+                  href={i.documentData}
+                  download={i.documentName}
+                  style={{ color: '#C4622D', fontSize: '13px', textDecoration: 'none' }}
+                >
+                  📎 {i.documentName}
+                </a>
+              </div>
+            )}
           </div>
         ))}
       </main>

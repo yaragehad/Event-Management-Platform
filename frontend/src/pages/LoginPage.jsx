@@ -117,7 +117,7 @@ function LoginPage() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <div style={styles.logo}>🏢 VenueHub</div>
+        <div style={styles.logo}>🏢 VendorHub</div>
         <div style={styles.subtitle}>Event Management Platform</div>
 
         {error && <div style={styles.error}>{error}</div>}

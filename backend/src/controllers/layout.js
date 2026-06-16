@@ -1,4 +1,3 @@
-
 const prisma = require('../lib/prismaClient');
 
 const getLayout = async (req, res) => {
@@ -15,17 +14,36 @@ const getLayout = async (req, res) => {
 
 const saveLayout = async (req, res) => {
   try {
-    const { venueId, eventId, elements } = req.body
-    if (!venueId || !eventId || !elements) {
-      return res.status(400).json({ error: 'venueId, eventId and elements are required' })
+    const { venueId, elements } = req.body
+    if (!venueId || !elements) {
+      return res.status(400).json({ error: 'venueId and elements are required' })
     }
-    const layout = await prisma.layout.create({
-      data: {
-        venueId: parseInt(venueId),
-        eventId: parseInt(eventId),
-        elements
+
+    const vid = parseInt(venueId)
+
+    const venue = await prisma.venue.findUnique({ where: { id: vid } })
+    if (!venue) {
+      return res.status(404).json({ error: 'Venue with id ' + vid + ' does not exist' })
+    }
+
+    const existing = await prisma.layout.findFirst({ where: { venueId: vid } })
+
+    let layout
+    if (existing) {
+      layout = await prisma.layout.update({
+        where: { id: existing.id },
+        data: { elements }
+      })
+    } else {
+      const anyEvent = await prisma.event.findFirst()
+      if (!anyEvent) {
+        return res.status(400).json({ error: 'No events exist yet. Create an event first or seed the database.' })
       }
-    })
+      layout = await prisma.layout.create({
+        data: { venueId: vid, eventId: anyEvent.id, elements }
+      })
+    }
+
     res.status(201).json(layout)
   } catch (err) {
     console.error(err)

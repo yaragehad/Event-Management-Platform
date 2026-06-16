@@ -7,19 +7,33 @@ export default function EditVenuePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [form, setForm] = useState(null)
+  const [photoUrls, setPhotoUrls] = useState([''])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     getVenueById(id).then(res => {
       setForm(res.data)
+      setPhotoUrls(res.data.photos?.length ? res.data.photos : [''])
       setLoading(false)
     })
   }, [id])
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value })
 
+  const handlePhotoChange = (index, value) => {
+    setPhotoUrls(prev => { const u = [...prev]; u[index] = value; return u })
+  }
+
   const handleSubmit = async () => {
+    if (parseInt(form.capacity) < 50) {
+      alert('Capacity must be at least 50 guests')
+      return
+    }
+    if (form.areaM2 && parseFloat(form.areaM2) < 20) {
+      alert('Area must be at least 20 m²')
+      return
+    }
     setSaving(true)
     try {
       await updateVenue(id, {
@@ -28,7 +42,8 @@ export default function EditVenuePage() {
         capacity: parseInt(form.capacity),
         areaM2: form.areaM2 ? parseFloat(form.areaM2) : null,
         amenities: form.amenities,
-        pricePerDay: parseFloat(form.pricePerDay)
+        pricePerDay: parseFloat(form.pricePerDay),
+        photos: photoUrls.filter(u => u.trim() !== '')
       })
       alert('Venue updated successfully!')
       navigate('/venue/listings')
@@ -93,24 +108,56 @@ export default function EditVenuePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div>
               <label style={labelStyle}>Capacity</label>
-              <input name="capacity" type="number" value={form.capacity || ''} onChange={handleChange} style={inputStyle} />
+              <input name="capacity" type="number" min="50" value={form.capacity || ''} onChange={handleChange} style={{ ...inputStyle, borderColor: form.capacity && parseInt(form.capacity) < 50 ? '#C0392B' : COLORS.border }} />
+              {form.capacity && parseInt(form.capacity) < 50 && (
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#C0392B', fontWeight: '600' }}>Minimum capacity is 50 guests</p>
+              )}
             </div>
             <div>
               <label style={labelStyle}>Area (m²)</label>
-              <input name="areaM2" type="number" value={form.areaM2 || ''} onChange={handleChange} style={inputStyle} />
+              <input name="areaM2" type="number" min="20" value={form.areaM2 || ''} onChange={handleChange} style={{ ...inputStyle, borderColor: form.areaM2 && parseFloat(form.areaM2) < 20 ? '#C0392B' : COLORS.border }} />
+              {form.areaM2 && parseFloat(form.areaM2) < 20 && (
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#C0392B', fontWeight: '600' }}>Minimum area is 20 m²</p>
+              )}
             </div>
             <div>
               <label style={labelStyle}>Price per Day (EGP)</label>
-              <input name="pricePerDay" type="number" value={form.pricePerDay || ''} onChange={handleChange} style={inputStyle} />
+              <input name="pricePerDay" type="number" min="0" value={form.pricePerDay || ''} onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 
           <h3 style={{ margin: '0 0 1.25rem', fontSize: '15px', fontWeight: '700', color: COLORS.text, borderBottom: `1px solid ${COLORS.border}`, paddingBottom: '0.75rem' }}>
             Amenities
           </h3>
-          <div style={{ marginBottom: '2rem' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
             <label style={labelStyle}>Available Amenities</label>
             <input name="amenities" value={form.amenities || ''} onChange={handleChange} style={inputStyle} placeholder="e.g. Parking, WiFi, Kitchen" />
+          </div>
+
+          <h3 style={{ margin: '0 0 1.25rem', fontSize: '15px', fontWeight: '700', color: COLORS.text, borderBottom: `1px solid ${COLORS.border}`, paddingBottom: '0.75rem' }}>
+            Photos
+          </h3>
+          <div style={{ marginBottom: '2rem' }}>
+            {photoUrls.map((url, i) => (
+              <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                <input
+                  value={url} onChange={e => handlePhotoChange(i, e.target.value)}
+                  placeholder="Paste image URL here"
+                  style={{ ...inputStyle, flex: 1 }}
+                />
+                {url && <img src={url} alt="" style={{ width: 48, height: 48, borderRadius: 6, objectFit: 'cover', border: `1px solid ${COLORS.border}`, flexShrink: 0 }} onError={e => e.target.style.display = 'none'} />}
+                {photoUrls.length > 1 && (
+                  <button onClick={() => setPhotoUrls(prev => prev.filter((_, idx) => idx !== i))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: COLORS.red, fontSize: 18, flexShrink: 0 }}>✕</button>
+                )}
+              </div>
+            ))}
+            <button
+              onClick={() => setPhotoUrls(prev => [...prev, ''])}
+              style={{ background: 'none', border: `1px dashed ${COLORS.border}`, padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', color: COLORS.textMuted, fontSize: '13px' }}
+            >
+              + Add another photo
+            </button>
           </div>
 
           <div style={{ display: 'flex', gap: '1rem' }}>

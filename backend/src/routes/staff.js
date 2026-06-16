@@ -2,15 +2,13 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../lib/prismaClient');
 
-// GET /api/staff/events/:userId - Get events for a staff member
+// GET /api/staff/events/:userId
 router.get('/events/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     const assignments = await prisma.staffAssignment.findMany({
       where: { userId },
-      include: {
-        event: true
-      }
+      include: { event: true }
     });
     const events = assignments.map(a => ({
       id: a.event.id,
@@ -26,7 +24,7 @@ router.get('/events/:userId', async (req, res) => {
   }
 });
 
-// GET /api/staff/tasks/:userId - Get tasks assigned to a staff member
+// GET /api/staff/tasks/:userId
 router.get('/tasks/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
@@ -54,7 +52,52 @@ router.get('/tasks/:userId', async (req, res) => {
   }
 });
 
-// GET /api/staff/guests/:eventId - Get guests for an event
+// GET /api/staff/tasks/:userId/reminders
+router.get('/tasks/:userId/reminders', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const assignments = await prisma.staffAssignment.findMany({
+      where: { userId },
+      include: {
+        tasks: {
+          where: { status: { not: 'DONE' } },
+          include: { event: true },
+          orderBy: { dueDate: 'asc' }
+        }
+      }
+    });
+    const reminders = assignments.flatMap(a =>
+      a.tasks.map(t => ({
+        id: t.id,
+        title: t.title,
+        event: t.event.name,
+        status: t.status,
+        dueDate: t.dueDate,
+        category: a.specialty
+      }))
+    );
+    res.json(reminders);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch reminders' });
+  }
+});
+
+// PATCH /api/staff/tasks/:taskId/status - Update task status
+router.patch('/tasks/:taskId/status', async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    const { status } = req.body;
+    const updated = await prisma.task.update({
+      where: { id: taskId },
+      data: { status }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update task status' });
+  }
+});
+
+// GET /api/staff/guests/:eventId
 router.get('/guests/:eventId', async (req, res) => {
   try {
     const eventId = parseInt(req.params.eventId);
@@ -64,9 +107,7 @@ router.get('/guests/:eventId', async (req, res) => {
         guests: {
           include: {
             user: true,
-            rsvps: {
-              where: { eventId }
-            }
+            rsvps: { where: { eventId } }
           }
         }
       }
@@ -85,7 +126,36 @@ router.get('/guests/:eventId', async (req, res) => {
   }
 });
 
-// PATCH /api/staff/guests/:guestId/checkin - Update guest check-in status
+// GET /api/staff/guests/:guestId/details
+router.get('/guests/:guestId/details', async (req, res) => {
+  try {
+    const guestId = parseInt(req.params.guestId);
+    const guest = await prisma.guest.findUnique({
+      where: { id: guestId },
+      include: {
+        user: true,
+        rsvps: { include: { event: true } },
+        events: true
+      }
+    });
+    if (!guest) return res.status(404).json({ error: 'Guest not found' });
+    res.json({
+      id: guest.id,
+      name: guest.user.name,
+      email: guest.user.email,
+      dietaryPreference: guest.dietaryPreference,
+      checkedIn: guest.checkInStatus,
+      rsvps: guest.rsvps.map(r => ({
+        event: r.event.name,
+        status: r.status
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch guest details' });
+  }
+});
+
+// PATCH /api/staff/guests/:guestId/checkin
 router.patch('/guests/:guestId/checkin', async (req, res) => {
   try {
     const guestId = parseInt(req.params.guestId);
@@ -100,7 +170,7 @@ router.patch('/guests/:guestId/checkin', async (req, res) => {
   }
 });
 
-// GET /api/staff/vendors/:eventId - Get vendors for an event
+// GET /api/staff/vendors/:eventId
 router.get('/vendors/:eventId', async (req, res) => {
   try {
     const eventId = parseInt(req.params.eventId);
@@ -114,6 +184,7 @@ router.get('/vendors/:eventId', async (req, res) => {
     });
     const vendors = requests.map(r => ({
       id: r.vendor.id,
+      requestId: r.id,
       name: r.vendor.companyName,
       supplies: r.items,
       event: r.event.name,
@@ -125,7 +196,23 @@ router.get('/vendors/:eventId', async (req, res) => {
   }
 });
 
-// GET /api/staff/dayof/:eventId - Get day-of dashboard data
+// PATCH /api/staff/vendors/:requestId/arrived
+router.patch('/vendors/:requestId/arrived', async (req, res) => {
+  try {
+    const requestId = parseInt(req.params.requestId);
+    const { arrived } = req.body;
+    const delivery = await prisma.delivery.upsert({
+      where: { sourcingRequestId: requestId },
+      update: { status: arrived ? 'DELIVERED' : 'PREPARING' },
+      create: { sourcingRequestId: requestId, status: arrived ? 'DELIVERED' : 'PREPARING' }
+    });
+    res.json(delivery);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update vendor arrival' });
+  }
+});
+
+// GET /api/staff/dayof/:eventId
 router.get('/dayof/:eventId', async (req, res) => {
   try {
     const eventId = parseInt(req.params.eventId);

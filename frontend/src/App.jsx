@@ -14,6 +14,7 @@ import StaffFloorPlan from './pages/staff/StaffFloorPlan';
 import GuestCheckIn from './pages/staff/GuestCheckIn';
 import VendorArrival from './pages/staff/VendorArrival';
 import DayOfDashboard from './pages/staff/DayOfDashboard';
+import GuestDetails from './pages/staff/GuestDetails';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/staff/checkin" element={<GuestCheckIn />} />
         <Route path="/staff/vendors" element={<VendorArrival />} />
         <Route path="/staff/dayof" element={<DayOfDashboard />} />
+        <Route path="/staff/guest/:guestId" element={<GuestDetails />} />
       </Routes>
     </Router>
   );

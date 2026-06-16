@@ -36,6 +36,17 @@ const StaffTaskList = () => {
     fetchTasks();
   }, []);
 
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      await axios.patch(`http://localhost:3001/api/staff/tasks/${taskId}/status`, {
+        status: newStatus
+      });
+      setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    } catch (err) {
+      console.error('Failed to update task status:', err);
+    }
+  };
+
   const filteredTasks = filterStatus === 'All'
     ? tasks
     : tasks.filter(t => t.status === filterStatus.toUpperCase().replace(' ', '_'));
@@ -55,7 +66,6 @@ const StaffTaskList = () => {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: 'sans-serif' }}>
 
-      {/* Sidebar */}
       {sidebarOpen && (
         <div style={{
           width: '220px',
@@ -76,10 +86,8 @@ const StaffTaskList = () => {
         </div>
       )}
 
-      {/* Main Content */}
       <div style={{ flex: 1 }}>
 
-        {/* Topbar */}
         <div style={{
           backgroundColor: colors.white,
           borderBottom: `1px solid ${colors.border}`,
@@ -99,7 +107,6 @@ const StaffTaskList = () => {
 
         <div style={{ padding: '24px' }}>
 
-          {/* Filter */}
           <div style={{
             backgroundColor: colors.white,
             border: `1px solid ${colors.border}`,
@@ -130,7 +137,6 @@ const StaffTaskList = () => {
             ))}
           </div>
 
-          {/* Tasks Table */}
           <div style={{
             backgroundColor: colors.white,
             border: `1px solid ${colors.border}`,
@@ -152,6 +158,7 @@ const StaffTaskList = () => {
                     <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Event</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Category</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Status</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Update</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -170,6 +177,25 @@ const StaffTaskList = () => {
                         }}>
                           {formatStatus(task.status)}
                         </span>
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <select
+                          value={task.status}
+                          onChange={e => handleStatusChange(task.id, e.target.value)}
+                          style={{
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: '6px',
+                            padding: '6px 10px',
+                            color: colors.text,
+                            backgroundColor: colors.cream,
+                            cursor: 'pointer',
+                            fontSize: '13px'
+                          }}
+                        >
+                          <option value="PENDING">Pending</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="DONE">Done</option>
+                        </select>
                       </td>
                     </tr>
                   ))}

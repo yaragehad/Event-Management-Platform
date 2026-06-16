@@ -43,8 +43,15 @@ const VendorArrival = () => {
     fetchVendors();
   }, [selectedEvent]);
 
-  const handleArrival = (id) => {
-    setVendors(vendors.map(v => v.id === id ? { ...v, arrived: !v.arrived } : v));
+  const handleArrival = async (id, requestId, currentArrived) => {
+    try {
+      await axios.patch(`http://localhost:3001/api/staff/vendors/${requestId}/arrived`, {
+        arrived: !currentArrived
+      });
+      setVendors(vendors.map(v => v.id === id ? { ...v, arrived: !currentArrived } : v));
+    } catch (err) {
+      console.error('Failed to update vendor arrival:', err);
+    }
   };
 
   return (
@@ -169,7 +176,7 @@ const VendorArrival = () => {
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
-                        <button onClick={() => handleArrival(vendor.id)}
+                        <button onClick={() => handleArrival(vendor.id, vendor.requestId, vendor.arrived)}
                           style={{
                             backgroundColor: vendor.arrived ? colors.redBg : colors.greenBg,
                             color: vendor.arrived ? colors.red : colors.green,

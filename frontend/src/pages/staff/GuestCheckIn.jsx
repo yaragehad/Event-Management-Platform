@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const colors = {
   sidebar: '#6B2D0E',
@@ -22,6 +23,7 @@ const GuestCheckIn = () => {
   const [search, setSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchGuests = async () => {
@@ -60,17 +62,8 @@ const GuestCheckIn = () => {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: 'sans-serif' }}>
 
-      {/* Sidebar */}
       {sidebarOpen && (
-        <div style={{
-          width: '220px',
-          backgroundColor: colors.sidebar,
-          color: colors.white,
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}>
+        <div style={{ width: '220px', backgroundColor: colors.sidebar, color: colors.white, padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <h2 style={{ color: colors.white, marginBottom: '20px' }}>VenueHub</h2>
           <a href="/staff/dashboard" style={{ color: colors.accentLight, textDecoration: 'none' }}>📋 My Events</a>
           <a href="/staff/tasks" style={{ color: colors.accentLight, textDecoration: 'none' }}>✅ My Tasks</a>
@@ -82,15 +75,7 @@ const GuestCheckIn = () => {
       )}
 
       <div style={{ flex: 1 }}>
-
-        <div style={{
-          backgroundColor: colors.white,
-          borderBottom: `1px solid ${colors.border}`,
-          padding: '14px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px'
-        }}>
+        <div style={{ backgroundColor: colors.white, borderBottom: `1px solid ${colors.border}`, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button onClick={() => setSidebarOpen(!sidebarOpen)}
             style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: colors.text }}>
             ☰
@@ -100,39 +85,19 @@ const GuestCheckIn = () => {
 
         <div style={{ padding: '24px' }}>
 
-          <div style={{
-            backgroundColor: colors.white,
-            border: `1px solid ${colors.border}`,
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap'
-          }}>
+          <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <input
               type="text"
               placeholder="Search guest name..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{
-                border: `1px solid ${colors.border}`,
-                borderRadius: '6px',
-                padding: '6px 12px',
-                color: colors.text,
-                backgroundColor: colors.cream,
-                width: '200px'
-              }}
+              style={{ border: `1px solid ${colors.border}`, borderRadius: '6px', padding: '6px 12px', color: colors.text, backgroundColor: colors.cream, width: '200px' }}
             />
             <label style={{ color: colors.text, fontWeight: 'bold' }}>Filter:</label>
             {['All', 'Checked In', 'Not Checked In'].map(status => (
               <button key={status} onClick={() => setFilterStatus(status)}
                 style={{
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  border: `1px solid ${colors.border}`,
-                  cursor: 'pointer',
+                  padding: '6px 14px', borderRadius: '20px', border: `1px solid ${colors.border}`, cursor: 'pointer',
                   backgroundColor: filterStatus === status ? colors.accent : colors.white,
                   color: filterStatus === status ? colors.white : colors.text,
                   fontWeight: filterStatus === status ? 'bold' : 'normal'
@@ -173,7 +138,7 @@ const GuestCheckIn = () => {
                     <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Event</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>RSVP</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Status</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Action</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -191,7 +156,7 @@ const GuestCheckIn = () => {
                           {guest.checkedIn ? 'Checked In' : 'Not Checked In'}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px' }}>
+                      <td style={{ padding: '12px 16px', display: 'flex', gap: '8px' }}>
                         <button onClick={() => handleCheckIn(guest.id, guest.checkedIn)}
                           style={{
                             backgroundColor: guest.checkedIn ? colors.redBg : colors.greenBg,
@@ -200,6 +165,15 @@ const GuestCheckIn = () => {
                             borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px'
                           }}>
                           {guest.checkedIn ? 'Undo Check-In' : 'Check In'}
+                        </button>
+                        <button onClick={() => navigate(`/staff/guest/${guest.id}`)}
+                          style={{
+                            backgroundColor: colors.accentLight,
+                            color: colors.accent,
+                            border: `1px solid ${colors.accent}`,
+                            borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px'
+                          }}>
+                          View Details
                         </button>
                       </td>
                     </tr>

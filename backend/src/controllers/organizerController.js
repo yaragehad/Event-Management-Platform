@@ -151,7 +151,7 @@ const getOrganizerStaff = async (req, res) => {
     const staff = await prisma.staffAssignment.findMany({
       where,
       include: {
-        user: { select: { id: true, name: true, email: true, isActive: true } },
+        user: { select: { id: true, name: true, email: true, isActive: true, age: true } },
         event: { select: { id: true, name: true } },
         tasks: { select: { status: true } },
       },
@@ -299,10 +299,10 @@ const toggleUserActive = async (req, res) => {
 // ── Account Management ────────────────────────────────────────────────────────
 const createStakeholderAccount = async (req, res) => {
   try {
-    const { name, email, password, role, specialty, employmentType, eventId,
+    const { name, email, password, role, age, specialty, employmentType, eventId,
       dietaryPreference, companyName, suppliesOffered, location, contactEmail, contactPhone } = req.body;
     const hashed = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { name, email, password: hashed, role } });
+    const user = await prisma.user.create({ data: { name, email, password: hashed, role, age: age ? parseInt(age) : null } });
     if (role === 'STAFF' && eventId) {
       await prisma.staffAssignment.create({
         data: { userId: user.id, eventId: parseInt(eventId), specialty, employmentType }

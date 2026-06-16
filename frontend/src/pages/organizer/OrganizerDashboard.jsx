@@ -286,8 +286,14 @@ function EventsSection({ organizerId }) {
       <SectionHeader title="Upcoming Events" icon="📅">
         <FilterSelect value={statusFilter} onChange={setStatusFilter} placeholder="All Statuses"
           options={['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED'].map(s => ({ value: s, label: s }))} />
-        <FilterInput value={dateFrom} onChange={setDateFrom} placeholder="From date" type="date" />
-        <FilterInput value={dateTo} onChange={setDateTo} placeholder="To date" type="date" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Start:</span>
+          <FilterInput value={dateFrom} onChange={setDateFrom} placeholder="From date" type="date" />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>End:</span>
+          <FilterInput value={dateTo} onChange={setDateTo} placeholder="To date" type="date" />
+        </div>
       </SectionHeader>
       {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : events.length === 0 ? <EmptyState msg="No events found." /> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -299,8 +305,11 @@ function EventsSection({ organizerId }) {
             }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 15, color: C.text }}>{ev.name}</div>
+                {ev.description && <div style={{ fontSize: 13, color: C.text, marginTop: 6, marginBottom: 2 }}>{ev.description}</div>}
                 <div style={{ fontSize: 13, color: C.textMuted, marginTop: 3 }}>
-                  📍 {ev.booking?.venue?.name || 'No venue'} &nbsp;·&nbsp; 📆 {fmt(ev.date)}
+                  📍 {ev.booking?.venue?.name ? (
+                    <span>{ev.booking.venue.name} <strong style={{ color: ev.booking.status === 'APPROVED' ? C.green : ev.booking.status === 'PENDING' ? C.accent : C.red, fontSize: 11, background: C.cream, padding: '2px 6px', borderRadius: 4, marginLeft: 4 }}>{ev.booking.status}</strong></span>
+                  ) : 'No venue booked'} &nbsp;·&nbsp; 📆 {fmt(ev.date)}
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
@@ -768,7 +777,7 @@ function StaffSection({ organizerId }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
               <tr style={{ background: C.cream }}>
-                {['Name', 'Email', 'Event', 'Type', 'Specialty', 'Status', 'Tasks', 'Action'].map(h => (
+                {['Name', 'Age', 'Email', 'Event', 'Type', 'Specialty', 'Status', 'Tasks', 'Action'].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: C.textMuted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
                 ))}
               </tr>
@@ -777,6 +786,7 @@ function StaffSection({ organizerId }) {
               {staff.map(s => (
                 <tr key={s.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                   <td style={{ padding: '10px 14px', fontWeight: 600, color: C.text }}>{s.user?.name}</td>
+                  <td style={{ padding: '10px 14px', color: C.textMuted }}>{s.user?.age || '—'}</td>
                   <td style={{ padding: '10px 14px', color: C.textMuted }}>{s.user?.email}</td>
                   <td style={{ padding: '10px 14px', color: C.textMuted }}>{s.event?.name || '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
@@ -1011,7 +1021,7 @@ function SourcingSection({ organizerId }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ background: C.cream }}>
-                    {['Items', 'Event', 'Quantity', 'Delivery Date', 'Status', 'Vendor'].map(h => <th key={h} style={thStyle}>{h}</th>)}
+                    {['Items', 'Event', 'Quantity', 'Delivery Date', 'Status', 'Delivery Lifecycle', 'Vendor'].map(h => <th key={h} style={thStyle}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -1022,6 +1032,7 @@ function SourcingSection({ organizerId }) {
                       <td style={{ padding: '11px 14px' }}>{r.quantity}</td>
                       <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.deliveryDate ? new Date(r.deliveryDate).toLocaleDateString() : '—'}</td>
                       <td style={{ padding: '11px 14px' }}>{statusBadge(r.status)}</td>
+                      <td style={{ padding: '11px 14px' }}>{r.delivery?.status ? statusBadge(r.delivery.status) : badge('Not Started', C.cream, C.textMuted)}</td>
                       <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.vendor?.companyName || '—'}</td>
                     </tr>
                   ))}
@@ -1256,7 +1267,20 @@ function DayOfOpsSection({ organizerId }) {
             </form>
             <div style={{ marginTop: 20, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
               <div style={{ fontSize: 13, color: C.text, fontWeight: 600, marginBottom: 8 }}>Message Delivery Status</div>
-              <div style={{ fontSize: 12, color: C.textMuted }}>85% of guests have seen the latest broadcast.</div>
+              <div style={{ fontSize: 12, color: C.textMuted }}>
+                {dayOfData.messages?.length > 0 ? (() => {
+                  const latestMsg = dayOfData.messages[0];
+                  const seenCount = latestMsg.seenByIds?.length || 0;
+                  const total = dayOfData.totalGuests || 0;
+                  const pct = total > 0 ? Math.round((seenCount / total) * 100) : 0;
+                  return (
+                    <div>
+                      <div style={{ marginBottom: 4 }}><strong>Latest:</strong> "{latestMsg.content.substring(0, 40)}{latestMsg.content.length > 40 ? '...' : ''}"</div>
+                      <div>{pct}% of guests ({seenCount}/{total}) have seen this broadcast.</div>
+                    </div>
+                  );
+                })() : 'No broadcasts sent yet.'}
+              </div>
               <button onClick={() => alert('Follow-up message sent to guests who have not seen the broadcast.')} style={{ marginTop: 8, padding: '6px 12px', fontSize: 12, borderRadius: 6, border: `1px solid ${C.border}`, background: C.cream, cursor: 'pointer' }}>
                 Resend to unread
               </button>
@@ -1416,8 +1440,15 @@ function ReportsSection({ organizerId }) {
 function AccountsSection({ organizerId, currentUser }) {
   const [activeTab, setActiveTab] = useState('profile')
   const [profileForm, setProfileForm] = useState({ name: currentUser?.name || '', email: currentUser?.email || '' })
-  const [accountForm, setAccountForm] = useState({ name: '', email: '', password: '', role: 'STAFF', specialty: '', companyName: '' })
+  const [accountForm, setAccountForm] = useState({ name: '', email: '', password: '', role: 'STAFF', age: '', specialty: '', companyName: '', eventId: '' })
   const [saving, setSaving] = useState(false)
+  const [events, setEvents] = useState([])
+
+  useEffect(() => {
+    if (organizerId) {
+      getOrganizerEvents(organizerId).then(res => setEvents(res.data)).catch(() => {})
+    }
+  }, [organizerId])
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault()
@@ -1436,7 +1467,7 @@ function AccountsSection({ organizerId, currentUser }) {
     setSaving(true)
     try {
       await createStakeholderAccount(accountForm)
-      setAccountForm({ name: '', email: '', password: '', role: 'STAFF', specialty: '', companyName: '' })
+      setAccountForm({ name: '', email: '', password: '', role: 'STAFF', age: '', specialty: '', companyName: '', eventId: '' })
       alert('Account created successfully!')
     } catch {
       alert('Failed to create account. Email may already be in use.')
@@ -1500,9 +1531,16 @@ function AccountsSection({ organizerId, currentUser }) {
                 </Field>
 
                 {accountForm.role === 'STAFF' && (
-                  <div style={{ gridColumn: '1/-1' }}>
-                    <Field label="Staff Specialty (e.g. Coordinator, Security)"><input value={accountForm.specialty} onChange={e => setAccountForm(p => ({ ...p, specialty: e.target.value }))} style={inputStyle} /></Field>
-                  </div>
+                  <>
+                    <Field label="Assign to Event *">
+                      <select required value={accountForm.eventId} onChange={e => setAccountForm(p => ({ ...p, eventId: e.target.value }))} style={inputStyle}>
+                        <option value="">Select Event</option>
+                        {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Age (Optional)"><input type="number" value={accountForm.age} onChange={e => setAccountForm(p => ({ ...p, age: e.target.value }))} style={inputStyle} /></Field>
+                    <Field label="Staff Specialty (e.g. Security)"><input value={accountForm.specialty} onChange={e => setAccountForm(p => ({ ...p, specialty: e.target.value }))} style={inputStyle} /></Field>
+                  </>
                 )}
                 {accountForm.role === 'VENDOR' && (
                   <div style={{ gridColumn: '1/-1' }}>
@@ -1567,10 +1605,10 @@ export default function OrganizerDashboard() {
 
       {/* ── Sidebar (fixed) ───────────────────────────────────────────────── */}
       <div style={{
-        width: sidebarWidth, minHeight: '100vh', background: C.sidebar,
+        width: sidebarWidth, height: '100vh', background: C.sidebar,
         display: 'flex', flexDirection: 'column', position: 'fixed',
         top: 0, left: 0, zIndex: 100,
-        overflow: 'hidden',
+        overflowY: 'auto', overflowX: 'hidden',
         transition: 'width 0.3s ease',
       }}>
         <div style={{ width: '260px' }}>

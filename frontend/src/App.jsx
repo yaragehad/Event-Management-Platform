@@ -16,12 +16,20 @@ import OrganizerVenueSearchPage from './pages/organizer/OrganizerVenueSearchPage
 import OrganizerCreateBookingPage from './pages/organizer/OrganizerCreateBookingPage';
 import OrganizerBookingStatusPage from './pages/organizer/OrganizerBookingStatusPage';
 import OrganizerDashboard from './pages/organizer/OrganizerDashboard';
+import StaffDashboard from './pages/staff/StaffDashboard';
+import StaffTaskList from './pages/staff/StaffTaskList';
+import StaffFloorPlan from './pages/staff/StaffFloorPlan';
+import GuestCheckIn from './pages/staff/GuestCheckIn';
+import VendorArrival from './pages/staff/VendorArrival';
+import DayOfDashboard from './pages/staff/DayOfDashboard';
+import GuestDetails from './pages/staff/GuestDetails';
 
 function RootRedirect() {
   const { user } = useContext(AuthContext);
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'ORGANIZER') return <Navigate to="/organizer/dashboard" replace />;
   if (user.role === 'VENUE_OWNER') return <Navigate to="/venue/dashboard" replace />;
+  if (user.role === 'STAFF') return <Navigate to="/staff/dashboard" replace />;
   return <Navigate to="/login" replace />;
 }
 
@@ -30,7 +38,6 @@ function ProtectedRoute({ children, allowedRole }) {
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (allowedRole && user.role !== allowedRole) {
-    // If they have the wrong role, send them back to root which will redirect to their correct dashboard
     return <Navigate to="/" replace />;
   }
   return children;
@@ -41,7 +48,6 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Default Route — smart redirect based on role */}
           <Route path="/" element={<RootRedirect />} />
 
           {/* --- AUTHENTICATION ROUTES --- */}
@@ -66,6 +72,15 @@ function App() {
           <Route path="/organizer/bookings" element={<ProtectedRoute allowedRole="ORGANIZER"><OrganizerBookingStatusPage /></ProtectedRoute>} />
           <Route path="/organizer/layout/:venueId" element={<ProtectedRoute allowedRole="ORGANIZER"><LayoutDesignerPage /></ProtectedRoute>} />
           <Route path="/organizer/layout" element={<ProtectedRoute allowedRole="ORGANIZER"><LayoutDesignerPage /></ProtectedRoute>} />
+
+          {/* --- STAFF ROUTES --- */}
+          <Route path="/staff/dashboard" element={<ProtectedRoute allowedRole="STAFF"><StaffDashboard /></ProtectedRoute>} />
+          <Route path="/staff/tasks" element={<ProtectedRoute allowedRole="STAFF"><StaffTaskList /></ProtectedRoute>} />
+          <Route path="/staff/floorplan" element={<ProtectedRoute allowedRole="STAFF"><StaffFloorPlan /></ProtectedRoute>} />
+          <Route path="/staff/checkin" element={<ProtectedRoute allowedRole="STAFF"><GuestCheckIn /></ProtectedRoute>} />
+          <Route path="/staff/vendors" element={<ProtectedRoute allowedRole="STAFF"><VendorArrival /></ProtectedRoute>} />
+          <Route path="/staff/dayof" element={<ProtectedRoute allowedRole="STAFF"><DayOfDashboard /></ProtectedRoute>} />
+          <Route path="/staff/guest/:guestId" element={<ProtectedRoute allowedRole="STAFF"><GuestDetails /></ProtectedRoute>} />
         </Routes>
       </Router>
     </AuthProvider>

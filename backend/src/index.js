@@ -2,16 +2,14 @@ require('dotenv').config({ override: true });
 const express = require('express');
 const cors = require('cors');
 
-
 const app = express();
 const port = process.env.PORT || 3001;
+
 app.use(cors({
   origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));
-
-app.use(cors())
 app.use(express.json());
 
 const userRoutes = require('./routes/userRoutes')
@@ -25,6 +23,7 @@ const deliveryRoutes = require('./routes/deliveryRoutes')
 const invoiceRoutes = require('./routes/invoiceRoutes')
 const organizerRoutes = require('./routes/organizerRoutes')
 const notificationRoutes = require('./routes/notification')
+const staffRoutes = require('./routes/staff')
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', userRoutes);
@@ -38,7 +37,7 @@ app.use('/api/layouts', layoutRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/organizer', organizerRoutes)
 app.use('/api/notifications', notificationRoutes)
-app.use(cors())
+app.use('/api/staff', staffRoutes)
 
 app.get('/', (req, res) => {
   res.send('Event Management Platform API');
@@ -47,5 +46,3 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-
-

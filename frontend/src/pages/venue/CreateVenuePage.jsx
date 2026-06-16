@@ -41,6 +41,14 @@ export default function CreateVenuePage() {
       alert('Please fill in all required fields')
       return
     }
+    if (parseInt(form.capacity) < 50) {
+      alert('Capacity must be at least 50 guests')
+      return
+    }
+    if (form.areaM2 && parseFloat(form.areaM2) < 20) {
+      alert('Area must be at least 20 m²')
+      return
+    }
     setSubmitting(true)
     try {
       await createVenue({
@@ -102,15 +110,21 @@ export default function CreateVenuePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div>
               <label style={labelStyle}>Capacity *</label>
-              <input name="capacity" type="number" value={form.capacity} onChange={handleChange} placeholder="e.g. 300" style={inputStyle} />
+              <input name="capacity" type="number" min="50" value={form.capacity} onChange={handleChange} placeholder="e.g. 300" style={{ ...inputStyle, borderColor: form.capacity && parseInt(form.capacity) < 50 ? '#C0392B' : COLORS.border }} />
+              {form.capacity && parseInt(form.capacity) < 50 && (
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#C0392B', fontWeight: '600' }}>Minimum capacity is 50 guests</p>
+              )}
             </div>
             <div>
               <label style={labelStyle}>Area (m²)</label>
-              <input name="areaM2" type="number" value={form.areaM2} onChange={handleChange} placeholder="e.g. 500" style={inputStyle} />
+              <input name="areaM2" type="number" min="20" value={form.areaM2} onChange={handleChange} placeholder="e.g. 500" style={{ ...inputStyle, borderColor: form.areaM2 && parseFloat(form.areaM2) < 20 ? '#C0392B' : COLORS.border }} />
+              {form.areaM2 && parseFloat(form.areaM2) < 20 && (
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#C0392B', fontWeight: '600' }}>Minimum area is 20 m²</p>
+              )}
             </div>
             <div>
               <label style={labelStyle}>Price per Day (EGP) *</label>
-              <input name="pricePerDay" type="number" value={form.pricePerDay} onChange={handleChange} placeholder="e.g. 5000" style={inputStyle} />
+              <input name="pricePerDay" type="number" min="0" value={form.pricePerDay} onChange={handleChange} placeholder="e.g. 5000" style={inputStyle} />
             </div>
           </div>
 

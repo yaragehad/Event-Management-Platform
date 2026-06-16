@@ -57,6 +57,7 @@ const NAV_ITEMS = [
   { key: 'vendors', icon: '🏪', label: 'Vendors' },
   { key: 'sourcing', icon: '📦', label: 'Sourcing' },
   { key: 'guests', icon: '🎟️', label: 'Guests' },
+  { key: 'venues', icon: '🏛', label: 'Browse Venues', route: '/organizer/venues' },
   { key: 'layout', icon: '✏️', label: 'Layout Designer', route: '/organizer/layout' },
   { key: 'dayof', icon: '📡', label: 'Day-Of Ops' },
   { key: 'reports', icon: '📈', label: 'Reports' },

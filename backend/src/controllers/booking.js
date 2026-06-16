@@ -2,15 +2,25 @@ const prisma = require('../lib/prismaClient');
 
 const getAllBookings = async (req, res) => {
   try {
-    const { organizerId, venueId, ownerId } = req.query
+    const { organizerId, venueId, ownerId, status, dateFrom, dateTo } = req.query
     const filters = {}
     if (organizerId) filters.organizerId = parseInt(organizerId)
     if (venueId) filters.venueId = parseInt(venueId)
     if (ownerId) filters.venue = { ownerId: parseInt(ownerId) }
+    if (status) filters.status = status
+    if (dateFrom || dateTo) {
+      filters.eventDate = {}
+      if (dateFrom) filters.eventDate.gte = new Date(dateFrom)
+      if (dateTo) filters.eventDate.lte = new Date(dateTo)
+    }
 
     const bookings = await prisma.booking.findMany({
       where: filters,
-      include: { venue: true, organizer: true }
+      include: {
+        venue: true,
+        organizer: { select: { id: true, name: true, email: true } }
+      },
+      orderBy: { eventDate: 'asc' }
     })
     res.json(bookings)
   } catch (err) {

@@ -57,6 +57,7 @@ export default function VenueListingsPage() {
         <input
           placeholder="Min capacity"
           type="number"
+          min="0"
           value={capacityFilter}
           onChange={e => setCapacityFilter(e.target.value)}
           style={{ ...inputStyle, width: '160px' }}

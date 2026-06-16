@@ -1,18 +1,16 @@
-require('dotenv').config()
-console.log('>>> EMAIL_USER AT RUNTIME:', process.env.EMAIL_USER)
-const express = require('express')
-const cors = require('cors')
-
-const app = express()
-const port = process.env.PORT || 3001
-
+require('dotenv').config({ override: true });
+const express = require('express');
+const cors = require('cors');
+const app = express();
+const port = process.env.PORT || 3001;
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
-}))
-app.use(express.json())
+}));
+app.use(express.json());
 
+const userRoutes = require('./routes/userRoutes')
 const venueRoutes = require('./routes/venue')
 const bookingRoutes = require('./routes/booking')
 const layoutRoutes = require('./routes/layout')
@@ -21,11 +19,15 @@ const vendorRoutes = require('./routes/vendorRoutes')
 const sourcingRequestRoutes = require('./routes/sourcingRequestRoutes')
 const deliveryRoutes = require('./routes/deliveryRoutes')
 const invoiceRoutes = require('./routes/invoiceRoutes')
+const organizerRoutes = require('./routes/organizerRoutes')
+const notificationRoutes = require('./routes/notification')
+const staffRoutes = require('./routes/staff')
 const guestRoutes = require('./routes/guestRoutes')
 const emailRoutes = require('./routes/emailRoutes')
 const eventRoutes = require('./routes/eventRoutes')
 
-app.use('/api/auth', require('./routes/authRoutes'))
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', userRoutes);
 app.use('/api/venues', venueRoutes)
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/layouts', layoutRoutes)
@@ -34,6 +36,9 @@ app.use('/api/vendors', vendorRoutes)
 app.use('/api/sourcing-requests', sourcingRequestRoutes)
 app.use('/api/deliveries', deliveryRoutes)
 app.use('/api/invoices', invoiceRoutes)
+app.use('/api/organizer', organizerRoutes)
+app.use('/api/notifications', notificationRoutes)
+app.use('/api/staff', staffRoutes)
 app.use('/api/guests', guestRoutes)
 app.use('/api/email', emailRoutes)
 app.use('/api/events', eventRoutes)
@@ -43,5 +48,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`)
-})
+  console.log(`Server running on port ${port}`);
+});

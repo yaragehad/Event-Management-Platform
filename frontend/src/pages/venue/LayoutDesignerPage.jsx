@@ -1,6 +1,8 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useRef, useCallback, useEffect, useContext } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { saveLayout } from '../../services/venueService'
+import { getOrganizerStaff } from '../../services/organizerService'
+import { AuthContext } from '../../context/AuthContext'
 
 const COLORS = {
   accent: '#C4622D',
@@ -253,6 +255,9 @@ function ElementCanvas({ type, color, rotation = 0, width, height, isActive, isD
 
 export default function LayoutDesignerPage() {
   const navigate = useNavigate()
+  const { venueId: venueIdParam } = useParams()
+  const currentVenueId = venueIdParam ? parseInt(venueIdParam) : 1
+  const { user } = useContext(AuthContext)
   const canvasAreaRef = useRef(null)
   const [placed, setPlaced] = useState([])
   const [selected, setSelected] = useState('Round Table')
@@ -263,6 +268,11 @@ export default function LayoutDesignerPage() {
   const [saved, setSaved] = useState(false)
   const [activeCategory, setActiveCategory] = useState('Tables')
   const [showGrid, setShowGrid] = useState(true)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [staffList, setStaffList] = useState([])
+  const [selectedStaff, setSelectedStaff] = useState([])
+  const [staffLoading, setStaffLoading] = useState(false)
+  const [shareConfirmed, setShareConfirmed] = useState(null)
 
   const colorOf = (type) => ELEMENT_DEFS.find(e => e.type === type)?.color || '#888'
 
@@ -341,7 +351,7 @@ export default function LayoutDesignerPage() {
   if (!placed.length) { alert('Add some elements first.'); return }
   setSaving(true)
   try {
-    await saveLayout({ venueId: 3, elements: placed })
+    await saveLayout({ venueId: currentVenueId, elements: placed })
     setSaved(true)
   } catch {
     alert('Failed to save layout. Make sure the backend is running.')
@@ -506,7 +516,7 @@ export default function LayoutDesignerPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button
-            onClick={() => navigate('/venue/dashboard')}
+            onClick={() => navigate('/organizer/dashboard')}
             style={{
               padding: '0.45rem 0.9rem', background: COLORS.cream,
               border: `1px solid ${COLORS.border}`, borderRadius: '7px',
@@ -547,6 +557,38 @@ export default function LayoutDesignerPage() {
             fontSize: '12px', color: placed.length ? COLORS.white : '#aaa', fontWeight: '700'
           }}>
             {saving ? '...' : saved ? '✓ Saved' : '💾 Save'}
+          </button>
+          <button
+            onClick={() => {
+              setShowShareModal(true)
+              setShareConfirmed(null)
+              setSelectedStaff([])
+              if (user?.id) {
+                setStaffLoading(true)
+                getOrganizerStaff(user.id)
+                  .then(res => {
+                    const seen = new Set()
+                    const unique = res.data.filter(s => {
+                      if (seen.has(s.user.id)) return false
+                      seen.add(s.user.id)
+                      return true
+                    })
+                    setStaffList(unique)
+                  })
+                  .catch(() => setStaffList([]))
+                  .finally(() => setStaffLoading(false))
+              }
+            }}
+            disabled={!placed.length}
+            style={{
+              padding: '0.45rem 1rem',
+              background: placed.length ? COLORS.accentLight : '#f5f5f5',
+              border: `1px solid ${placed.length ? COLORS.accent : '#e5e5e5'}`,
+              borderRadius: '7px', cursor: placed.length ? 'pointer' : 'not-allowed',
+              fontSize: '12px', color: placed.length ? COLORS.accent : '#aaa', fontWeight: '700'
+            }}
+          >
+            🔗 Share with Staff
           </button>
         </div>
       </div>
@@ -728,6 +770,108 @@ export default function LayoutDesignerPage() {
           {placed.length === 0 && <p style={{ fontSize: '11px', color: COLORS.textMuted }}>No elements yet.</p>}
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }} onClick={() => setShowShareModal(false)}>
+          <div style={{
+            background: COLORS.white, borderRadius: '14px', width: '420px', maxHeight: '80vh',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column',
+            overflow: 'hidden'
+          }} onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
+            <div style={{ padding: '18px 20px', borderBottom: `1px solid ${COLORS.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.text }}>Share Floor Plan</div>
+                <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>Select staff members to share with</div>
+              </div>
+              <button onClick={() => setShowShareModal(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: COLORS.textMuted }}>✕</button>
+            </div>
+
+            {/* Staff list */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px' }}>
+              {staffLoading && <p style={{ textAlign: 'center', color: COLORS.textMuted, fontSize: 13, padding: '20px 0' }}>Loading staff...</p>}
+              {!staffLoading && staffList.length === 0 && (
+                <p style={{ textAlign: 'center', color: COLORS.textMuted, fontSize: 13, padding: '20px 0' }}>No staff members found.</p>
+              )}
+              {!staffLoading && staffList.map(s => {
+                const checked = selectedStaff.includes(s.user.id)
+                return (
+                  <div
+                    key={s.user.id}
+                    onClick={() => setSelectedStaff(prev => checked ? prev.filter(id => id !== s.user.id) : [...prev, s.user.id])}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '10px 10px',
+                      borderRadius: 8, cursor: 'pointer', marginBottom: 2,
+                      background: checked ? COLORS.accentLight : 'transparent',
+                      border: `1px solid ${checked ? COLORS.accent : 'transparent'}`,
+                    }}
+                  >
+                    <div style={{
+                      width: 18, height: 18, borderRadius: 4, border: `2px solid ${checked ? COLORS.accent : COLORS.border}`,
+                      background: checked ? COLORS.accent : COLORS.white, flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {checked && <span style={{ color: COLORS.white, fontSize: 11, fontWeight: 700 }}>✓</span>}
+                    </div>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: '50%', background: COLORS.accent,
+                      color: COLORS.white, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, fontWeight: 700, flexShrink: 0
+                    }}>
+                      {s.user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: COLORS.text }}>{s.user.name}</div>
+                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>{s.user.email}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Confirmation message */}
+            {shareConfirmed && (
+              <div style={{ margin: '0 12px', padding: '10px 14px', background: COLORS.greenBg, borderRadius: 8, fontSize: 12, color: COLORS.green, fontWeight: 600 }}>
+                ✓ Floor plan exported and shared with: {shareConfirmed}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div style={{ padding: '14px 16px', borderTop: `1px solid ${COLORS.border}`, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ fontSize: 12, color: COLORS.textMuted, flex: 1 }}>
+                {selectedStaff.length === 0 ? 'Select recipients above' : `${selectedStaff.length} selected`}
+              </span>
+              <button
+                disabled={selectedStaff.length === 0}
+                onClick={() => {
+                  handleExportImage()
+                  const names = staffList.filter(s => selectedStaff.includes(s.user.id)).map(s => s.user.name).join(', ')
+                  setShareConfirmed(names)
+                }}
+                style={{ padding: '8px 14px', background: selectedStaff.length ? '#EEF2FF' : '#f5f5f5', border: `1px solid ${selectedStaff.length ? '#818CF8' : '#e5e5e5'}`, borderRadius: 7, cursor: selectedStaff.length ? 'pointer' : 'not-allowed', fontSize: 12, color: selectedStaff.length ? '#4F46E5' : '#aaa', fontWeight: 600 }}
+              >
+                🖼 Export Image
+              </button>
+              <button
+                disabled={selectedStaff.length === 0}
+                onClick={() => {
+                  handleExportPDF()
+                  const names = staffList.filter(s => selectedStaff.includes(s.user.id)).map(s => s.user.name).join(', ')
+                  setShareConfirmed(names)
+                }}
+                style={{ padding: '8px 14px', background: selectedStaff.length ? '#FEF3C7' : '#f5f5f5', border: `1px solid ${selectedStaff.length ? '#F59E0B' : '#e5e5e5'}`, borderRadius: 7, cursor: selectedStaff.length ? 'pointer' : 'not-allowed', fontSize: 12, color: selectedStaff.length ? '#92400E' : '#aaa', fontWeight: 600 }}
+              >
+                📄 Export PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -23,7 +23,10 @@ const getVenueAnalytics = async (req, res) => {
     const pendingBookings = bookings.filter(b => b.status === 'PENDING').length
     const declinedBookings = bookings.filter(b => b.status === 'DECLINED').length
     const conversionRate = totalBookings > 0 ? ((approvedBookings / totalBookings) * 100).toFixed(1) : 0
-    const estimatedRevenue = venues.reduce((sum, v) => sum + (v.pricePerDay * approvedBookings), 0)
+    const estimatedRevenue = venues.reduce((sum, v) => {
+      const approvedForVenue = v.bookings.filter(b => b.status === 'APPROVED').length
+      return sum + (v.pricePerDay * approvedForVenue)
+    }, 0)
 
     // Monthly breakdown
     const monthlyData = {}

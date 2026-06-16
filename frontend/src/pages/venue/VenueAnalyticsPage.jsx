@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import VenueLayout, { COLORS } from './VenueLayout'
 import { getVenueAnalytics } from '../../services/venueService'
+import { AuthContext } from '../../context/AuthContext'
 
 function MetricCard({ icon, value, label, sub, color }) {
   return (
@@ -21,16 +22,17 @@ function MetricCard({ icon, value, label, sub, color }) {
 }
 
 export default function VenueAnalyticsPage() {
+  const { user } = useContext(AuthContext)
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const OWNER_ID = 1 // replace with logged in user id later
 
   useEffect(() => {
-    getVenueAnalytics(OWNER_ID).then(res => {
+    if (!user?.id) return
+    getVenueAnalytics(user.id).then(res => {
       setData(res.data)
       setLoading(false)
     }).catch(() => setLoading(false))
-  }, [])
+  }, [user?.id])
 
   const exportToCSV = (rows, filename) => {
     if (!rows.length) return

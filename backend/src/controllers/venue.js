@@ -1,12 +1,26 @@
 const prisma = require('../lib/prismaClient');
 const getAllVenues = async (req, res) => {
   try {
-    const { city, minCapacity, ownerId } = req.query
+    const { city, minCapacity, minArea, ownerId, date } = req.query
     const filters = {}
     if (!ownerId) filters.isActive = true
     if (city) filters.city = { contains: city, mode: 'insensitive' }
     if (minCapacity) filters.capacity = { gte: parseInt(minCapacity) }
+    if (minArea) filters.areaM2 = { gte: parseFloat(minArea) }
     if (ownerId) filters.ownerId = parseInt(ownerId)
+
+    // Exclude venues already booked (APPROVED) on the requested date
+    if (date) {
+      const day = new Date(date)
+      const nextDay = new Date(day)
+      nextDay.setDate(nextDay.getDate() + 1)
+      filters.bookings = {
+        none: {
+          status: 'APPROVED',
+          eventDate: { gte: day, lt: nextDay }
+        }
+      }
+    }
 
     const venues = await prisma.venue.findMany({ where: filters, orderBy: { createdAt: 'desc' } })
     res.json(venues)

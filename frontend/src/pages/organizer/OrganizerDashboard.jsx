@@ -36,6 +36,7 @@ const NAV_ITEMS = [
   { key: 'staff', icon: '👥', label: 'Staff' },
   { key: 'vendors', icon: '🏪', label: 'Vendors' },
   { key: 'guests', icon: '🎟️', label: 'Guests' },
+  { key: 'venues', icon: '🏛', label: 'Browse Venues', route: '/organizer/venues' },
   { key: 'layout', icon: '✏️', label: 'Layout Designer', route: '/organizer/layout' },
 ]
 

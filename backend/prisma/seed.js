@@ -89,7 +89,7 @@ async function main() {
       areaM2: 350,
       amenities: 'Outdoor Seating, WiFi, Bar, Lighting',
       pricePerDay: 3000,
-      ownerId: venueOwner2.id
+      ownerId: venueOwner1.id
     }
   })
   const venue3 = await prisma.venue.create({

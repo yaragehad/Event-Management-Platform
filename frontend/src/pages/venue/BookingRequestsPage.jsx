@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext, useMemo } from 'react'
 import VenueLayout, { COLORS } from './VenueLayout'
 import { AuthContext } from '../../context/AuthContext'
-import { getBookings, getAllVenues } from '../../services/venueService'
+import { getBookings, getAllVenues, updateBookingStatus, getBookingMessages, sendBookingMessage } from '../../services/venueService'
 
 const STATUS_MAP = {
   PENDING:  { bg: '#FEF9C3', color: '#92400E', label: '⏳ Pending' },
@@ -84,7 +84,7 @@ function OrganizerCard({ organizer }) {
   const initials = organizer?.name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
   return (
     <div style={{
-      marginTop: '0.75rem', padding: '0.75rem 1rem',
+      padding: '0.75rem 1rem',
       background: COLORS.accentLight, borderRadius: '8px',
       border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', gap: '0.75rem'
     }}>
@@ -103,6 +103,110 @@ function OrganizerCard({ organizer }) {
   )
 }
 
+// ─── Intake Sheet (EMP-132) ───────────────────────────────────────────────────
+function IntakeSheet({ booking: b }) {
+  const row = (label, value) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.border}` }}>
+      <span style={{ fontSize: '12px', color: COLORS.textMuted }}>{label}</span>
+      <span style={{ fontSize: '12px', fontWeight: '600', color: COLORS.text }}>{value}</span>
+    </div>
+  )
+  return (
+    <div style={{ marginTop: '0.75rem', padding: '0.75rem 1rem', background: COLORS.cream, borderRadius: '8px', border: `1px solid ${COLORS.border}` }}>
+      <div style={{ fontSize: '11px', fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+        Intake Sheet
+      </div>
+      {row('Organizer', b.organizer?.name || `#${b.organizerId}`)}
+      {row('Event Date', new Date(b.eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }))}
+      {row('Expected Attendees', b.attendeeCount ? b.attendeeCount.toLocaleString() : 'Not specified')}
+      {row('Requested On', new Date(b.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }))}
+      {b.decidedAt && row('Decided On', new Date(b.decidedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }))}
+    </div>
+  )
+}
+
+function markRead(bookingId) {
+  localStorage.setItem(`chatLastRead_${bookingId}`, new Date().toISOString())
+}
+
+// ─── Message Thread / Counter-Proposal (EMP-134) ──────────────────────────────
+function MessageThread({ bookingId, currentUserId, onRead }) {
+  const [messages, setMessages] = useState([])
+  const [text, setText] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    markRead(bookingId)
+    onRead?.()
+    getBookingMessages(bookingId).then(res => setMessages(res.data)).finally(() => setLoading(false))
+  }, [bookingId])
+
+  const handleSend = async () => {
+    if (!text.trim()) return
+    setSending(true)
+    try {
+      const res = await sendBookingMessage(bookingId, { senderId: currentUserId, content: text.trim() })
+      setMessages(prev => [...prev, res.data])
+      markRead(bookingId)
+      setText('')
+    } catch {
+      alert('Failed to send message')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div style={{ marginTop: '0.75rem', padding: '0.75rem 1rem', background: COLORS.cream, borderRadius: '8px', border: `1px solid ${COLORS.border}` }}>
+      <div style={{ fontSize: '11px', fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+        Messages &amp; Counter-Proposals
+      </div>
+      <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
+        {loading && <p style={{ fontSize: '12px', color: COLORS.textMuted }}>Loading messages...</p>}
+        {!loading && messages.length === 0 && <p style={{ fontSize: '12px', color: COLORS.textMuted }}>No messages yet. Send a note or counter-proposal below.</p>}
+        {messages.map(m => {
+          const isMine = m.senderId === currentUserId
+          return (
+            <div key={m.id} style={{ alignSelf: isMine ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
+              <div style={{
+                padding: '7px 12px', borderRadius: '10px', fontSize: '13px',
+                background: isMine ? COLORS.accent : COLORS.white,
+                color: isMine ? COLORS.white : COLORS.text,
+                border: isMine ? 'none' : `1px solid ${COLORS.border}`,
+              }}>
+                {m.content}
+              </div>
+              <div style={{ fontSize: '10px', color: COLORS.textMuted, marginTop: '2px', textAlign: isMine ? 'right' : 'left' }}>
+                {m.sender?.name} • {new Date(m.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSend()}
+          placeholder="Type a message or counter-proposal..."
+          style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '7px', border: `1px solid ${COLORS.border}`, fontSize: '13px' }}
+        />
+        <button
+          onClick={handleSend}
+          disabled={sending || !text.trim()}
+          style={{
+            padding: '0.5rem 1rem', borderRadius: '7px', border: 'none', cursor: sending ? 'not-allowed' : 'pointer',
+            background: COLORS.accent, color: COLORS.white, fontSize: '13px', fontWeight: '600', opacity: sending ? 0.6 : 1
+          }}
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function BookingRequestsPage() {
   const { user } = useContext(AuthContext)
@@ -111,6 +215,7 @@ export default function BookingRequestsPage() {
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
   const [expandedId, setExpandedId] = useState(null)
+  const [messagesOpenId, setMessagesOpenId] = useState(null)
 
   // filters
   const [statusFilter, setStatusFilter] = useState('ALL')
@@ -155,11 +260,30 @@ export default function BookingRequestsPage() {
     })
   }, [bookings, statusFilter, venueFilter, dateFrom, dateTo])
 
+  // EMP-135: archived ledger of decided bookings, most recent decision first
+  const history = useMemo(() => {
+    return bookings
+      .filter(b => b.status === 'APPROVED' || b.status === 'DECLINED')
+      .filter(b => !venueFilter || b.venueId === parseInt(venueFilter))
+      .sort((a, b) => new Date(b.decidedAt || b.createdAt) - new Date(a.decidedAt || a.createdAt))
+  }, [bookings, venueFilter])
+
   const counts = {
     ALL: bookings.length,
     PENDING: bookings.filter(b => b.status === 'PENDING').length,
     APPROVED: bookings.filter(b => b.status === 'APPROVED').length,
     DECLINED: bookings.filter(b => b.status === 'DECLINED').length,
+  }
+
+  const handleStatus = async (id, status) => {
+    try {
+      await updateBookingStatus(id, status)
+      // Reload — approving can auto-decline competing pending requests server-side
+      const res = await getBookings({ ownerId: user.id })
+      setBookings(res.data)
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to update booking status')
+    }
   }
 
   const prevMonth = () => {
@@ -242,7 +366,7 @@ export default function BookingRequestsPage() {
 
           {/* View toggle */}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.35rem' }}>
-            {[['list', '☰ List'], ['calendar', '📅 Calendar']].map(([v, label]) => (
+            {[['list', '☰ List'], ['calendar', '📅 Calendar'], ['history', '🗄 History']].map(([v, label]) => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding: '0.4rem 0.85rem', borderRadius: '7px', fontSize: '13px', fontWeight: view === v ? '700' : '400',
                 border: `1px solid ${view === v ? COLORS.accent : COLORS.border}`,
@@ -257,7 +381,41 @@ export default function BookingRequestsPage() {
       {loading && <div style={{ textAlign: 'center', padding: '3rem', color: COLORS.textMuted }}>Loading bookings...</div>}
 
       {!loading && (
-        view === 'calendar' ? (
+        view === 'history' ? (
+          /* EMP-135: Archived decision ledger */
+          <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: '12px', overflow: 'hidden' }}>
+            {history.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '4rem' }}>
+                <div style={{ fontSize: '48px', marginBottom: '1rem' }}>🗄</div>
+                <h3 style={{ color: COLORS.text, margin: '0 0 0.5rem' }}>No decisions recorded yet</h3>
+                <p style={{ color: COLORS.textMuted, margin: 0 }}>Approved and declined requests will appear here as an audit trail.</p>
+              </div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: COLORS.cream, textAlign: 'left' }}>
+                    {['Decided On', 'Venue', 'Organizer', 'Attendees', 'Decision'].map(h => (
+                      <th key={h} style={{ padding: '0.75rem 1rem', fontSize: '11px', fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${COLORS.border}` }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map(b => (
+                    <tr key={b.id} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
+                      <td style={{ padding: '0.75rem 1rem', color: COLORS.textMuted }}>
+                        {b.decidedAt ? new Date(b.decidedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                      </td>
+                      <td style={{ padding: '0.75rem 1rem', fontWeight: '600', color: COLORS.text }}>{b.venue?.name}</td>
+                      <td style={{ padding: '0.75rem 1rem', color: COLORS.text }}>{b.organizer?.name}</td>
+                      <td style={{ padding: '0.75rem 1rem', color: COLORS.textMuted }}>{b.attendeeCount?.toLocaleString() || '—'}</td>
+                      <td style={{ padding: '0.75rem 1rem' }}><Badge status={b.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        ) : view === 'calendar' ? (
           /* EMP-137: Calendar view */
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
             <MiniCalendar bookings={filtered} month={calMonth} year={calYear} onPrev={prevMonth} onNext={nextMonth} />
@@ -268,7 +426,7 @@ export default function BookingRequestsPage() {
               {filtered.filter(b => {
                 const d = new Date(b.eventDate)
                 return d.getMonth() === calMonth && d.getFullYear() === calYear
-              }).map(b => <BookingCard key={b.id} booking={b} expandedId={expandedId} setExpandedId={setExpandedId} />)}
+              }).map(b => <BookingCard key={b.id} booking={b} expandedId={expandedId} setExpandedId={setExpandedId} messagesOpenId={messagesOpenId} setMessagesOpenId={setMessagesOpenId} onStatusChange={handleStatus} currentUserId={user.id} />)}
             </div>
           </div>
         ) : (
@@ -281,7 +439,7 @@ export default function BookingRequestsPage() {
                 <p style={{ color: COLORS.textMuted, margin: 0 }}>Try adjusting your filters.</p>
               </div>
             )}
-            {filtered.map(b => <BookingCard key={b.id} booking={b} expandedId={expandedId} setExpandedId={setExpandedId} />)}
+            {filtered.map(b => <BookingCard key={b.id} booking={b} expandedId={expandedId} setExpandedId={setExpandedId} messagesOpenId={messagesOpenId} setMessagesOpenId={setMessagesOpenId} onStatusChange={handleStatus} currentUserId={user.id} />)}
           </div>
         )
       )}
@@ -290,12 +448,37 @@ export default function BookingRequestsPage() {
 }
 
 // ─── Booking Card ─────────────────────────────────────────────────────────────
-function BookingCard({ booking: b, expandedId, setExpandedId }) {
+function BookingCard({ booking: b, expandedId, setExpandedId, messagesOpenId, setMessagesOpenId, onStatusChange, currentUserId }) {
   const isExpanded = expandedId === b.id
+  const isMessagesOpen = messagesOpenId === b.id
+  const [unread, setUnread] = useState(false)
+
+  // Fetch latest message independently to determine unread state
+  useEffect(() => {
+    getBookingMessages(b.id).then(res => {
+      const msgs = res.data
+      if (msgs.length === 0) return
+      const latest = msgs[msgs.length - 1]
+      if (latest.senderId === currentUserId) return
+      const lastRead = localStorage.getItem(`chatLastRead_${b.id}`)
+      if (!lastRead || new Date(latest.createdAt) > new Date(lastRead)) {
+        setUnread(true)
+      }
+    }).catch(() => {})
+  }, [b.id, currentUserId])
+
+  const handleToggleMessages = () => {
+    if (!isMessagesOpen) setUnread(false)
+    setMessagesOpenId(isMessagesOpen ? null : b.id)
+  }
+
   return (
     <div style={{
-      background: COLORS.white, border: `1px solid ${COLORS.border}`,
+      background: COLORS.white,
+      border: `1.5px solid ${unread ? COLORS.red : COLORS.border}`,
+      borderLeft: `5px solid ${unread ? COLORS.red : COLORS.border}`,
       borderRadius: '12px', padding: '1.25rem',
+      boxShadow: unread ? '0 4px 16px rgba(192,57,43,0.15)' : 'none',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -304,8 +487,20 @@ function BookingCard({ booking: b, expandedId, setExpandedId }) {
             borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0
           }}>📅</div>
           <div>
-            <div style={{ fontWeight: '700', fontSize: '15px', color: COLORS.text, marginBottom: '0.2rem' }}>
-              {b.venue?.name || `Venue #${b.venueId}`}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
+              <span style={{ fontWeight: '700', fontSize: '15px', color: COLORS.text }}>
+                {b.venue?.name || `Venue #${b.venueId}`}
+              </span>
+              {unread && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  padding: '2px 8px', borderRadius: 999,
+                  background: COLORS.red, color: COLORS.white,
+                  fontSize: '11px', fontWeight: '700',
+                }}>
+                  💬 New message
+                </span>
+              )}
             </div>
             <div style={{ fontSize: '13px', color: COLORS.textMuted, marginBottom: '0.15rem' }}>
               Organizer: <strong>{b.organizer?.name || `#${b.organizerId}`}</strong>
@@ -323,7 +518,22 @@ function BookingCard({ booking: b, expandedId, setExpandedId }) {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
           <Badge status={b.status} />
-          {/* EMP-139: toggle organizer contact */}
+          {b.status === 'PENDING' && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => onStatusChange(b.id, 'APPROVED')}
+                style={{ padding: '0.4rem 0.9rem', background: COLORS.greenBg, border: `1px solid ${COLORS.green}`, borderRadius: '7px', cursor: 'pointer', fontSize: '12px', color: COLORS.green, fontWeight: '600' }}
+              >
+                ✓ Approve
+              </button>
+              <button
+                onClick={() => onStatusChange(b.id, 'DECLINED')}
+                style={{ padding: '0.4rem 0.9rem', background: COLORS.redBg, border: `1px solid ${COLORS.red}`, borderRadius: '7px', cursor: 'pointer', fontSize: '12px', color: COLORS.red, fontWeight: '600' }}
+              >
+                ✕ Decline
+              </button>
+            </div>
+          )}
           <button
             onClick={() => setExpandedId(isExpanded ? null : b.id)}
             style={{
@@ -332,13 +542,37 @@ function BookingCard({ booking: b, expandedId, setExpandedId }) {
               color: isExpanded ? COLORS.accent : COLORS.textMuted, cursor: 'pointer'
             }}
           >
-            {isExpanded ? '▲ Hide Contact' : '👤 Contact'}
+            {isExpanded ? '▲ Hide Details' : '📋 Details'}
+          </button>
+          <button
+            onClick={handleToggleMessages}
+            style={{
+              padding: '0.4rem 0.85rem', borderRadius: '7px', fontSize: '12px', fontWeight: '700',
+              border: `2px solid ${unread ? COLORS.red : isMessagesOpen ? COLORS.accent : COLORS.border}`,
+              background: unread ? COLORS.red : isMessagesOpen ? COLORS.accentLight : COLORS.cream,
+              color: unread ? COLORS.white : isMessagesOpen ? COLORS.accent : COLORS.textMuted,
+              cursor: 'pointer',
+            }}
+          >
+            {isMessagesOpen ? '▲ Hide Messages' : '💬 Message'}
           </button>
         </div>
       </div>
 
-      {/* EMP-139: Organizer contact card */}
-      {isExpanded && <OrganizerCard organizer={b.organizer} />}
+      {isExpanded && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
+          <OrganizerCard organizer={b.organizer} />
+          <IntakeSheet booking={b} />
+        </div>
+      )}
+
+      {isMessagesOpen && (
+        <MessageThread
+          bookingId={b.id}
+          currentUserId={currentUserId}
+          onRead={() => setUnread(false)}
+        />
+      )}
     </div>
   )
 }

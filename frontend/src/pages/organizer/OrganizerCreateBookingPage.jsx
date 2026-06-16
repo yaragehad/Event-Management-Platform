@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import OrganizerLayout from './OrganizerLayout'
 import { createBooking, getAllVenues } from '../../services/venueService'
-
-const ORGANIZER_ID = 1
+import { AuthContext } from '../../context/AuthContext'
 
 function useQuery() {
   return new URLSearchParams(useLocation().search)
@@ -79,6 +78,7 @@ function Btn({ children, onClick, variant = 'primary', disabled, type = 'button'
 export default function OrganizerCreateBookingPage() {
   const navigate = useNavigate()
   const query = useQuery()
+  const { user } = useContext(AuthContext)
   const [venues, setVenues] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -87,6 +87,7 @@ export default function OrganizerCreateBookingPage() {
   const [venueId, setVenueId] = useState(query.get('venueId') || '')
   const [eventDate, setEventDate] = useState('')
   const [notes, setNotes] = useState('')
+  const [attendeeCount, setAttendeeCount] = useState('')
 
   useEffect(() => {
     async function loadVenues() {
@@ -110,8 +111,7 @@ export default function OrganizerCreateBookingPage() {
 
     setSubmitting(true)
     try {
-      // Temporary organizer ID until auth is implemented.
-      await createBooking({ venueId: Number(venueId), organizerId: ORGANIZER_ID, eventDate, notes })
+      await createBooking({ venueId: Number(venueId), organizerId: user.id, eventDate, notes, attendeeCount: attendeeCount || null })
       setSubmitted(true)
       setTimeout(() => navigate('/organizer/bookings'), 1800)
     } catch (error) {
@@ -214,6 +214,18 @@ export default function OrganizerCreateBookingPage() {
                       onChange={e => setEventDate(e.target.value)}
                       required
                       min={new Date().toISOString().split('T')[0]}
+                      style={inputStyle}
+                    />
+                  </Field>
+
+                  {/* Attendee count */}
+                  <Field label="Expected Attendees">
+                    <input
+                      type="number"
+                      min="0"
+                      value={attendeeCount}
+                      onChange={e => setAttendeeCount(e.target.value)}
+                      placeholder="e.g. 150"
                       style={inputStyle}
                     />
                   </Field>

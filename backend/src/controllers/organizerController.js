@@ -151,7 +151,7 @@ const getOrganizerStaff = async (req, res) => {
     const staff = await prisma.staffAssignment.findMany({
       where,
       include: {
-        user: { select: { id: true, name: true, email: true, isActive: true } },
+        user: { select: { id: true, name: true, email: true, isActive: true, age: true } },
         event: { select: { id: true, name: true } },
         tasks: { select: { status: true } },
       },
@@ -299,10 +299,10 @@ const toggleUserActive = async (req, res) => {
 // ── Account Management ────────────────────────────────────────────────────────
 const createStakeholderAccount = async (req, res) => {
   try {
-    const { name, email, password, role, specialty, employmentType, eventId,
+    const { name, email, password, role, age, specialty, employmentType, eventId,
       dietaryPreference, companyName, suppliesOffered, location, contactEmail, contactPhone } = req.body;
     const hashed = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { name, email, password: hashed, role } });
+    const user = await prisma.user.create({ data: { name, email, password: hashed, role, age: age ? parseInt(age) : null } });
     if (role === 'STAFF' && eventId) {
       await prisma.staffAssignment.create({
         data: { userId: user.id, eventId: parseInt(eventId), specialty, employmentType }
@@ -568,7 +568,7 @@ const updateInvoiceStatus = async (req, res) => {
 const getDayOfDashboard = async (req, res) => {
   try {
     const eventId = parseInt(req.params.eventId);
-    const [event, guests, messages] = await Promise.all([
+    const [event, guests, messages, tasks] = await Promise.all([
       prisma.event.findUnique({
         where: { id: eventId },
         include: { booking: { include: { venue: true } } }
@@ -580,13 +580,21 @@ const getDayOfDashboard = async (req, res) => {
           rsvps: { where: { eventId }, select: { status: true } }
         }
       }),
-      prisma.message.findMany({ where: { eventId }, orderBy: { sentAt: 'desc' } })
+      prisma.message.findMany({ where: { eventId }, orderBy: { sentAt: 'desc' } }),
+      prisma.task.findMany({
+        where: { eventId },
+        include: { assignee: { include: { user: { select: { name: true } } } } }
+      })
     ]);
+    const pendingTasksList = tasks.filter(t => t.status !== 'DONE');
     res.json({
       event, guests, messages,
       totalGuests: guests.length,
-      arrivedGuests: guests.filter(g => g.checkInStatus).length,
-      attendingGuests: guests.filter(g => g.rsvps?.[0]?.status === 'ATTENDING').length
+      checkedInGuests: guests.filter(g => g.checkInStatus).length,
+      attendingGuests: guests.filter(g => g.rsvps?.[0]?.status === 'ATTENDING').length,
+      totalTasks: tasks.length,
+      tasksDone: tasks.filter(t => t.status === 'DONE').length,
+      pendingTasksList,
     });
   } catch (err) {
     console.error(err);

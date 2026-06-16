@@ -3,19 +3,26 @@ const router = express.Router()
 const {
   getGuests,
   getGuestById,
+  lookupGuest,
+  registerGuest,
   submitRSVP,
   updateRSVP,
   submitFeedback,
-  sendMessage,
-  getMessages,
-  markMessageSeen,
+  getEventThreads,
+  getThread,
+  broadcastMessage,
+  sendFollowUp,
+  sendThreadMessage,
+  markThreadSeen,
   checkInGuest,
+  getCheckInList,
   getDayOfDashboard,
 } = require('../controllers/guestController')
 
 // Guest routes
 router.get('/', getGuests)
-router.get('/:id', getGuestById)
+router.get('/lookup', lookupGuest)
+router.post('/register', registerGuest)
 
 // RSVP routes
 router.post('/rsvp', submitRSVP)
@@ -24,15 +31,24 @@ router.patch('/rsvp/:id', updateRSVP)
 // Feedback routes
 router.post('/feedback', submitFeedback)
 
-// Message routes
-router.post('/messages', sendMessage)
-router.get('/messages/:eventId', getMessages)
-router.patch('/messages/:id/seen', markMessageSeen)
+// Messaging (chat) routes — keep ABOVE /:id
+router.get('/messages/event/:eventId/threads', getEventThreads)
+router.get('/messages/thread/:eventId/:guestId', getThread)
+router.post('/messages/organizer-broadcast', broadcastMessage)
+router.post('/messages/follow-up', sendFollowUp)
+router.post('/messages/send', sendThreadMessage)
+router.patch('/messages/seen', markThreadSeen)
 
-// Check-in routes
-router.patch('/:id/checkin', checkInGuest)
+// Check-in list (staff) — keep ABOVE /:id
+router.get('/checkin-list/:eventId', getCheckInList)
 
 // Dashboard route
 router.get('/dashboard/:eventId', getDayOfDashboard)
+
+// Check-in route
+router.patch('/:id/checkin', checkInGuest)
+
+// Single guest — keep LAST so it doesn't swallow /lookup, /messages, etc.
+router.get('/:id', getGuestById)
 
 module.exports = router

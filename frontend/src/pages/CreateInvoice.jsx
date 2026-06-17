@@ -29,6 +29,17 @@ function CreateInvoice() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handleFileChange = (e) => {
+    const selected = e.target.files[0];
+    if (selected && selected.size > 5 * 1024 * 1024) {
+      setError('File must be under 5MB');
+      e.target.value = '';
+      return;
+    }
+    setError('');
+    setFile(selected);
+  };
+
  const handleSubmit = async (e) => {
   e.preventDefault();
   setSuccess('');
@@ -81,7 +92,7 @@ function CreateInvoice() {
             <textarea style={styles.textarea} name="description" placeholder="Describe the invoice items..." value={form.description} onChange={handleChange} />
 
             <label style={styles.label}>Attach Supporting Document</label>
-            <input style={styles.fileInput} type="file" onChange={e => setFile(e.target.files[0])} />
+            <input style={styles.fileInput} type="file" onChange={handleFileChange} />
             {file && <div style={{ color: '#8B6555', fontSize: '13px', marginBottom: '16px' }}>Selected: {file.name}</div>}
 
             <button style={styles.button} type="submit">Submit Invoice</button>

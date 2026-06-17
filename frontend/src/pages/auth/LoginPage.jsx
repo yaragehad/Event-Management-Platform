@@ -30,7 +30,9 @@ function LoginPage() {
           navigate('/venue/dashboard');
         } else if (data.user.role === 'ORGANIZER') {
           navigate('/organizer/dashboard');
-        } else {
+        } else if (data.user.role === 'VENDOR') {
+          navigate('/vendor/dashboard'); 
+        }else {
           navigate('/login'); // Default fallback
         }
       } else {

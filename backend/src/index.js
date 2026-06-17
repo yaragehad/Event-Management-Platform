@@ -7,13 +7,14 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.post('/api/auth/test', (req, res) => res.json({ ok: true }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Auth & Users
 app.use('/api/auth', require('./routes/authRoutes'));

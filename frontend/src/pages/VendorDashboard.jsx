@@ -96,6 +96,8 @@ function VendorDashboard() {
   const [requests, setRequests] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   useEffect(() => {
     if (user?.vendorId) {
@@ -104,6 +106,21 @@ function VendorDashboard() {
       getInvoices({ vendorId: user.vendorId }).then(r => setInvoices(r.data)).catch(() => {});
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch(`http://localhost:3001/api/notifications/${user.id}`)
+      .then(r => r.json())
+      .then(data => Array.isArray(data) && setNotifications(data))
+      .catch(() => {});
+  }, [user?.id]);
+
+  const markAllRead = () => {
+    if (!user?.id) return;
+    fetch(`http://localhost:3001/api/notifications/read-all/${user.id}`, { method: 'PUT' })
+      .then(() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true }))))
+      .catch(() => {});
+  };
 
   const pendingRequests = requests.filter(r => r.status === 'PENDING').length;
   const activeDeliveries = deliveries.filter(d => d.status !== 'DELIVERED').length;

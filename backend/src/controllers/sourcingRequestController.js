@@ -83,6 +83,26 @@ const updateRequestStatus = async (req, res) => {
         create: { sourcingRequestId: request.id, status: 'PREPARING' },
       })
     }
+
+    // Notify the event organizer of the vendor's decision
+    const fullRequest = await prisma.sourcingRequest.findUnique({
+      where: { id: parseInt(req.params.id) },
+      include: {
+        event: { select: { organizerId: true, name: true } },
+        vendor: { select: { companyName: true } },
+      },
+    })
+    if (fullRequest?.event?.organizerId) {
+      await prisma.notification.create({
+        data: {
+          userId: fullRequest.event.organizerId,
+          title: `Sourcing Request ${status === 'ACCEPTED' ? 'Accepted' : 'Declined'}`,
+          message: `${fullRequest.vendor?.companyName} has ${status.toLowerCase()} your sourcing request for "${fullRequest.event.name}"`,
+          link: '/organizer/dashboard',
+        },
+      })
+    }
+
     res.json(request)
   } catch (err) {
     res.status(500).json({ error: 'Failed to update request status' })

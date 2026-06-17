@@ -47,6 +47,27 @@ const createInvoice = async (req, res) => {
         documentData: documentData || null,
       },
     })
+
+    // Notify all organizers about the new invoice
+    const vendorInfo = await prisma.vendor.findUnique({
+      where: { id: parseInt(vendorId) },
+      select: { companyName: true },
+    })
+    const organizers = await prisma.user.findMany({
+      where: { role: 'ORGANIZER', isActive: true },
+      select: { id: true },
+    })
+    if (organizers.length > 0) {
+      await prisma.notification.createMany({
+        data: organizers.map(org => ({
+          userId: org.id,
+          title: 'New Invoice Submitted',
+          message: `${vendorInfo?.companyName || 'A vendor'} submitted an invoice for $${parseFloat(amount)}`,
+          link: '/organizer/invoices',
+        })),
+      })
+    }
+
     res.status(201).json(invoice)
   } catch (err) {
     console.error('Full error:', err)
@@ -64,6 +85,23 @@ const updateInvoiceStatus = async (req, res) => {
       where: { id: parseInt(req.params.id) },
       data: { status },
     })
+
+    // Notify the vendor that their invoice status changed
+    const fullInvoice = await prisma.invoice.findUnique({
+      where: { id: parseInt(req.params.id) },
+      include: { vendor: { include: { user: { select: { id: true } } } } },
+    })
+    if (fullInvoice?.vendor?.user?.id) {
+      await prisma.notification.create({
+        data: {
+          userId: fullInvoice.vendor.user.id,
+          title: 'Invoice Status Updated',
+          message: `Your invoice #${req.params.id} has been ${status.replace('_', ' ')}`,
+          link: '/vendor/invoices',
+        },
+      })
+    }
+
     res.json(invoice)
   } catch (err) {
     res.status(500).json({ error: 'Failed to update invoice status' })

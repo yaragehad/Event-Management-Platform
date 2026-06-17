@@ -1044,7 +1044,7 @@ function SourcingSection({ organizerId }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ background: C.cream }}>
-                    {['Invoice Details', 'Amount', 'Vendor', 'Sourcing Req', 'Status'].map(h => <th key={h} style={thStyle}>{h}</th>)}
+                    {['Invoice Details', 'Amount', 'Vendor', 'Description', 'Status'].map(h => <th key={h} style={thStyle}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -1052,16 +1052,16 @@ function SourcingSection({ organizerId }) {
                     <tr key={inv.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                       <td style={{ padding: '11px 14px', fontWeight: 600, color: C.text }}>{inv.details || `Invoice #${inv.id}`}</td>
                       <td style={{ padding: '11px 14px', color: C.red, fontWeight: 600 }}>{fmtMoney(inv.amount)}</td>
-                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.sourcingRequest?.vendor?.companyName || '—'}</td>
-                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.sourcingRequest?.items || '—'}</td>
+                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.vendor?.companyName || '—'}</td>
+                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.description || '—'}</td>
                       <td style={{ padding: '11px 14px' }}>
                         <select value={inv.status} onChange={e => handleInvoiceStatus(inv.id, e.target.value)}
-                          style={{ ...inputStyle, padding: '4px 8px', minWidth: 100,
-                            background: inv.status === 'PAID' ? C.greenBg : inv.status === 'PENDING' ? C.cream : C.redBg,
-                            color: inv.status === 'PAID' ? C.green : inv.status === 'PENDING' ? C.text : C.red }}>
-                          <option value="PENDING">Pending</option>
+                          style={{ ...inputStyle, padding: '4px 8px', minWidth: 120,
+                            background: ['PAID', 'APPROVED'].includes(inv.status) ? C.greenBg : C.cream,
+                            color: ['PAID', 'APPROVED'].includes(inv.status) ? C.green : C.text }}>
+                          <option value="PENDING_REVIEW">Pending Review</option>
+                          <option value="APPROVED">Approved</option>
                           <option value="PAID">Paid</option>
-                          <option value="OVERDUE">Overdue</option>
                         </select>
                       </td>
                     </tr>
@@ -1569,6 +1569,8 @@ export default function OrganizerDashboard() {
   const [logoHovered, setLogoHovered] = useState(false)
   const [logoOpen, setLogoOpen] = useState(false)
   const closeTimer = useRef(null)
+  const [notifications, setNotifications] = useState([])
+  const [notifOpen, setNotifOpen] = useState(false)
 
   useEffect(() => {
     if (!user || user.role !== 'ORGANIZER') { navigate('/login'); return }
@@ -1578,6 +1580,21 @@ export default function OrganizerDashboard() {
       .catch(() => setSummary(null))
       .finally(() => setSummaryLoading(false))
   }, [user, navigate])
+
+  useEffect(() => {
+    if (!user?.id) return
+    fetch(`http://localhost:3001/api/notifications/${user.id}`)
+      .then(r => r.json())
+      .then(data => Array.isArray(data) && setNotifications(data))
+      .catch(() => {})
+  }, [user?.id])
+
+  const markAllRead = () => {
+    if (!user?.id) return
+    fetch(`http://localhost:3001/api/notifications/read-all/${user.id}`, { method: 'PUT' })
+      .then(() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true }))))
+      .catch(() => {})
+  }
 
   const handleLogout = () => { logout(); navigate('/login') }
 
@@ -1771,7 +1788,55 @@ export default function OrganizerDashboard() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ fontSize: '20px', cursor: 'pointer', color: C.textMuted }}>🔔</div>
+            <div style={{ position: 'relative' }}>
+              <div
+                onClick={() => { setNotifOpen(o => !o); if (!notifOpen) markAllRead() }}
+                style={{ fontSize: '20px', cursor: 'pointer', color: C.textMuted, userSelect: 'none' }}
+              >
+                🔔
+                {notifications.filter(n => !n.isRead).length > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '-6px', right: '-8px',
+                    background: C.red, color: C.white, borderRadius: '50%',
+                    fontSize: '10px', fontWeight: 700,
+                    width: '16px', height: '16px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    lineHeight: 1,
+                  }}>
+                    {notifications.filter(n => !n.isRead).length > 9 ? '9+' : notifications.filter(n => !n.isRead).length}
+                  </span>
+                )}
+              </div>
+              {notifOpen && (
+                <div style={{
+                  position: 'absolute', top: '36px', right: 0, zIndex: 300,
+                  background: C.white, border: `1px solid ${C.border}`, borderRadius: '10px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.12)', width: '340px', maxHeight: '400px',
+                  overflowY: 'auto',
+                }}>
+                  <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}`, fontWeight: 600, color: C.text, fontSize: '14px' }}>
+                    Notifications
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '20px 16px', color: C.textMuted, fontSize: '13px', textAlign: 'center' }}>No notifications</div>
+                  ) : notifications.map(n => (
+                    <div key={n.id} style={{
+                      padding: '12px 16px', borderBottom: `1px solid ${C.border}`,
+                      background: n.isRead ? C.white : C.cream,
+                      cursor: 'pointer',
+                    }}
+                      onClick={() => { setNotifOpen(false); if (n.link) navigate(n.link) }}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: '13px', color: C.text, marginBottom: '2px' }}>{n.title}</div>
+                      <div style={{ fontSize: '12px', color: C.textMuted }}>{n.message}</div>
+                      <div style={{ fontSize: '11px', color: C.border, marginTop: '4px' }}>
+                        {new Date(n.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div style={{
               width: '36px', height: '36px', borderRadius: '50%',
               background: C.accent, color: C.white,

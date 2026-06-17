@@ -67,10 +67,16 @@ exports.login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    res.status(200).json({ 
-        message: "Login successful", 
-        token, 
-        user: { id: user.id, name: user.name, email: user.email, role: user.role } 
+    let vendorId = null;
+    if (user.role === 'VENDOR') {
+      const vendorProfile = await prisma.vendor.findUnique({ where: { userId: user.id } });
+      vendorId = vendorProfile?.id ?? null;
+    }
+
+    res.status(200).json({
+        message: "Login successful",
+        token,
+        user: { id: user.id, name: user.name, email: user.email, role: user.role, vendorId }
     });
 
   } catch (error) {

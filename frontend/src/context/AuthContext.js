@@ -1,9 +1,7 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 
-// 1. Create the Context
 export const AuthContext = createContext();
 
-// Helper: safely parse stored user
 function getStoredUser() {
   try {
     const savedUser = localStorage.getItem('user');
@@ -13,18 +11,15 @@ function getStoredUser() {
   return null;
 }
 
-// 2. Create the Provider
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(getStoredUser);
 
-  // The function to run when they successfully log in
   const login = (userData, token) => {
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('token', token);
     setUser(userData);
   };
 
-  // The function to run when they click "Logout"
   const logout = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
@@ -37,3 +32,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);

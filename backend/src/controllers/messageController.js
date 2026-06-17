@@ -13,6 +13,23 @@ const sendMessage = async (req, res) => {
         eventId: parseInt(eventId),
       },
     })
+
+    // Notify the event organizer when someone else sends a message
+    const event = await prisma.event.findUnique({
+      where: { id: parseInt(eventId) },
+      select: { organizerId: true, name: true },
+    })
+    if (event?.organizerId && event.organizerId !== parseInt(senderId)) {
+      await prisma.notification.create({
+        data: {
+          userId: event.organizerId,
+          title: 'New Message',
+          message: `You have a new message regarding event "${event.name}"`,
+          link: '/organizer/dashboard',
+        },
+      })
+    }
+
     res.status(201).json(message)
   } catch (err) {
     console.error('Message error:', err)

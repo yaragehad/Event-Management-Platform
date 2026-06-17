@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { AuthContext } from '../../context/AuthContext';
 
 const colors = {
   sidebar: '#6B2D0E',
@@ -17,15 +18,17 @@ const colors = {
 };
 
 const StaffDashboard = () => {
+  const { user } = useContext(AuthContext);
   const [events, setEvents] = useState([]);
   const [filterDate, setFilterDate] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     const fetchEvents = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/staff/events/3');
+        const response = await axios.get(`http://localhost:3001/api/staff/events/${user.id}`);
         setEvents(response.data);
       } catch (err) {
         console.error('Failed to fetch events:', err);
@@ -34,7 +37,7 @@ const StaffDashboard = () => {
       }
     };
     fetchEvents();
-  }, []);
+  }, [user]);
 
   const filteredEvents = filterDate
     ? events.filter(e => new Date(e.date).toISOString().split('T')[0] === filterDate)
@@ -43,7 +46,6 @@ const StaffDashboard = () => {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: 'sans-serif' }}>
 
-      {/* Sidebar */}
       {sidebarOpen && (
         <div style={{
           width: '220px',
@@ -57,17 +59,15 @@ const StaffDashboard = () => {
           <h2 style={{ color: colors.white, marginBottom: '20px' }}>VenueHub</h2>
           <a href="/staff/dashboard" style={{ color: colors.accentLight, textDecoration: 'none', fontWeight: 'bold' }}>📋 My Events</a>
           <a href="/staff/tasks" style={{ color: colors.accentLight, textDecoration: 'none' }}>✅ My Tasks</a>
-          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none' }}>🗺️ Floor Plan</a>
+          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none' }}>🗺️ Venue Layout</a>
           <a href="/staff/checkin" style={{ color: colors.accentLight, textDecoration: 'none' }}>👥 Guest Check-In</a>
           <a href="/staff/vendors" style={{ color: colors.accentLight, textDecoration: 'none' }}>🚚 Vendor Arrival</a>
           <a href="/staff/dayof" style={{ color: colors.accentLight, textDecoration: 'none' }}>📊 Day-Of Dashboard</a>
         </div>
       )}
 
-      {/* Main Content */}
       <div style={{ flex: 1 }}>
 
-        {/* Topbar */}
         <div style={{
           backgroundColor: colors.white,
           borderBottom: `1px solid ${colors.border}`,
@@ -85,10 +85,8 @@ const StaffDashboard = () => {
           <span style={{ fontWeight: 'bold', color: colors.text, fontSize: '18px' }}>Staff Dashboard</span>
         </div>
 
-        {/* Page Content */}
         <div style={{ padding: '24px' }}>
 
-          {/* Filter */}
           <div style={{
             backgroundColor: colors.white,
             border: `1px solid ${colors.border}`,
@@ -129,7 +127,6 @@ const StaffDashboard = () => {
             )}
           </div>
 
-          {/* Events Table */}
           <div style={{
             backgroundColor: colors.white,
             border: `1px solid ${colors.border}`,

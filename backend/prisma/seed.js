@@ -12,8 +12,11 @@ async function main() {
   const hashed = await bcrypt.hash('test12345', salt);
 
   // ─── USERS ───────────────────────────────────────────────────────────────
+  const organizer0 = await prisma.user.create({
+    data: { name: 'Ziad Bakry', email: 'ziad@eventpro.com', password: hashed, role: 'ORGANIZER' }
+  })
   const organizer1 = await prisma.user.create({
-    data: { name: 'Noran Mohamed', email: 'noran@eventspro.com', password: hashed, role: 'ORGANIZER' }
+    data: { name: 'Noran Mohamed', email: 'noran@eventpro.com', password: hashed, role: 'ORGANIZER' }
   })
   const organizer2 = await prisma.user.create({
     data: { name: 'Omar Khalil', email: 'omar@eventpro.com', password: hashed, role: 'ORGANIZER' }
@@ -341,12 +344,20 @@ async function main() {
   console.log('✅ Feedback created')
 
   // ─── MESSAGES ────────────────────────────────────────────────────────────
-  await prisma.message.createMany({
-    data: [
-      { eventId: event1.id, senderId: organizer1.id, content: 'Welcome to the Tech Summit! Please proceed to Hall A for registration.', seenByIds: [guestUser1.id, guestUser2.id] },
-      { eventId: event1.id, senderId: organizer1.id, content: 'Reminder: Keynote speech starts in 30 minutes at the main stage.', seenByIds: [guestUser1.id] },
-      { eventId: event2.id, senderId: organizer1.id, content: 'Welcome to the Summer Gala! Cocktail hour is on the terrace.', seenByIds: [guestUser1.id, guestUser3.id] },
-    ]
+  await prisma.message.create({
+    data: { eventId: event1.id, guestId: guest1.id, senderRole: 'ORGANIZER', content: 'Welcome to the Tech Summit! Please proceed to Hall A for registration.', seenByGuest: true }
+  })
+  await prisma.message.create({
+    data: { eventId: event1.id, guestId: guest2.id, senderRole: 'ORGANIZER', content: 'Welcome to the Tech Summit! Please proceed to Hall A for registration.', seenByGuest: true }
+  })
+  await prisma.message.create({
+    data: { eventId: event1.id, guestId: guest1.id, senderRole: 'ORGANIZER', content: 'Reminder: Keynote speech starts in 30 minutes at the main stage.', seenByGuest: true }
+  })
+  await prisma.message.create({
+    data: { eventId: event2.id, guestId: guest1.id, senderRole: 'ORGANIZER', content: 'Welcome to the Summer Gala! Cocktail hour is on the terrace.', seenByGuest: true }
+  })
+  await prisma.message.create({
+    data: { eventId: event2.id, guestId: guest3.id, senderRole: 'ORGANIZER', content: 'Welcome to the Summer Gala! Cocktail hour is on the terrace.', seenByGuest: true }
   })
 
   console.log('✅ Messages created')

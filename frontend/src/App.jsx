@@ -23,6 +23,15 @@ import GuestCheckIn from './pages/staff/GuestCheckIn';
 import VendorArrival from './pages/staff/VendorArrival';
 import DayOfDashboard from './pages/staff/DayOfDashboard';
 import GuestDetails from './pages/staff/GuestDetails';
+import InvitationPage from './pages/InvitationPage';
+import RSVPPage from './pages/RSVPPage';
+import DayOfMessagesPage from './pages/DayOfMessagesPage';
+import GuestChatPage from './pages/GuestChatPage';
+import CheckInPage from './pages/CheckInPage';
+import MyQRPage from './pages/MyQRPage';
+import FeedbackPage from './pages/FeedbackPage';
+import DayOfDashboardPage from './pages/DayOfDashboardPage';
+import SendInvitationPage from './pages/SendInvitationPage';
 
 function RootRedirect() {
   const { user } = useContext(AuthContext);
@@ -48,9 +57,10 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Default Route — smart redirect based on role */}
           <Route path="/" element={<RootRedirect />} />
 
-          {/* --- AUTHENTICATION ROUTES --- */}
+          {/* Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
@@ -81,6 +91,17 @@ function App() {
           <Route path="/staff/vendors" element={<ProtectedRoute allowedRole="STAFF"><VendorArrival /></ProtectedRoute>} />
           <Route path="/staff/dayof" element={<ProtectedRoute allowedRole="STAFF"><DayOfDashboard /></ProtectedRoute>} />
           <Route path="/staff/guest/:guestId" element={<ProtectedRoute allowedRole="STAFF"><GuestDetails /></ProtectedRoute>} />
+
+          {/* --- MEMBER 4: GUEST ROUTES --- */}
+          <Route path="/invitation/:eventId" element={<InvitationPage />} />
+          <Route path="/rsvp/:eventId" element={<RSVPPage />} />
+          <Route path="/messages/:eventId" element={<DayOfMessagesPage />} />
+          <Route path="/guest-chat/:eventId" element={<GuestChatPage />} />
+          <Route path="/checkin/:eventId" element={<CheckInPage />} />
+          <Route path="/my-qr/:eventId" element={<MyQRPage />} />
+          <Route path="/feedback/:eventId" element={<FeedbackPage />} />
+          <Route path="/dashboard/:eventId" element={<DayOfDashboardPage />} />
+          <Route path="/send-invitation" element={<SendInvitationPage />} />
         </Routes>
       </Router>
     </AuthProvider>

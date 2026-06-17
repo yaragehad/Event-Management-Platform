@@ -13,10 +13,13 @@ async function main() {
 
   // ─── USERS ───────────────────────────────────────────────────────────────
   const organizer1 = await prisma.user.create({
-    data: { name: 'Noran Mohamed', email: ' ', password: hashed, role: 'ORGANIZER' }
+    data: { name: 'Noran Mohamed', email: 'noran@eventpro.com', password: hashed, role: 'ORGANIZER' }
   })
   const organizer2 = await prisma.user.create({
     data: { name: 'Omar Khalil', email: 'omar@eventpro.com', password: hashed, role: 'ORGANIZER' }
+  })
+  const organizer3 = await prisma.user.create({
+    data: { name: 'Ziad Bakry', email: 'ziad@eventpro.com', password: hashed, role: 'ORGANIZER' }
   })
   const staff1 = await prisma.user.create({
     data: { name: 'Ahmed Hassan', email: 'ahmed@staff.com', password: hashed, role: 'STAFF' }

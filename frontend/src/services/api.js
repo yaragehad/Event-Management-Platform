@@ -4,6 +4,12 @@ const API = axios.create({
   baseURL: 'http://localhost:3001/api',
 });
 
+API.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 // Vendors
 export const getVendors = (search) => API.get('/vendors', { params: { search } });
 export const getVendorById = (id) => API.get(`/vendors/${id}`);
@@ -24,6 +30,9 @@ export const getInvoices = (params) => API.get('/invoices', { params });
 export const getInvoiceById = (id) => API.get(`/invoices/${id}`);
 export const createInvoice = (data) => API.post('/invoices', data);
 export const updateInvoiceStatus = (id, status) => API.patch(`/invoices/${id}/status`, { status });
+
+// User profile
+export const updateUserProfile = (data) => API.put('/users/profile', data);
 
 // Messages
 export const sendMessage = (data) => API.post('/messages', data);

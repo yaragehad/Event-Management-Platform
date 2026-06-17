@@ -71,7 +71,7 @@ const VendorArrival = () => {
           <h2 style={{ color: colors.white, marginBottom: '20px' }}>VenueHub</h2>
           <a href="/staff/dashboard" style={{ color: colors.accentLight, textDecoration: 'none' }}>📋 My Events</a>
           <a href="/staff/tasks" style={{ color: colors.accentLight, textDecoration: 'none' }}>✅ My Tasks</a>
-          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none' }}>🗺️ Floor Plan</a>
+          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none' }}>🗺️ Venue Layout</a>
           <a href="/staff/checkin" style={{ color: colors.accentLight, textDecoration: 'none' }}>👥 Guest Check-In</a>
           <a href="/staff/vendors" style={{ color: colors.accentLight, textDecoration: 'none', fontWeight: 'bold' }}>🚚 Vendor Arrival</a>
           <a href="/staff/dayof" style={{ color: colors.accentLight, textDecoration: 'none' }}>📊 Day-Of Dashboard</a>

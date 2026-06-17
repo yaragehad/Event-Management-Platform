@@ -7,27 +7,6 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('🌱 Cleaning existing data...')
-  await prisma.layout.deleteMany({})
-  await prisma.delivery.deleteMany({})
-  await prisma.sourcingRequest.deleteMany({})
-  await prisma.invoice.deleteMany({})
-  await prisma.feedback.deleteMany({})
-  await prisma.rSVP.deleteMany({})
-  await prisma.message.deleteMany({})
-  await prisma.task.deleteMany({})
-  await prisma.staffAssignment.deleteMany({})
-  await prisma.expense.deleteMany({})
-  await prisma.budgetItem.deleteMany({})
-  await prisma.budget.deleteMany({})
-  await prisma.bookingMessage.deleteMany({})
-  await prisma.notification.deleteMany({})
-  await prisma.guest.deleteMany({})
-  await prisma.event.deleteMany({})
-  await prisma.booking.deleteMany({})
-  await prisma.vendor.deleteMany({})
-  await prisma.venue.deleteMany({})
-  await prisma.user.deleteMany({})
   console.log('🌱 Seeding database...')
   const salt = await bcrypt.genSalt(10);
   const hashed = await bcrypt.hash('test12345', salt);

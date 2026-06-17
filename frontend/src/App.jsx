@@ -22,6 +22,22 @@ import OrganizerVenueSearchPage from './pages/organizer/OrganizerVenueSearchPage
 import OrganizerCreateBookingPage from './pages/organizer/OrganizerCreateBookingPage';
 import OrganizerBookingStatusPage from './pages/organizer/OrganizerBookingStatusPage';
 import OrganizerDashboard from './pages/organizer/OrganizerDashboard';
+import StaffDashboard from './pages/staff/StaffDashboard';
+import StaffTaskList from './pages/staff/StaffTaskList';
+import StaffFloorPlan from './pages/staff/StaffFloorPlan';
+import GuestCheckIn from './pages/staff/GuestCheckIn';
+import VendorArrival from './pages/staff/VendorArrival';
+import DayOfDashboard from './pages/staff/DayOfDashboard';
+import GuestDetails from './pages/staff/GuestDetails';
+import InvitationPage from './pages/InvitationPage';
+import RSVPPage from './pages/RSVPPage';
+import DayOfMessagesPage from './pages/DayOfMessagesPage';
+import GuestChatPage from './pages/GuestChatPage';
+import CheckInPage from './pages/CheckInPage';
+import MyQRPage from './pages/MyQRPage';
+import FeedbackPage from './pages/FeedbackPage';
+import DayOfDashboardPage from './pages/DayOfDashboardPage';
+import SendInvitationPage from './pages/SendInvitationPage';
 
 // Vendor Pages (Member 3 - Your pages)
 import VendorDashboard from './pages/VendorDashboard';
@@ -41,6 +57,7 @@ function RootRedirect() {
   if (user.role === 'ORGANIZER') return <Navigate to="/organizer/dashboard" replace />;
   if (user.role === 'VENUE_OWNER') return <Navigate to="/venue/dashboard" replace />;
   if (user.role === 'VENDOR') return <Navigate to="/vendor/dashboard" replace />;
+  if (user.role === 'STAFF') return <Navigate to="/staff/dashboard" replace />;
   return <Navigate to="/login" replace />;
 }
 
@@ -62,6 +79,7 @@ function App() {
           <Route path="/" element={<RootRedirect />} />
 
           {/* Auth Routes */}
+          {/* Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
@@ -95,6 +113,26 @@ function App() {
           <Route path="/vendor/deliveries" element={<ProtectedRoute allowedRole="VENDOR"><DeliveryManagement /></ProtectedRoute>} />
           <Route path="/vendor/invoices" element={<ProtectedRoute allowedRole="VENDOR"><InvoiceList /></ProtectedRoute>} />
           <Route path="/vendor/invoices/create" element={<ProtectedRoute allowedRole="VENDOR"><CreateInvoice /></ProtectedRoute>} />
+
+          {/* --- STAFF ROUTES --- */}
+          <Route path="/staff/dashboard" element={<ProtectedRoute allowedRole="STAFF"><StaffDashboard /></ProtectedRoute>} />
+          <Route path="/staff/tasks" element={<ProtectedRoute allowedRole="STAFF"><StaffTaskList /></ProtectedRoute>} />
+          <Route path="/staff/floorplan" element={<ProtectedRoute allowedRole="STAFF"><StaffFloorPlan /></ProtectedRoute>} />
+          <Route path="/staff/checkin" element={<ProtectedRoute allowedRole="STAFF"><GuestCheckIn /></ProtectedRoute>} />
+          <Route path="/staff/vendors" element={<ProtectedRoute allowedRole="STAFF"><VendorArrival /></ProtectedRoute>} />
+          <Route path="/staff/dayof" element={<ProtectedRoute allowedRole="STAFF"><DayOfDashboard /></ProtectedRoute>} />
+          <Route path="/staff/guest/:guestId" element={<ProtectedRoute allowedRole="STAFF"><GuestDetails /></ProtectedRoute>} />
+
+          {/* --- MEMBER 4: GUEST ROUTES --- */}
+          <Route path="/invitation/:eventId" element={<InvitationPage />} />
+          <Route path="/rsvp/:eventId" element={<RSVPPage />} />
+          <Route path="/messages/:eventId" element={<DayOfMessagesPage />} />
+          <Route path="/guest-chat/:eventId" element={<GuestChatPage />} />
+          <Route path="/checkin/:eventId" element={<CheckInPage />} />
+          <Route path="/my-qr/:eventId" element={<MyQRPage />} />
+          <Route path="/feedback/:eventId" element={<FeedbackPage />} />
+          <Route path="/dashboard/:eventId" element={<DayOfDashboardPage />} />
+          <Route path="/send-invitation" element={<SendInvitationPage />} />
         </Routes>
       </Router>
     </AuthProvider>

@@ -6,30 +6,29 @@ const { PrismaPg } = require('@prisma/adapter-pg');
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-
 async function main() {
   console.log('🌱 Seeding database...')
-  // 1. Create a salt
   const salt = await bcrypt.genSalt(10);
-
-  // 2. Hash the specific password you want to use
   const hashed = await bcrypt.hash('test12345', salt);
 
   // ─── USERS ───────────────────────────────────────────────────────────────
+  const organizer0 = await prisma.user.create({
+    data: { name: 'Ziad Bakry', email: 'ziad@eventpro.com', password: hashed, role: 'ORGANIZER' }
+  })
   const organizer1 = await prisma.user.create({
-    data: { name: 'Noran Mohamed', email: ' ', password: hashed, role: 'ORGANIZER' }
+    data: { name: 'Noran Mohamed', email: 'noran@eventpro.com', password: hashed, role: 'ORGANIZER' }
   })
   const organizer2 = await prisma.user.create({
     data: { name: 'Omar Khalil', email: 'omar@eventpro.com', password: hashed, role: 'ORGANIZER' }
   })
   const staff1 = await prisma.user.create({
-    data: { name: 'Ahmed Hassan', email: 'ahmed@staff.com', password: hashed, role: 'STAFF', age: 28 }
+    data: { name: 'Ahmed Hassan', email: 'ahmed@staff.com', password: hashed, role: 'STAFF' }
   })
   const staff2 = await prisma.user.create({
-    data: { name: 'Nour Sami', email: 'nour@staff.com', password: hashed, role: 'STAFF', age: 24 }
+    data: { name: 'Nour Sami', email: 'nour@staff.com', password: hashed, role: 'STAFF' }
   })
   const staff3 = await prisma.user.create({
-    data: { name: 'Karim Youssef', email: 'karim@staff.com', password: hashed, role: 'STAFF', age: 31 }
+    data: { name: 'Karim Youssef', email: 'karim@staff.com', password: hashed, role: 'STAFF' }
   })
   const vendorUser1 = await prisma.user.create({
     data: { name: 'Mona Catering', email: 'mona@catering.com', password: hashed, role: 'VENDOR' }
@@ -41,7 +40,6 @@ async function main() {
     data: { name: 'Sound & Light Co', email: 'contact@soundlight.com', password: hashed, role: 'VENDOR' }
   })
   const guestUser1 = await prisma.user.create({
-
     data: { name: 'Layla Ibrahim', email: 'layla@gmail.com', password: hashed, role: 'GUEST' }
   })
   const guestUser2 = await prisma.user.create({
@@ -110,28 +108,13 @@ async function main() {
 
   // ─── BOOKINGS ────────────────────────────────────────────────────────────
   const booking1 = await prisma.booking.create({
-    data: {
-      venueId: venue1.id,
-      organizerId: organizer1.id,
-      eventDate: new Date('2026-07-15'),
-      status: 'APPROVED'
-    }
+    data: { venueId: venue1.id, organizerId: organizer1.id, eventDate: new Date('2026-07-15'), status: 'APPROVED' }
   })
   const booking2 = await prisma.booking.create({
-    data: {
-      venueId: venue2.id,
-      organizerId: organizer1.id,
-      eventDate: new Date('2026-08-20'),
-      status: 'APPROVED'
-    }
+    data: { venueId: venue2.id, organizerId: organizer1.id, eventDate: new Date('2026-08-20'), status: 'APPROVED' }
   })
   const booking3 = await prisma.booking.create({
-    data: {
-      venueId: venue3.id,
-      organizerId: organizer2.id,
-      eventDate: new Date('2026-09-10'),
-      status: 'PENDING'
-    }
+    data: { venueId: venue3.id, organizerId: organizer2.id, eventDate: new Date('2026-09-10'), status: 'PENDING' }
   })
 
   console.log('✅ Bookings created')
@@ -204,7 +187,7 @@ async function main() {
   console.log('✅ Tasks created')
 
   // ─── BUDGET ──────────────────────────────────────────────────────────────
-  const budget1 = await prisma.budget.create({
+  await prisma.budget.create({
     data: {
       eventId: event1.id,
       totalPlanned: 50000,
@@ -228,7 +211,7 @@ async function main() {
     }
   })
 
-  const budget2 = await prisma.budget.create({
+  await prisma.budget.create({
     data: {
       eventId: event2.id,
       totalPlanned: 30000,
@@ -288,70 +271,27 @@ async function main() {
 
   // ─── SOURCING REQUESTS ───────────────────────────────────────────────────
   const request1 = await prisma.sourcingRequest.create({
-    data: {
-      eventId: event1.id,
-      vendorId: vendor1.id,
-      items: 'Full buffet for 300 guests including vegetarian options',
-      quantity: '300 meals',
-      deliveryDate: new Date('2026-07-15'),
-      status: 'ACCEPTED',
-      notes: 'Please include gluten-free options'
-    }
+    data: { eventId: event1.id, vendorId: vendor1.id, items: 'Full buffet for 300 guests including vegetarian options', quantity: '300 meals', deliveryDate: new Date('2026-07-15'), status: 'ACCEPTED', notes: 'Please include gluten-free options' }
   })
   const request2 = await prisma.sourcingRequest.create({
-    data: {
-      eventId: event1.id,
-      vendorId: vendor3.id,
-      items: 'PA system, 2x projectors, stage lighting rig',
-      quantity: '1 full setup',
-      deliveryDate: new Date('2026-07-14'),
-      status: 'ACCEPTED'
-    }
+    data: { eventId: event1.id, vendorId: vendor3.id, items: 'PA system, 2x projectors, stage lighting rig', quantity: '1 full setup', deliveryDate: new Date('2026-07-14'), status: 'ACCEPTED' }
   })
   const request3 = await prisma.sourcingRequest.create({
-    data: {
-      eventId: event2.id,
-      vendorId: vendor2.id,
-      items: 'Floral centerpieces for 20 tables, stage backdrop, entrance arch',
-      quantity: '20 centerpieces + 1 arch',
-      deliveryDate: new Date('2026-08-20'),
-      status: 'ACCEPTED',
-      notes: 'Color theme: white and gold'
-    }
+    data: { eventId: event2.id, vendorId: vendor2.id, items: 'Floral centerpieces for 20 tables, stage backdrop, entrance arch', quantity: '20 centerpieces + 1 arch', deliveryDate: new Date('2026-08-20'), status: 'ACCEPTED', notes: 'Color theme: white and gold' }
   })
   const request4 = await prisma.sourcingRequest.create({
-    data: {
-      eventId: event2.id,
-      vendorId: vendor1.id,
-      items: 'Fine dining 3-course meal for 150 guests',
-      quantity: '150 meals',
-      deliveryDate: new Date('2026-08-20'),
-      status: 'PENDING'
-    }
+    data: { eventId: event2.id, vendorId: vendor1.id, items: 'Fine dining 3-course meal for 150 guests', quantity: '150 meals', deliveryDate: new Date('2026-08-20'), status: 'PENDING' }
   })
   const request5 = await prisma.sourcingRequest.create({
-    data: {
-      eventId: event3.id,
-      vendorId: vendor3.id,
-      items: 'Wireless microphones x4, projector screen 16ft',
-      quantity: '4 mics + 1 screen',
-      deliveryDate: new Date('2026-09-10'),
-      status: 'PENDING'
-    }
+    data: { eventId: event3.id, vendorId: vendor3.id, items: 'Wireless microphones x4, projector screen 16ft', quantity: '4 mics + 1 screen', deliveryDate: new Date('2026-09-10'), status: 'PENDING' }
   })
 
   console.log('✅ Sourcing requests created')
 
   // ─── DELIVERIES ──────────────────────────────────────────────────────────
-  await prisma.delivery.create({
-    data: { sourcingRequestId: request1.id, status: 'PREPARING' }
-  })
-  await prisma.delivery.create({
-    data: { sourcingRequestId: request2.id, status: 'OUT_FOR_DELIVERY' }
-  })
-  await prisma.delivery.create({
-    data: { sourcingRequestId: request3.id, status: 'PREPARING' }
-  })
+  await prisma.delivery.create({ data: { sourcingRequestId: request1.id, status: 'PREPARING' } })
+  await prisma.delivery.create({ data: { sourcingRequestId: request2.id, status: 'OUT_FOR_DELIVERY' } })
+  await prisma.delivery.create({ data: { sourcingRequestId: request3.id, status: 'PREPARING' } })
 
   console.log('✅ Deliveries created')
 
@@ -368,20 +308,11 @@ async function main() {
   console.log('✅ Invoices created')
 
   // ─── GUESTS ──────────────────────────────────────────────────────────────
-  const guest1 = await prisma.guest.create({
-    data: { userId: guestUser1.id, dietaryPreference: 'Vegetarian', checkInStatus: false }
-  })
-  const guest2 = await prisma.guest.create({
-    data: { userId: guestUser2.id, dietaryPreference: 'No restrictions', checkInStatus: false }
-  })
-  const guest3 = await prisma.guest.create({
-    data: { userId: guestUser3.id, dietaryPreference: 'Gluten-free', checkInStatus: false }
-  })
-  const guest4 = await prisma.guest.create({
-    data: { userId: guestUser4.id, dietaryPreference: 'Vegan', checkInStatus: false }
-  })
+  const guest1 = await prisma.guest.create({ data: { userId: guestUser1.id, dietaryPreference: 'Vegetarian', checkInStatus: false } })
+  const guest2 = await prisma.guest.create({ data: { userId: guestUser2.id, dietaryPreference: 'No restrictions', checkInStatus: false } })
+  const guest3 = await prisma.guest.create({ data: { userId: guestUser3.id, dietaryPreference: 'Gluten-free', checkInStatus: false } })
+  const guest4 = await prisma.guest.create({ data: { userId: guestUser4.id, dietaryPreference: 'Vegan', checkInStatus: false } })
 
-  // Link guests to events
   await prisma.event.update({ where: { id: event1.id }, data: { guests: { connect: [{ id: guest1.id }, { id: guest2.id }, { id: guest3.id }, { id: guest4.id }] } } })
   await prisma.event.update({ where: { id: event2.id }, data: { guests: { connect: [{ id: guest1.id }, { id: guest3.id }] } } })
 
@@ -413,12 +344,20 @@ async function main() {
   console.log('✅ Feedback created')
 
   // ─── MESSAGES ────────────────────────────────────────────────────────────
-  await prisma.message.createMany({
-    data: [
-      { eventId: event1.id, senderId: organizer1.id, content: 'Welcome to the Tech Summit! Please proceed to Hall A for registration.', seenByIds: [guestUser1.id, guestUser2.id] },
-      { eventId: event1.id, senderId: organizer1.id, content: 'Reminder: Keynote speech starts in 30 minutes at the main stage.', seenByIds: [guestUser1.id] },
-      { eventId: event2.id, senderId: organizer1.id, content: 'Welcome to the Summer Gala! Cocktail hour is on the terrace.', seenByIds: [guestUser1.id, guestUser3.id] },
-    ]
+  await prisma.message.create({
+    data: { eventId: event1.id, guestId: guest1.id, senderRole: 'ORGANIZER', content: 'Welcome to the Tech Summit! Please proceed to Hall A for registration.', seenByGuest: true }
+  })
+  await prisma.message.create({
+    data: { eventId: event1.id, guestId: guest2.id, senderRole: 'ORGANIZER', content: 'Welcome to the Tech Summit! Please proceed to Hall A for registration.', seenByGuest: true }
+  })
+  await prisma.message.create({
+    data: { eventId: event1.id, guestId: guest1.id, senderRole: 'ORGANIZER', content: 'Reminder: Keynote speech starts in 30 minutes at the main stage.', seenByGuest: true }
+  })
+  await prisma.message.create({
+    data: { eventId: event2.id, guestId: guest1.id, senderRole: 'ORGANIZER', content: 'Welcome to the Summer Gala! Cocktail hour is on the terrace.', seenByGuest: true }
+  })
+  await prisma.message.create({
+    data: { eventId: event2.id, guestId: guest3.id, senderRole: 'ORGANIZER', content: 'Welcome to the Summer Gala! Cocktail hour is on the terrace.', seenByGuest: true }
   })
 
   console.log('✅ Messages created')

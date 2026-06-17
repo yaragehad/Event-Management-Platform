@@ -27,10 +27,7 @@ const deliveryRoutes = require('./routes/deliveryRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 
-app.use('/api/vendors', vendorRoutes);
-app.use('/api/sourcing-requests', sourcingRequestRoutes);
-app.use('/api/deliveries', deliveryRoutes);
-app.use('/api/invoices', invoiceRoutes);
+
 app.use('/api/messages', messageRoutes);
 
 // Other routes
@@ -40,10 +37,25 @@ app.use('/api/layouts', require('./routes/layout'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/organizer', require('./routes/organizerRoutes'));
 app.use('/api/notifications', require('./routes/notification'));
+app.use('/api/users', userRoutes);
+app.use('/api/venues', venueRoutes)
+app.use('/api/bookings', bookingRoutes)
+app.use('/api/layouts', layoutRoutes)
+app.use('/api/analytics', analyticsRoutes)
+app.use('/api/vendors', vendorRoutes)
+app.use('/api/sourcing-requests', sourcingRequestRoutes)
+app.use('/api/deliveries', deliveryRoutes)
+app.use('/api/invoices', invoiceRoutes)
+app.use('/api/organizer', organizerRoutes)
+app.use('/api/notifications', notificationRoutes)
+app.use('/api/staff', staffRoutes)
+app.use('/api/guests', guestRoutes)
+app.use('/api/email', emailRoutes)
+app.use('/api/events', eventRoutes)
 
 app.get('/', (req, res) => {
-  res.send('Event Management Platform API');
-});
+  res.send('Event Management Platform API')
+})
 
 app.use(errorHandler);
 

@@ -286,14 +286,8 @@ function EventsSection({ organizerId }) {
       <SectionHeader title="Upcoming Events" icon="📅">
         <FilterSelect value={statusFilter} onChange={setStatusFilter} placeholder="All Statuses"
           options={['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED'].map(s => ({ value: s, label: s }))} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Start:</span>
-          <FilterInput value={dateFrom} onChange={setDateFrom} placeholder="From date" type="date" />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>End:</span>
-          <FilterInput value={dateTo} onChange={setDateTo} placeholder="To date" type="date" />
-        </div>
+        <FilterInput value={dateFrom} onChange={setDateFrom} placeholder="From date" type="date" />
+        <FilterInput value={dateTo} onChange={setDateTo} placeholder="To date" type="date" />
       </SectionHeader>
       {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : events.length === 0 ? <EmptyState msg="No events found." /> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -305,11 +299,8 @@ function EventsSection({ organizerId }) {
             }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 15, color: C.text }}>{ev.name}</div>
-                {ev.description && <div style={{ fontSize: 13, color: C.text, marginTop: 6, marginBottom: 2 }}>{ev.description}</div>}
                 <div style={{ fontSize: 13, color: C.textMuted, marginTop: 3 }}>
-                  📍 {ev.booking?.venue?.name ? (
-                    <span>{ev.booking.venue.name} <strong style={{ color: ev.booking.status === 'APPROVED' ? C.green : ev.booking.status === 'PENDING' ? C.accent : C.red, fontSize: 11, background: C.cream, padding: '2px 6px', borderRadius: 4, marginLeft: 4 }}>{ev.booking.status}</strong></span>
-                  ) : 'No venue booked'} &nbsp;·&nbsp; 📆 {fmt(ev.date)}
+                  📍 {ev.booking?.venue?.name || 'No venue'} &nbsp;·&nbsp; 📆 {fmt(ev.date)}
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
@@ -382,10 +373,7 @@ function TasksSection({ organizerId }) {
     try {
       const res = await updateTask(taskId, { status })
       setTasks(prev => prev.map(t => t.id === taskId ? res.data : t))
-    } catch (err) {
-      console.error(err)
-      alert('Failed to update status')
-    }
+    } catch { }
   }
 
   const thStyle = { padding: '10px 14px', textAlign: 'left', color: C.textMuted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }
@@ -429,86 +417,45 @@ function TasksSection({ organizerId }) {
       )}
 
       {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : tasks.length === 0 ? <EmptyState msg="No tasks found." /> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, marginTop: 10 }}>
-          {[
-            { id: 'PENDING', label: 'Pending', color: C.cream, bar: C.border },
-            { id: 'IN_PROGRESS', label: 'In Progress', color: C.accentLight, bar: C.accent },
-            { id: 'DONE', label: 'Done', color: C.greenBg, bar: C.green }
-          ].map(col => (
-            <div
-              key={col.id}
-              style={{
-                background: col.color, borderTop: `4px solid ${col.bar}`,
-                borderRadius: 8, padding: 12, minHeight: 400
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: C.text }}>{col.label}</h3>
-                <span style={{ fontSize: 12, background: 'rgba(0,0,0,0.05)', padding: '2px 8px', borderRadius: 12, fontWeight: 600 }}>
-                  {tasks.filter(t => t.status === col.id).length}
-                </span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {tasks.filter(t => t.status === col.id).map(t => (
-                  <div
-                    key={t.id}
-                    style={{
-                      background: C.white, padding: 14, borderRadius: 8,
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                      border: `1px solid ${C.border}`
-                    }}
-                  >
-                    <div style={{ fontWeight: 600, fontSize: 14, color: C.text, marginBottom: 4 }}>{t.title}</div>
-                    {t.description && <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 10 }}>{t.description}</div>}
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: C.textMuted, marginBottom: 4 }}>
-                      <span>📌</span> <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.event?.name || 'No Event'}</span>
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE' ? C.red : C.textMuted, marginBottom: 10 }}>
-                      <span>⏳</span> <span>{t.dueDate ? fmt(t.dueDate) : 'No due date'}</span>
-                    </div>
-
-                    <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, marginBottom: 10 }}>
-                      <select
-                        value={t.assigneeId || ''}
-                        onChange={e => handleAssign(t.id, e.target.value)}
-                        style={{ ...inputStyle, width: '100%', padding: '4px 8px', fontSize: 11, background: C.cream }}
-                      >
-                        <option value="">Unassigned</option>
-                        {staff.map(s => <option key={s.id} value={s.id}>{s.user?.name}</option>)}
-                      </select>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 'auto' }}>
-                      {t.status === 'PENDING' ? (
-                        <div />
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStatus(t.id, t.status === 'DONE' ? 'IN_PROGRESS' : 'PENDING'); }}
-                          style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, borderRadius: 6, border: `1px solid ${C.border}`, background: C.white, color: C.textMuted, cursor: 'pointer' }}
-                        >
-                          {t.status === 'DONE' ? '← Reopen' : '← Move to Pending'}
-                        </button>
-                      )}
-                      
-                      {t.status !== 'DONE' && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStatus(t.id, t.status === 'PENDING' ? 'IN_PROGRESS' : 'DONE'); }}
-                          style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, borderRadius: 6, border: 'none', background: C.accentLight, color: C.accent, cursor: 'pointer' }}
-                        >
-                          {t.status === 'PENDING' ? 'Start Task →' : 'Mark Done ✔'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <thead>
+              <tr style={{ background: C.cream }}>
+                {['Task', 'Event', 'Assign To', 'Due Date', 'Status'].map(h => <th key={h} style={thStyle}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {tasks.map(t => (
+                <tr key={t.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                  <td style={{ padding: '11px 14px', color: C.text, fontWeight: 500 }}>
+                    {t.title}
+                    {t.description && <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{t.description}</div>}
+                  </td>
+                  <td style={{ padding: '11px 14px', color: C.textMuted }}>{t.event?.name || '—'}</td>
+                  <td style={{ padding: '11px 14px' }}>
+                    <select value={t.assigneeId || ''} onChange={e => handleAssign(t.id, e.target.value)}
+                      style={{ ...inputStyle, padding: '4px 8px', minWidth: 140 }}>
+                      <option value="">Unassigned</option>
+                      {staff.map(s => <option key={s.id} value={s.id}>{s.user?.name}</option>)}
+                    </select>
+                  </td>
+                  <td style={{ padding: '11px 14px', color: t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE' ? C.red : C.textMuted }}>
+                    {fmt(t.dueDate)}
+                  </td>
+                  <td style={{ padding: '11px 14px' }}>
+                    <select value={t.status} onChange={e => handleStatus(t.id, e.target.value)}
+                      style={{ ...inputStyle, padding: '4px 8px', minWidth: 110,
+                        background: t.status === 'DONE' ? C.greenBg : t.status === 'IN_PROGRESS' ? C.accentLight : C.cream,
+                        color: t.status === 'DONE' ? C.green : t.status === 'IN_PROGRESS' ? C.accent : C.text }}>
+                      <option value="PENDING">Pending</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="DONE">Done</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -777,7 +724,7 @@ function StaffSection({ organizerId }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
               <tr style={{ background: C.cream }}>
-                {['Name', 'Age', 'Email', 'Event', 'Type', 'Specialty', 'Status', 'Tasks', 'Action'].map(h => (
+                {['Name', 'Email', 'Event', 'Type', 'Specialty', 'Status', 'Tasks', 'Action'].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: C.textMuted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
                 ))}
               </tr>
@@ -786,7 +733,6 @@ function StaffSection({ organizerId }) {
               {staff.map(s => (
                 <tr key={s.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                   <td style={{ padding: '10px 14px', fontWeight: 600, color: C.text }}>{s.user?.name}</td>
-                  <td style={{ padding: '10px 14px', color: C.textMuted }}>{s.user?.age || '—'}</td>
                   <td style={{ padding: '10px 14px', color: C.textMuted }}>{s.user?.email}</td>
                   <td style={{ padding: '10px 14px', color: C.textMuted }}>{s.event?.name || '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
@@ -911,23 +857,20 @@ function SourcingSection({ organizerId }) {
   // Form state
   const [showReqForm, setShowReqForm] = useState(false)
   const [events, setEvents] = useState([])
-  const [vendors, setVendors] = useState([])
-  const [reqForm, setReqForm] = useState({ eventId: '', vendorId: '', items: '', quantity: '', deliveryDate: '', notes: '' })
+  const [reqForm, setReqForm] = useState({ eventId: '', itemDetails: '', quantity: '', maxBudget: '' })
   const [savingReq, setSavingReq] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [reqRes, invRes, evRes, venRes] = await Promise.all([
+      const [reqRes, invRes, evRes] = await Promise.all([
         getOrganizerSourcingRequests(organizerId),
         getOrganizerInvoices(organizerId),
         getOrganizerEvents(organizerId),
-        getVendors()
       ])
       setRequests(reqRes.data)
       setInvoices(invRes.data)
       setEvents(evRes.data)
-      setVendors(venRes.data)
     } catch { }
     setLoading(false)
   }, [organizerId])
@@ -939,16 +882,14 @@ function SourcingSection({ organizerId }) {
     setSavingReq(true)
     try {
       const res = await createSourcingRequest({
+        ...reqForm,
         eventId: parseInt(reqForm.eventId),
-        vendorId: parseInt(reqForm.vendorId),
-        items: reqForm.items,
-        quantity: reqForm.quantity,
-        deliveryDate: reqForm.deliveryDate,
-        notes: reqForm.notes || undefined
+        quantity: parseInt(reqForm.quantity),
+        maxBudget: reqForm.maxBudget ? parseFloat(reqForm.maxBudget) : null
       })
       setRequests(p => [res.data, ...p])
       setShowReqForm(false)
-      setReqForm({ eventId: '', vendorId: '', items: '', quantity: '', deliveryDate: '', notes: '' })
+      setReqForm({ eventId: '', itemDetails: '', quantity: '', maxBudget: '' })
     } catch { }
     setSavingReq(false)
   }
@@ -990,24 +931,9 @@ function SourcingSection({ organizerId }) {
                   {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
                 </select>
               </Field>
-              <Field label="Vendor *">
-                <select required value={reqForm.vendorId} onChange={e => setReqForm(p => ({ ...p, vendorId: e.target.value }))} style={inputStyle}>
-                  <option value="">Select vendor</option>
-                  {vendors.map(v => <option key={v.id} value={v.id}>{v.companyName}</option>)}
-                </select>
-              </Field>
-              <Field label="Items (Equipment/Catering) *">
-                <input required value={reqForm.items} onChange={e => setReqForm(p => ({ ...p, items: e.target.value }))} style={inputStyle} placeholder="e.g., 50 Chairs, PA System" />
-              </Field>
-              <Field label="Quantity *">
-                <input required value={reqForm.quantity} onChange={e => setReqForm(p => ({ ...p, quantity: e.target.value }))} style={inputStyle} placeholder="e.g., 50" />
-              </Field>
-              <Field label="Delivery Date *">
-                <input required type="date" value={reqForm.deliveryDate} onChange={e => setReqForm(p => ({ ...p, deliveryDate: e.target.value }))} style={inputStyle} />
-              </Field>
-              <Field label="Notes (Optional)">
-                <input value={reqForm.notes} onChange={e => setReqForm(p => ({ ...p, notes: e.target.value }))} style={inputStyle} />
-              </Field>
+              <Field label="Item Details *"><input required value={reqForm.itemDetails} onChange={e => setReqForm(p => ({ ...p, itemDetails: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Quantity *"><input required type="number" value={reqForm.quantity} onChange={e => setReqForm(p => ({ ...p, quantity: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Max Budget (Optional)"><input type="number" value={reqForm.maxBudget} onChange={e => setReqForm(p => ({ ...p, maxBudget: e.target.value }))} style={inputStyle} /></Field>
             </div>
             <Btn type="submit" disabled={savingReq}>{savingReq ? 'Creating...' : 'Submit Request'}</Btn>
           </form>
@@ -1021,18 +947,17 @@ function SourcingSection({ organizerId }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ background: C.cream }}>
-                    {['Items', 'Event', 'Quantity', 'Delivery Date', 'Status', 'Delivery Lifecycle', 'Vendor'].map(h => <th key={h} style={thStyle}>{h}</th>)}
+                    {['Item', 'Event', 'Quantity', 'Max Budget', 'Status', 'Vendor'].map(h => <th key={h} style={thStyle}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {requests.map(r => (
                     <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                      <td style={{ padding: '11px 14px', fontWeight: 600, color: C.text }}>{r.items}</td>
+                      <td style={{ padding: '11px 14px', fontWeight: 600, color: C.text }}>{r.itemDetails}</td>
                       <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.event?.name}</td>
                       <td style={{ padding: '11px 14px' }}>{r.quantity}</td>
-                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.deliveryDate ? new Date(r.deliveryDate).toLocaleDateString() : '—'}</td>
+                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.maxBudget ? fmtMoney(r.maxBudget) : '—'}</td>
                       <td style={{ padding: '11px 14px' }}>{statusBadge(r.status)}</td>
-                      <td style={{ padding: '11px 14px' }}>{r.delivery?.status ? statusBadge(r.delivery.status) : badge('Not Started', C.cream, C.textMuted)}</td>
                       <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.vendor?.companyName || '—'}</td>
                     </tr>
                   ))}
@@ -1052,8 +977,8 @@ function SourcingSection({ organizerId }) {
                     <tr key={inv.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                       <td style={{ padding: '11px 14px', fontWeight: 600, color: C.text }}>{inv.details || `Invoice #${inv.id}`}</td>
                       <td style={{ padding: '11px 14px', color: C.red, fontWeight: 600 }}>{fmtMoney(inv.amount)}</td>
-                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.vendor?.companyName || '—'}</td>
-                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.description || '—'}</td>
+                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.sourcingRequest?.vendor?.companyName || '—'}</td>
+                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.sourcingRequest?.itemDetails || '—'}</td>
                       <td style={{ padding: '11px 14px' }}>
                         <select value={inv.status} onChange={e => handleInvoiceStatus(inv.id, e.target.value)}
                           style={{ ...inputStyle, padding: '4px 8px', minWidth: 120,
@@ -1207,7 +1132,7 @@ function DayOfOpsSection({ organizerId }) {
     e.preventDefault()
     setSendingMsg(true)
     try {
-      await sendMessage(selectedEventId, { ...msgForm, senderId: organizerId })
+      await sendMessage(selectedEventId, msgForm)
       setMsgForm({ audience: 'ALL', content: '' })
       alert('Message sent successfully!')
     } catch {
@@ -1267,100 +1192,12 @@ function DayOfOpsSection({ organizerId }) {
             </form>
             <div style={{ marginTop: 20, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
               <div style={{ fontSize: 13, color: C.text, fontWeight: 600, marginBottom: 8 }}>Message Delivery Status</div>
-              <div style={{ fontSize: 12, color: C.textMuted }}>
-                {dayOfData.messages?.length > 0 ? (() => {
-                  const latestMsg = dayOfData.messages[0];
-                  const seenCount = latestMsg.seenByIds?.length || 0;
-                  const total = dayOfData.totalGuests || 0;
-                  const pct = total > 0 ? Math.round((seenCount / total) * 100) : 0;
-                  return (
-                    <div>
-                      <div style={{ marginBottom: 4 }}><strong>Latest:</strong> "{latestMsg.content.substring(0, 40)}{latestMsg.content.length > 40 ? '...' : ''}"</div>
-                      <div>{pct}% of guests ({seenCount}/{total}) have seen this broadcast.</div>
-                    </div>
-                  );
-                })() : 'No broadcasts sent yet.'}
-              </div>
+              <div style={{ fontSize: 12, color: C.textMuted }}>85% of guests have seen the latest broadcast.</div>
               <button onClick={() => alert('Follow-up message sent to guests who have not seen the broadcast.')} style={{ marginTop: 8, padding: '6px 12px', fontSize: 12, borderRadius: 6, border: `1px solid ${C.border}`, background: C.cream, cursor: 'pointer' }}>
                 Resend to unread
               </button>
             </div>
           </FormCard>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Feedback Section ───────────────────────────────────────────────────────────
-function FeedbackSection({ organizerId }) {
-  const [feedback, setFeedback] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filterEventId, setFilterEventId] = useState('')
-
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await getOrganizerFeedback(organizerId)
-      setFeedback(res.data)
-    } catch { }
-    setLoading(false)
-  }, [organizerId])
-
-  useEffect(() => { loadData() }, [loadData])
-
-  const filtered = filterEventId ? feedback.filter(f => String(f.event?.id) === filterEventId) : feedback
-  
-  // Extract unique events for the filter dropdown
-  const uniqueEvents = Array.from(new Map(feedback.filter(f => f.event).map(f => [f.event.id, f.event])).values())
-  
-  const avgScore = filtered.length ? (filtered.reduce((acc, f) => acc + (f.overall || 0), 0) / filtered.length).toFixed(1) : 0
-
-  return (
-    <div>
-      <SectionHeader title="Guest Feedback" icon="⭐">
-        <FilterSelect value={filterEventId} onChange={setFilterEventId} placeholder="All Events"
-          options={uniqueEvents.map(e => ({ value: String(e.id), label: e.name }))} />
-      </SectionHeader>
-
-      {loading ? <p style={{ color: C.textMuted }}>Loading feedback...</p> : (
-        <div>
-          {/* Summary Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>
-            <StatCard icon="📊" label="Total Reviews" value={filtered.length} />
-            <StatCard icon="⭐" label="Average Rating" value={filtered.length ? `${avgScore} / 5` : 'N/A'} />
-            <StatCard icon="💬" label="Comments Left" value={filtered.filter(f => f.comments).length} />
-          </div>
-
-          {filtered.length === 0 ? <EmptyState msg="No feedback received." /> : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-              {filtered.map(f => (
-                <div key={f.id} style={{ background: C.white, padding: 20, borderRadius: 12, border: `1px solid ${C.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                    <div>
-                      <div style={{ fontWeight: 700, color: C.text, fontSize: 15 }}>{f.guestName || 'Anonymous Guest'}</div>
-                      <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>📌 {f.event?.name}</div>
-                    </div>
-                    <div style={{ background: C.cream, padding: '4px 8px', borderRadius: 12, fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span style={{ color: C.accent, fontWeight: 700 }}>{f.overall || 0}</span> ⭐
-                    </div>
-                  </div>
-                  
-                  {f.comments ? (
-                    <div style={{ fontSize: 14, color: C.text, lineHeight: 1.5, fontStyle: 'italic', background: C.cream, padding: 12, borderRadius: 8 }}>
-                      "{f.comments}"
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: 13, color: C.textMuted }}>No additional comments provided.</div>
-                  )}
-                  
-                  <div style={{ fontSize: 11, color: C.textMuted, marginTop: 12, textAlign: 'right' }}>
-                    {new Date(f.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>
@@ -1411,21 +1248,21 @@ function ReportsSection({ organizerId }) {
       {!loading && reportData && (
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>
-            <StatCard icon="👥" label="Total Attendance" value={reportData.summary?.totalAttending || 0} />
-            <StatCard icon="💰" label="Total Spent" value={fmtMoney(reportData.summary?.totalActual || 0)} />
-            <StatCard icon="⭐" label="Avg. Feedback" value={reportData.summary?.avgFeedback || 'N/A'} />
+            <StatCard icon="👥" label="Total Attendance" value={reportData.attendance} />
+            <StatCard icon="💰" label="Total Spent" value={fmtMoney(reportData.financials?.spent)} />
+            <StatCard icon="⭐" label="Avg. Feedback" value={reportData.feedbackSummary?.avgRating || 'N/A'} />
           </div>
 
           <h3 style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 10 }}>Feedback Quotes</h3>
-          {reportData.feedback?.length === 0 ? <p style={{ color: C.textMuted, fontSize: 14 }}>No feedback received.</p> : (
+          {reportData.feedbackSummary?.quotes?.length === 0 ? <p style={{ color: C.textMuted, fontSize: 14 }}>No feedback received.</p> : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              {reportData.feedback?.map((q, i) => (
+              {reportData.feedbackSummary?.quotes?.map((q, i) => (
                 <div key={i} style={{ background: C.white, padding: '16px', borderRadius: 12, border: `1px solid ${C.border}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{q.guestName || 'Anonymous'}</span>
-                    <span style={{ fontSize: 13 }}>{'⭐'.repeat(q.overall || 0)}</span>
+                    <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{q.author}</span>
+                    <span style={{ fontSize: 13 }}>{'⭐'.repeat(q.rating)}</span>
                   </div>
-                  <div style={{ fontSize: 14, color: C.textMuted, fontStyle: 'italic' }}>"{q.comments}"</div>
+                  <div style={{ fontSize: 14, color: C.textMuted, fontStyle: 'italic' }}>"{q.comment}"</div>
                 </div>
               ))}
             </div>
@@ -1440,15 +1277,8 @@ function ReportsSection({ organizerId }) {
 function AccountsSection({ organizerId, currentUser }) {
   const [activeTab, setActiveTab] = useState('profile')
   const [profileForm, setProfileForm] = useState({ name: currentUser?.name || '', email: currentUser?.email || '' })
-  const [accountForm, setAccountForm] = useState({ name: '', email: '', password: '', role: 'STAFF', age: '', specialty: '', companyName: '', eventId: '' })
+  const [accountForm, setAccountForm] = useState({ name: '', email: '', password: '', role: 'STAFF', specialty: '', companyName: '' })
   const [saving, setSaving] = useState(false)
-  const [events, setEvents] = useState([])
-
-  useEffect(() => {
-    if (organizerId) {
-      getOrganizerEvents(organizerId).then(res => setEvents(res.data)).catch(() => {})
-    }
-  }, [organizerId])
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault()
@@ -1467,7 +1297,7 @@ function AccountsSection({ organizerId, currentUser }) {
     setSaving(true)
     try {
       await createStakeholderAccount(accountForm)
-      setAccountForm({ name: '', email: '', password: '', role: 'STAFF', age: '', specialty: '', companyName: '', eventId: '' })
+      setAccountForm({ name: '', email: '', password: '', role: 'STAFF', specialty: '', companyName: '' })
       alert('Account created successfully!')
     } catch {
       alert('Failed to create account. Email may already be in use.')
@@ -1531,16 +1361,9 @@ function AccountsSection({ organizerId, currentUser }) {
                 </Field>
 
                 {accountForm.role === 'STAFF' && (
-                  <>
-                    <Field label="Assign to Event *">
-                      <select required value={accountForm.eventId} onChange={e => setAccountForm(p => ({ ...p, eventId: e.target.value }))} style={inputStyle}>
-                        <option value="">Select Event</option>
-                        {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
-                      </select>
-                    </Field>
-                    <Field label="Age (Optional)"><input type="number" value={accountForm.age} onChange={e => setAccountForm(p => ({ ...p, age: e.target.value }))} style={inputStyle} /></Field>
-                    <Field label="Staff Specialty (e.g. Security)"><input value={accountForm.specialty} onChange={e => setAccountForm(p => ({ ...p, specialty: e.target.value }))} style={inputStyle} /></Field>
-                  </>
+                  <div style={{ gridColumn: '1/-1' }}>
+                    <Field label="Staff Specialty (e.g. Coordinator, Security)"><input value={accountForm.specialty} onChange={e => setAccountForm(p => ({ ...p, specialty: e.target.value }))} style={inputStyle} /></Field>
+                  </div>
                 )}
                 {accountForm.role === 'VENDOR' && (
                   <div style={{ gridColumn: '1/-1' }}>
@@ -1622,10 +1445,10 @@ export default function OrganizerDashboard() {
 
       {/* ── Sidebar (fixed) ───────────────────────────────────────────────── */}
       <div style={{
-        width: sidebarWidth, height: '100vh', background: C.sidebar,
+        width: sidebarWidth, minHeight: '100vh', background: C.sidebar,
         display: 'flex', flexDirection: 'column', position: 'fixed',
         top: 0, left: 0, zIndex: 100,
-        overflowY: 'auto', overflowX: 'hidden',
+        overflow: 'hidden',
         transition: 'width 0.3s ease',
       }}>
         <div style={{ width: '260px' }}>
@@ -1879,7 +1702,6 @@ export default function OrganizerDashboard() {
           {activeSection === 'sourcing' && <SourcingSection organizerId={user?.id} />}
           {activeSection === 'guests' && <GuestsSection organizerId={user?.id} />}
           {activeSection === 'dayof' && <DayOfOpsSection organizerId={user?.id} />}
-          {activeSection === 'feedback' && <FeedbackSection organizerId={user?.id} />}
           {activeSection === 'reports' && <ReportsSection organizerId={user?.id} />}
           {activeSection === 'accounts' && <AccountsSection organizerId={user?.id} currentUser={user} />}
         </div>

@@ -25,7 +25,6 @@ function LoginPage() {
 
       if (response.ok) {
         login(data.user, data.token);
-        // Redirect based on user role
         if (data.user.role === 'VENUE_OWNER') {
           navigate('/venue/dashboard');
         } else if (data.user.role === 'ORGANIZER') {

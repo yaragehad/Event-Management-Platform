@@ -61,7 +61,7 @@ model Venue {
   layouts  Layout[]
 }
 
-// ─── BOOKINGS ─────────────────────────────────────────────────────────────────
+// ─── BOOKINGS ────────────────────────────────────────────────────────────────
 
 model Booking {
   id            Int           @id @default(autoincrement())
@@ -124,6 +124,9 @@ model Event {
   name        String
   description String?
   date        DateTime
+  time        String?
+  dressCode   String?
+  agenda      String?
   organizerId Int
   bookingId   Int?        @unique
   status      EventStatus @default(UPCOMING)
@@ -140,6 +143,7 @@ model Event {
   feedbacks        Feedback[]
   layouts Layout[]
   rsvps            RSVP[]
+  messages         Message[]
 }
 
 enum EventStatus {
@@ -315,9 +319,10 @@ model Guest {
   checkInStatus     Boolean     @default(false)
 
   // Relations
-  user   User    @relation(fields: [userId], references: [id])
-  events Event[]
-  rsvps  RSVP[]
+  user     User      @relation(fields: [userId], references: [id])
+  events   Event[]
+  rsvps    RSVP[]
+  messages Message[]
 }
 
 // ─── RSVP ────────────────────────────────────────────────────────────────────
@@ -327,6 +332,7 @@ model RSVP {
   guestId   Int
   eventId   Int
   status    RSVPStatus @default(PENDING)
+  notes     String?
   createdAt DateTime   @default(now())
 
   // Relations
@@ -361,12 +367,23 @@ model Feedback {
 // ─── MESSAGES ────────────────────────────────────────────────────────────────
 
 model Message {
-  id         Int      @id @default(autoincrement())
-  eventId    Int
-  senderId   Int
-  content    String
-  sentAt     DateTime @default(now())
-  seenByIds  Int[]
+  id               Int        @id @default(autoincrement())
+  eventId          Int
+  guestId          Int
+  senderRole       SenderRole
+  content          String
+  seenByGuest      Boolean    @default(false)
+  seenByOrganizer  Boolean    @default(false)
+  sentAt           DateTime   @default(now())
+
+  // Relations
+  event Event @relation(fields: [eventId], references: [id])
+  guest Guest @relation(fields: [guestId], references: [id])
+}
+
+enum SenderRole {
+  ORGANIZER
+  GUEST
 }
 
 model Layout {

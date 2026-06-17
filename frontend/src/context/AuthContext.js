@@ -12,7 +12,7 @@ function getStoredUser() {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(getStoredUser);
+  const [user, setUser] = useState(getStoredUser());
 
   const login = (userData, token) => {
     localStorage.setItem('user', JSON.stringify(userData));

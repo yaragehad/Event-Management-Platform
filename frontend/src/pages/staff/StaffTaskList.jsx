@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { AuthContext } from '../../context/AuthContext';
 
 const colors = {
   sidebar: '#6B2D0E',
@@ -17,15 +18,17 @@ const colors = {
 };
 
 const StaffTaskList = () => {
+  const { user } = useContext(AuthContext);
   const [tasks, setTasks] = useState([]);
   const [filterStatus, setFilterStatus] = useState('All');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     const fetchTasks = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/staff/tasks/3');
+        const response = await axios.get(`http://localhost:3001/api/staff/tasks/${user.id}`);
         setTasks(response.data);
       } catch (err) {
         console.error('Failed to fetch tasks:', err);
@@ -34,13 +37,11 @@ const StaffTaskList = () => {
       }
     };
     fetchTasks();
-  }, []);
+  }, [user]);
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
-      await axios.patch(`http://localhost:3001/api/staff/tasks/${taskId}/status`, {
-        status: newStatus
-      });
+      await axios.patch(`http://localhost:3001/api/staff/tasks/${taskId}/status`, { status: newStatus });
       setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
     } catch (err) {
       console.error('Failed to update task status:', err);
@@ -79,7 +80,7 @@ const StaffTaskList = () => {
           <h2 style={{ color: colors.white, marginBottom: '20px' }}>VenueHub</h2>
           <a href="/staff/dashboard" style={{ color: colors.accentLight, textDecoration: 'none' }}>📋 My Events</a>
           <a href="/staff/tasks" style={{ color: colors.accentLight, textDecoration: 'none', fontWeight: 'bold' }}>✅ My Tasks</a>
-          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none' }}>🗺️ Floor Plan</a>
+          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none' }}>🗺️ Venue Layout</a>
           <a href="/staff/checkin" style={{ color: colors.accentLight, textDecoration: 'none' }}>👥 Guest Check-In</a>
           <a href="/staff/vendors" style={{ color: colors.accentLight, textDecoration: 'none' }}>🚚 Vendor Arrival</a>
           <a href="/staff/dayof" style={{ color: colors.accentLight, textDecoration: 'none' }}>📊 Day-Of Dashboard</a>

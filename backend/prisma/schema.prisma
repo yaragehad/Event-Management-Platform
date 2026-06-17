@@ -15,6 +15,7 @@ model User {
   password  String
   role      Role     @default(STAFF)
   isActive  Boolean  @default(true)
+  age       Int?
   createdAt DateTime @default(now())
 
   // Relations
@@ -22,6 +23,10 @@ model User {
   staffAssignments StaffAssignment[]
   guestProfile     Guest?
   vendorProfile    Vendor?
+  ownedVenues     Venue[]   @relation("VenueOwner")
+  bookingRequests Booking[] @relation("OrganizerBookings")
+  notifications   Notification[]
+  bookingMessages BookingMessage[]
 }
 
 enum Role {
@@ -44,34 +49,72 @@ model Venue {
   areaM2      Float?
   amenities   String?
   pricePerDay Float
+  photos         String[]   
+  availableDates DateTime[] 
   isActive    Boolean  @default(true)
   ownerId     Int
   createdAt   DateTime @default(now())
 
   // Relations
-  bookings    Booking[]
+  owner    User      @relation("VenueOwner", fields: [ownerId], references: [id])
+  bookings Booking[]
+  layouts  Layout[]
 }
 
 // ─── BOOKINGS ─────────────────────────────────────────────────────────────────
 
 model Booking {
-  id          Int           @id @default(autoincrement())
-  venueId     Int
-  organizerId Int
-  eventDate   DateTime
-  status      BookingStatus @default(PENDING)
-  notes       String?
-  createdAt   DateTime      @default(now())
+  id            Int           @id @default(autoincrement())
+  venueId       Int
+  organizerId   Int
+  eventDate     DateTime
+  status        BookingStatus @default(PENDING)
+  notes         String?
+  eventType     String?
+  attendeeCount Int?
+  decidedAt     DateTime?
+  createdAt     DateTime      @default(now())
 
   // Relations
-  venue  Venue  @relation(fields: [venueId], references: [id])
-  event  Event?
+  venue    Venue  @relation(fields: [venueId], references: [id])
+  event    Event?
+  organizer User  @relation("OrganizerBookings", fields: [organizerId], references: [id])
+  messages BookingMessage[]
 }
 
 enum BookingStatus {
   PENDING
   APPROVED
   DECLINED
+}
+
+// ─── BOOKING MESSAGES ────────────────────────────────────────────────────────
+
+model BookingMessage {
+  id        Int      @id @default(autoincrement())
+  bookingId Int
+  senderId  Int
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  booking Booking @relation(fields: [bookingId], references: [id])
+  sender  User    @relation(fields: [senderId], references: [id])
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
 }
 
 // ─── EVENTS ──────────────────────────────────────────────────────────────────
@@ -95,6 +138,8 @@ model Event {
   staffAssignments StaffAssignment[]
   vendorRequests   SourcingRequest[]
   feedbacks        Feedback[]
+  layouts Layout[]
+  rsvps            RSVP[]
 }
 
 enum EventStatus {
@@ -286,6 +331,7 @@ model RSVP {
 
   // Relations
   guest Guest @relation(fields: [guestId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
 }
 
 enum RSVPStatus {
@@ -321,4 +367,15 @@ model Message {
   content    String
   sentAt     DateTime @default(now())
   seenByIds  Int[]
+}
+
+model Layout {
+  id        Int      @id @default(autoincrement())
+  venueId   Int
+  eventId   Int
+  elements  Json
+  createdAt DateTime @default(now())
+
+  venue Venue @relation(fields: [venueId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
 }

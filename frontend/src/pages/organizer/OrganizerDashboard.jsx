@@ -292,8 +292,14 @@ function EventsSection({ organizerId }) {
       <SectionHeader title="Upcoming Events" icon="📅">
         <FilterSelect value={statusFilter} onChange={setStatusFilter} placeholder="All Statuses"
           options={['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED'].map(s => ({ value: s, label: s }))} />
-        <FilterInput value={dateFrom} onChange={setDateFrom} placeholder="From date" type="date" />
-        <FilterInput value={dateTo} onChange={setDateTo} placeholder="To date" type="date" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 600 }}>Start:</span>
+          <FilterInput value={dateFrom} onChange={setDateFrom} placeholder="From date" type="date" />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 600 }}>End:</span>
+          <FilterInput value={dateTo} onChange={setDateTo} placeholder="To date" type="date" />
+        </div>
       </SectionHeader>
       {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : events.length === 0 ? <EmptyState msg="No events found." /> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', maxHeight: 400, paddingRight: 8 }}>

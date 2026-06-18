@@ -1,5 +1,6 @@
 const prisma = require('../lib/prismaClient');
 const bcrypt = require('bcrypt');
+const { sendAccountCreationEmail } = require('./emailController');
 
 // GET /api/organizer/dashboard/:id
 // Summary stats: today's events, task breakdown, avg feedback
@@ -314,6 +315,14 @@ const createStakeholderAccount = async (req, res) => {
         data: { userId: user.id, companyName, suppliesOffered, location, contactEmail, contactPhone }
       });
     }
+    
+    // Send email with credentials to the newly created user
+    try {
+      await sendAccountCreationEmail(email, name, role, password);
+    } catch (emailErr) {
+      console.error('Account created but credential email failed:', emailErr);
+    }
+
     res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (err) {
     console.error(err);

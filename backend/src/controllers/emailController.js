@@ -396,6 +396,39 @@ const sendFeedbackThankYou = async (req, res) => {
   }
 }
 
+// Send an email with login credentials when a stakeholder account is created
+const sendAccountCreationEmail = async (email, name, role, plainPassword) => {
+  try {
+    const loginLink = `http://localhost:3000/login`
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: `Welcome! Your ${role} account has been created`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #C4622D; padding: 32px; text-align: center;">
+            <h1 style="color: white; margin: 0;">Welcome to EventPro!</h1>
+          </div>
+          <div style="padding: 32px; background-color: #FBF7F4;">
+            <h2 style="color: #2C1810;">Hi ${name || 'there'},</h2>
+            <p style="color: #8B6555;">An organizer has created a <strong>${role}</strong> account for you.</p>
+            <div style="background:#ffffff;border:1px solid #EDE0D9;border-radius:12px;padding:20px;margin:24px 0;">
+              <p style="margin:0 0 12px;color:#2C1810;font-weight:bold;font-size:15px;">🔑 Your login details</p>
+              <p style="margin:0 0 6px;color:#8B6555;font-size:14px;">Email: <strong style="color:#2C1810;">${email}</strong></p>
+              <p style="margin:0;color:#8B6555;font-size:14px;">Password: <strong style="color:#2C1810;">${plainPassword}</strong></p>
+            </div>
+            <a href="${loginLink}" style="display: block; margin-top: 24px; background-color: #C4622D; color: white; text-align: center; padding: 14px; border-radius: 8px; text-decoration: none; font-weight: bold;">Log In Now</a>
+          </div>
+        </div>
+      `,
+    }
+    await transporter.sendMail(mailOptions)
+  } catch (err) {
+    console.error('Failed to send account creation email:', err)
+    throw err
+  }
+}
+
 module.exports = {
   sendInvitationEmail,
   sendInvitationsToAll,
@@ -404,4 +437,5 @@ module.exports = {
   sendFeedbackLinks,
   notifyBroadcast,
   sendFeedbackThankYou,
+  sendAccountCreationEmail,
 }

@@ -857,20 +857,23 @@ function SourcingSection({ organizerId }) {
   // Form state
   const [showReqForm, setShowReqForm] = useState(false)
   const [events, setEvents] = useState([])
-  const [reqForm, setReqForm] = useState({ eventId: '', itemDetails: '', quantity: '', maxBudget: '' })
+  const [vendors, setVendors] = useState([])
+  const [reqForm, setReqForm] = useState({ eventId: '', vendorId: '', items: '', quantity: '', deliveryDate: '', notes: '' })
   const [savingReq, setSavingReq] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [reqRes, invRes, evRes] = await Promise.all([
+      const [reqRes, invRes, evRes, venRes] = await Promise.all([
         getOrganizerSourcingRequests(organizerId),
         getOrganizerInvoices(organizerId),
         getOrganizerEvents(organizerId),
+        getVendors(),
       ])
       setRequests(reqRes.data)
       setInvoices(invRes.data)
       setEvents(evRes.data)
+      setVendors(venRes.data)
     } catch { }
     setLoading(false)
   }, [organizerId])
@@ -884,12 +887,11 @@ function SourcingSection({ organizerId }) {
       const res = await createSourcingRequest({
         ...reqForm,
         eventId: parseInt(reqForm.eventId),
-        quantity: parseInt(reqForm.quantity),
-        maxBudget: reqForm.maxBudget ? parseFloat(reqForm.maxBudget) : null
+        vendorId: parseInt(reqForm.vendorId)
       })
       setRequests(p => [res.data, ...p])
       setShowReqForm(false)
-      setReqForm({ eventId: '', itemDetails: '', quantity: '', maxBudget: '' })
+      setReqForm({ eventId: '', vendorId: '', items: '', quantity: '', deliveryDate: '', notes: '' })
     } catch { }
     setSavingReq(false)
   }
@@ -931,9 +933,16 @@ function SourcingSection({ organizerId }) {
                   {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
                 </select>
               </Field>
-              <Field label="Item Details *"><input required value={reqForm.itemDetails} onChange={e => setReqForm(p => ({ ...p, itemDetails: e.target.value }))} style={inputStyle} /></Field>
-              <Field label="Quantity *"><input required type="number" value={reqForm.quantity} onChange={e => setReqForm(p => ({ ...p, quantity: e.target.value }))} style={inputStyle} /></Field>
-              <Field label="Max Budget (Optional)"><input type="number" value={reqForm.maxBudget} onChange={e => setReqForm(p => ({ ...p, maxBudget: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Vendor *">
+                <select required value={reqForm.vendorId} onChange={e => setReqForm(p => ({ ...p, vendorId: e.target.value }))} style={inputStyle}>
+                  <option value="">Select vendor</option>
+                  {vendors.map(v => <option key={v.id} value={v.id}>{v.companyName}</option>)}
+                </select>
+              </Field>
+              <Field label="Items Needed *"><input required value={reqForm.items} onChange={e => setReqForm(p => ({ ...p, items: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Quantity *"><input required value={reqForm.quantity} onChange={e => setReqForm(p => ({ ...p, quantity: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Delivery Date *"><input required type="date" value={reqForm.deliveryDate} onChange={e => setReqForm(p => ({ ...p, deliveryDate: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Notes (Optional)"><input value={reqForm.notes} onChange={e => setReqForm(p => ({ ...p, notes: e.target.value }))} style={inputStyle} /></Field>
             </div>
             <Btn type="submit" disabled={savingReq}>{savingReq ? 'Creating...' : 'Submit Request'}</Btn>
           </form>
@@ -947,16 +956,16 @@ function SourcingSection({ organizerId }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ background: C.cream }}>
-                    {['Item', 'Event', 'Quantity', 'Max Budget', 'Status', 'Vendor'].map(h => <th key={h} style={thStyle}>{h}</th>)}
+                    {['Items', 'Event', 'Quantity', 'Delivery Date', 'Status', 'Vendor'].map(h => <th key={h} style={thStyle}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {requests.map(r => (
                     <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                      <td style={{ padding: '11px 14px', fontWeight: 600, color: C.text }}>{r.itemDetails}</td>
+                      <td style={{ padding: '11px 14px', fontWeight: 600, color: C.text }}>{r.items}</td>
                       <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.event?.name}</td>
                       <td style={{ padding: '11px 14px' }}>{r.quantity}</td>
-                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.maxBudget ? fmtMoney(r.maxBudget) : '—'}</td>
+                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{fmt(r.deliveryDate)}</td>
                       <td style={{ padding: '11px 14px' }}>{statusBadge(r.status)}</td>
                       <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.vendor?.companyName || '—'}</td>
                     </tr>
@@ -1445,13 +1454,19 @@ export default function OrganizerDashboard() {
 
       {/* ── Sidebar (fixed) ───────────────────────────────────────────────── */}
       <div style={{
-        width: sidebarWidth, minHeight: '100vh', background: C.sidebar,
+        width: sidebarWidth, height: '100vh', background: C.sidebar,
         display: 'flex', flexDirection: 'column', position: 'fixed',
         top: 0, left: 0, zIndex: 100,
         overflow: 'hidden',
         transition: 'width 0.3s ease',
       }}>
-        <div style={{ width: '260px' }}>
+        <style>{`
+          .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        `}</style>
+        <div style={{ width: '260px', display: 'flex', flexDirection: 'column', height: '100vh' }}>
 
           {/* Logo with hover dropdown */}
           <div
@@ -1534,7 +1549,7 @@ export default function OrganizerDashboard() {
           </div>
 
           {/* Nav items */}
-          <nav style={{ padding: '1rem 0.75rem', flex: 1 }}>
+          <nav className="custom-scrollbar" style={{ padding: '1rem 0.75rem', flex: 1, overflowY: 'auto' }}>
             {NAV_ITEMS.map(item => {
               const isActive = activeSection === item.key
               return (

@@ -296,7 +296,7 @@ function EventsSection({ organizerId }) {
         <FilterInput value={dateTo} onChange={setDateTo} placeholder="To date" type="date" />
       </SectionHeader>
       {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : events.length === 0 ? <EmptyState msg="No events found." /> : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', maxHeight: 400, paddingRight: 8 }}>
           {events.map(ev => (
             <div key={ev.id} style={{
               background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 18px',
@@ -447,7 +447,7 @@ function TasksSection({ organizerId }) {
       )}
 
       {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : tasks.length === 0 ? <EmptyState msg="No tasks found." /> : (
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 400 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
               <tr style={{ background: C.cream }}>
@@ -638,11 +638,11 @@ function BudgetSection({ organizerId }) {
           )}
 
           {budget.items.length === 0 ? <p style={{ color: C.textMuted, fontSize: 14, marginBottom: 20 }}>No budget items.</p> : (
-            <div style={{ overflowX: 'auto', marginBottom: 30 }}>
+            <div className="custom-scrollbar" style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '300px', marginBottom: 30 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                <thead>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                   <tr style={{ background: C.cream }}>
-                    {['Category', 'Description', 'Planned', ''].map(h => <th key={h} style={thStyle}>{h}</th>)}
+                    {['Category', 'Description', 'Planned', ''].map(h => <th key={h} style={{ ...thStyle, position: 'sticky', top: 0, background: C.cream, zIndex: 1 }}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -683,11 +683,11 @@ function BudgetSection({ organizerId }) {
           )}
 
           {budget.expenses.length === 0 ? <p style={{ color: C.textMuted, fontSize: 14 }}>No expenses recorded.</p> : (
-            <div style={{ overflowX: 'auto' }}>
+            <div className="custom-scrollbar" style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '300px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                <thead>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                   <tr style={{ background: C.cream }}>
-                    {['Category', 'Description', 'Amount', 'Date', ''].map(h => <th key={h} style={thStyle}>{h}</th>)}
+                    {['Category', 'Description', 'Amount', 'Date', ''].map(h => <th key={h} style={{ ...thStyle, position: 'sticky', top: 0, background: C.cream, zIndex: 1 }}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -752,11 +752,11 @@ function StaffSection({ organizerId }) {
         <FilterInput value={specialtyFilter} onChange={setSpecialtyFilter} placeholder="Search specialty" />
       </SectionHeader>
       {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : staff.length === 0 ? <EmptyState msg="No staff found." /> : (
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 400 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
               <tr style={{ background: C.cream }}>
-                {['Name', 'Email', 'Event', 'Type', 'Specialty', 'Status', 'Tasks', 'Action'].map(h => (
+                {['Name', 'Email', 'Age', 'Event', 'Type', 'Specialty', 'Status', 'Tasks', 'Action'].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: C.textMuted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
                 ))}
               </tr>
@@ -766,6 +766,7 @@ function StaffSection({ organizerId }) {
                 <tr key={s.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                   <td style={{ padding: '10px 14px', fontWeight: 600, color: C.text }}>{s.user?.name}</td>
                   <td style={{ padding: '10px 14px', color: C.textMuted }}>{s.user?.email}</td>
+                  <td style={{ padding: '10px 14px', color: C.textMuted }}>{s.user?.age || '—'}</td>
                   <td style={{ padding: '10px 14px', color: C.textMuted }}>{s.event?.name || '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
                     {s.employmentType ? badge(s.employmentType, C.accentLight, C.accent) : '—'}
@@ -982,7 +983,7 @@ function SourcingSection({ organizerId }) {
       )}
 
       {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : (
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 400 }}>
           {tab === 'requests' ? (
             requests.length === 0 ? <EmptyState msg="No sourcing requests." /> : (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
@@ -1018,8 +1019,8 @@ function SourcingSection({ organizerId }) {
                     <tr key={inv.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                       <td style={{ padding: '11px 14px', fontWeight: 600, color: C.text }}>{inv.details || `Invoice #${inv.id}`}</td>
                       <td style={{ padding: '11px 14px', color: C.red, fontWeight: 600 }}>{fmtMoney(inv.amount)}</td>
-                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.sourcingRequest?.vendor?.companyName || '—'}</td>
-                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.sourcingRequest?.itemDetails || '—'}</td>
+                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.vendor?.companyName || '—'}</td>
+                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.description || '—'}</td>
                       <td style={{ padding: '11px 14px' }}>
                         <select value={inv.status} onChange={e => handleInvoiceStatus(inv.id, e.target.value)}
                           style={{
@@ -1094,7 +1095,7 @@ function GuestsSection({ organizerId }) {
         <Btn onClick={() => alert('Invitations sent to all pending guests!')}>✉️ Send Invitations</Btn>
       </SectionHeader>
       {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : guests.length === 0 ? <EmptyState msg="No guests found." /> : (
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 400 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
               <tr style={{ background: C.cream }}>
@@ -1197,7 +1198,7 @@ function DayOfOpsSection({ organizerId }) {
       {!loading && !dayOfData && selectedEventId && <EmptyState msg="No operations data available." />}
 
       {!loading && dayOfData && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 20, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
               <StatCard icon="🏟️" label="Check-In Rate" value={`${dayOfData.checkedInGuests}/${dayOfData.totalGuests}`} />
@@ -1216,31 +1217,6 @@ function DayOfOpsSection({ organizerId }) {
               </div>
             )}
           </div>
-
-          <FormCard title="Broadcast Message" onClose={() => { }}>
-            <form onSubmit={handleSendMsg}>
-              <Field label="Audience">
-                <select value={msgForm.audience} onChange={e => setMsgForm(p => ({ ...p, audience: e.target.value }))} style={{ ...inputStyle, marginBottom: 12 }}>
-                  <option value="ALL">All Stakeholders</option>
-                  <option value="GUESTS">Guests</option>
-                  <option value="STAFF">Staff</option>
-                  <option value="VENDORS">Vendors</option>
-                </select>
-              </Field>
-              <Field label="Message">
-                <textarea required rows={4} value={msgForm.content} onChange={e => setMsgForm(p => ({ ...p, content: e.target.value }))}
-                  style={{ ...inputStyle, marginBottom: 12, resize: 'vertical' }} placeholder="Type an urgent update or announcement..." />
-              </Field>
-              <Btn type="submit" style={{ width: '100%' }} disabled={sendingMsg}>{sendingMsg ? 'Sending...' : 'Send Message'}</Btn>
-            </form>
-            <div style={{ marginTop: 20, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
-              <div style={{ fontSize: 13, color: C.text, fontWeight: 600, marginBottom: 8 }}>Message Delivery Status</div>
-              <div style={{ fontSize: 12, color: C.textMuted }}>85% of guests have seen the latest broadcast.</div>
-              <button onClick={() => alert('Follow-up message sent to guests who have not seen the broadcast.')} style={{ marginTop: 8, padding: '6px 12px', fontSize: 12, borderRadius: 6, border: `1px solid ${C.border}`, background: C.cream, cursor: 'pointer' }}>
-                Resend to unread
-              </button>
-            </div>
-          </FormCard>
         </div>
       )}
     </div>
@@ -1350,7 +1326,7 @@ function GuestMessagesTab({ organizerId }) {
           <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
             Guests ({threads.length})
           </div>
-          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+          <div className="custom-scrollbar" style={{ maxHeight: 420, overflowY: 'auto' }}>
             {threads.length === 0 && <div style={{ padding: 14, fontSize: 13, color: C.textMuted }}>No guests for this event.</div>}
             {threads.map(t => (
               <div key={t.guestId} onClick={() => openThread(t.guestId)}
@@ -1384,7 +1360,7 @@ function GuestMessagesTab({ organizerId }) {
               <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
                 {activeThread?.name}
               </div>
-              <div style={{ flex: 1, padding: 14, overflowY: 'auto', maxHeight: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="custom-scrollbar" style={{ padding: 14, overflowY: 'auto', maxHeight: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {thread.length === 0 && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>No messages yet.</div>}
                 {thread.map(m => {
                   const mine = m.senderRole === 'ORGANIZER'
@@ -1468,7 +1444,7 @@ function VenueMessagesTab({ organizerId, currentUserId }) {
         <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
           Bookings ({bookings.length})
         </div>
-        <div style={{ maxHeight: 460, overflowY: 'auto' }}>
+        <div className="custom-scrollbar" style={{ maxHeight: '460px', overflowY: 'auto' }}>
           {bookings.map(b => (
             <div key={b.id} onClick={() => openBooking(b.id)}
               style={{
@@ -1495,7 +1471,7 @@ function VenueMessagesTab({ organizerId, currentUserId }) {
               <span style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{activeBooking?.venue?.name}</span>
               {activeBooking?.status && statusBadge(activeBooking.status)}
             </div>
-            <div style={{ flex: 1, padding: 14, overflowY: 'auto', maxHeight: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="custom-scrollbar" style={{ padding: 14, overflowY: 'auto', maxHeight: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {msgsLoading && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>Loading messages...</div>}
               {!msgsLoading && messages.length === 0 && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>No messages yet.</div>}
               {messages.map(m => {
@@ -1585,7 +1561,7 @@ function DirectMessagesTab({ organizerId, currentUserId, role }) {
         <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
           {role === 'STAFF' ? 'Staff Members' : 'Vendors'} ({contacts.length})
         </div>
-        <div style={{ maxHeight: 460, overflowY: 'auto' }}>
+        <div className="custom-scrollbar" style={{ maxHeight: '460px', overflowY: 'auto' }}>
           {contacts.map(c => (
             <div key={c.id} onClick={() => openThread(c.id)}
               style={{
@@ -1619,7 +1595,7 @@ function DirectMessagesTab({ organizerId, currentUserId, role }) {
               <div style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{activeContact?.name}</div>
               <div style={{ fontSize: 11, color: C.textMuted }}>{activeContact?.email}</div>
             </div>
-            <div style={{ flex: 1, padding: 14, overflowY: 'auto', maxHeight: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="custom-scrollbar" style={{ flex: 1, padding: 14, overflowY: 'auto', maxHeight: '320px' }}>
               {threadLoading && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>Loading...</div>}
               {!threadLoading && thread.length === 0 && (
                 <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>No messages yet. Say hello!</div>
@@ -1627,7 +1603,7 @@ function DirectMessagesTab({ organizerId, currentUserId, role }) {
               {thread.map(m => {
                 const mine = m.senderId === currentUserId
                 return (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
+                  <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
                     <div>
                       <div style={{
                         maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
@@ -1731,7 +1707,7 @@ function FeedbackSection({ organizerId }) {
             <StatCard icon="📊" label="Total Reviews" value={filtered.length} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14, overflowY: 'auto', maxHeight: 400, paddingRight: 8 }}>
             {filtered.map((f, i) => (
               <div key={f.id || i} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: '16px 18px', boxShadow: '0 1px 4px rgba(107,45,14,0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -1924,7 +1900,7 @@ function ReportsSection({ organizerId }) {
 // ─── Accounts Section ─────────────────────────────────────────────────────────
 function AccountsSection({ organizerId, currentUser }) {
   const [activeTab, setActiveTab] = useState('profile')
-  const [profileForm, setProfileForm] = useState({ name: currentUser?.name || '', email: currentUser?.email || '' })
+  const [profileForm, setProfileForm] = useState({ name: currentUser?.name || '', email: currentUser?.email || '', password: '' })
   const [accountForm, setAccountForm] = useState({ name: '', email: '', password: '', role: 'STAFF', specialty: '', companyName: '' })
   const [saving, setSaving] = useState(false)
 
@@ -1932,8 +1908,13 @@ function AccountsSection({ organizerId, currentUser }) {
     e.preventDefault()
     setSaving(true)
     try {
-      await updateOrganizerProfile(organizerId, profileForm)
+      // Create a payload that only includes the password if it's not empty
+      const payload = { ...profileForm }
+      if (!payload.password) delete payload.password
+
+      await updateOrganizerProfile(organizerId, payload)
       alert('Profile updated successfully! (Refresh to see changes)')
+      setProfileForm(p => ({ ...p, password: '' })) // Clear password field after save
     } catch {
       alert('Failed to update profile.')
     }
@@ -1978,7 +1959,10 @@ function AccountsSection({ organizerId, currentUser }) {
                 <input required value={profileForm.name} onChange={e => setProfileForm(p => ({ ...p, name: e.target.value }))} style={{ ...inputStyle, marginBottom: 14 }} />
               </Field>
               <Field label="Email Address">
-                <input required type="email" value={profileForm.email} onChange={e => setProfileForm(p => ({ ...p, email: e.target.value }))} style={{ ...inputStyle, marginBottom: 20 }} />
+                <input required type="email" value={profileForm.email} onChange={e => setProfileForm(p => ({ ...p, email: e.target.value }))} style={{ ...inputStyle, marginBottom: 14 }} />
+              </Field>
+              <Field label="New Password (leave blank to keep current)">
+                <input type="password" placeholder="Enter new password" value={profileForm.password} onChange={e => setProfileForm(p => ({ ...p, password: e.target.value }))} style={{ ...inputStyle, marginBottom: 20 }} />
               </Field>
               <Btn type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save Profile'}</Btn>
             </form>
@@ -2323,7 +2307,7 @@ export default function OrganizerDashboard() {
         </div>
 
         {/* ── Page content ─────────────────────────────────────────────────── */}
-        <div style={{ padding: '2rem', flex: 1 }}>
+      <div className="custom-scrollbar" style={{ padding: '2rem', flex: 1, overflowY: 'auto' }}>
           {/* Welcome banner — overview only */}
           {activeSection === 'overview' && (
             <div style={{

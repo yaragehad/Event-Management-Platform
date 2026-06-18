@@ -80,7 +80,7 @@ const getContacts = async (req, res) => {
         select: { vendor: { select: { userId: true } } },
         distinct: ['vendorId'],
       })
-      userIds = requests.map(r => r.vendor.userId)
+      userIds = requests.map(r => r.vendor?.userId).filter(Boolean)
     }
 
     const users = await prisma.user.findMany({

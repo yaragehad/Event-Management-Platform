@@ -1,7 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = require('../lib/prismaClient')
 
 // 1. REGISTER (Public Door)
@@ -27,16 +26,15 @@ exports.register = async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        role: assignedRole, 
+        role: assignedRole,
       }
     });
 
-    res.status(201).json({ 
-        message: "Account created successfully", 
+    res.status(201).json({
+        message: "Account created successfully",
         userId: newUser.id,
         role: newUser.role
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error during registration." });
@@ -67,12 +65,17 @@ exports.login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    let vendorId = null;
+    if (user.role === 'VENDOR') {
+      const vendorProfile = await prisma.vendor.findUnique({ where: { userId: user.id } });
+      vendorId = vendorProfile?.id ?? null;
+    }
+
     res.status(200).json({
         message: "Login successful",
         token,
-        user: { id: user.id, name: user.name, email: user.email, role: user.role }
+        user: { id: user.id, name: user.name, email: user.email, role: user.role, vendorId }
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error during login." });

@@ -145,7 +145,7 @@ function RSVPPage() {
           <h1 style={{ color: colors.white, margin: 0, fontSize: '22px' }}>
             {existingRSVP ? 'Update Your RSVP' : 'RSVP Form'}
           </h1>
-          {guestName && <p style={{ color: colors.accentLight, margin: '4px 0 0', fontSize: '14px' }}>Welcome, {guestName}!</p>}
+          <p style={{ color: colors.accentLight, margin: '4px 0 0', fontSize: '14px' }}>Please fill in your details below</p>
         </div>
 
         <div style={{ padding: '32px' }}>

@@ -1,6 +1,5 @@
 const prisma = require('../lib/prismaClient')
 
-// GET /api/deliveries - list all deliveries (filter by vendorId via sourcing request)
 const getAllDeliveries = async (req, res) => {
   try {
     const { vendorId } = req.query
@@ -12,7 +11,7 @@ const getAllDeliveries = async (req, res) => {
         sourcingRequest: {
           include: {
             vendor: { select: { companyName: true } },
-            event: { select: { name: true, date: true } },
+            event: { select: { id: true, name: true, date: true } },
           },
         },
       },
@@ -23,7 +22,6 @@ const getAllDeliveries = async (req, res) => {
   }
 }
 
-// GET /api/deliveries/:id - get single delivery
 const getDeliveryById = async (req, res) => {
   try {
     const delivery = await prisma.delivery.findUnique({
@@ -32,7 +30,7 @@ const getDeliveryById = async (req, res) => {
         sourcingRequest: {
           include: {
             vendor: true,
-            event: { select: { name: true, date: true } },
+            event: { select: { id: true, name: true, date: true } },
           },
         },
       },
@@ -44,7 +42,6 @@ const getDeliveryById = async (req, res) => {
   }
 }
 
-// PATCH /api/deliveries/:id/status - vendor updates delivery status
 const updateDeliveryStatus = async (req, res) => {
   try {
     const { status } = req.body

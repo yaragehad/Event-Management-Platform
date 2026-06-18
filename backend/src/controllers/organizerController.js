@@ -547,16 +547,7 @@ const createSourcingRequest = async (req, res) => {
 // ── Invoices ───────────────────────────────────────────────────────────────────
 const getOrganizerInvoices = async (req, res) => {
   try {
-    const organizerId = parseInt(req.params.id);
-    const events = await prisma.event.findMany({ where: { organizerId }, select: { id: true } });
-    const eventIds = events.map(e => e.id);
-    const requests = await prisma.sourcingRequest.findMany({
-      where: eventIds.length > 0 ? { eventId: { in: eventIds } } : { id: -1 },
-      select: { vendorId: true }
-    });
-    const vendorIds = [...new Set(requests.map(r => r.vendorId))];
     const invoices = await prisma.invoice.findMany({
-      where: vendorIds.length > 0 ? { vendorId: { in: vendorIds } } : {},
       include: { vendor: true },
       orderBy: { createdAt: 'desc' }
     });

@@ -1900,7 +1900,14 @@ function ReportsSection({ organizerId }) {
 // ─── Accounts Section ─────────────────────────────────────────────────────────
 function AccountsSection({ organizerId, currentUser }) {
   const [activeTab, setActiveTab] = useState('profile')
-  const [profileForm, setProfileForm] = useState({ name: currentUser?.name || '', email: currentUser?.email || '', password: '' })
+  const [profileForm, setProfileForm] = useState({ 
+    name: currentUser?.name || '', 
+    email: currentUser?.email || '', 
+    password: '',
+    age: currentUser?.age || '',
+    phone: currentUser?.phone || '',
+    bio: currentUser?.bio || ''
+  })
   const [accountForm, setAccountForm] = useState({ name: '', email: '', password: '', role: 'STAFF', specialty: '', companyName: '' })
   const [saving, setSaving] = useState(false)
 
@@ -1912,8 +1919,13 @@ function AccountsSection({ organizerId, currentUser }) {
       const payload = { ...profileForm }
       if (!payload.password) delete payload.password
 
-      await updateOrganizerProfile(organizerId, payload)
-      alert('Profile updated successfully! (Refresh to see changes)')
+      const res = await updateOrganizerProfile(organizerId, payload)
+      
+      // Update local storage so changes persist across refreshes without needing to re-login
+      const updatedUser = { ...currentUser, ...res.data }
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+      
+      alert('Profile updated successfully!')
       setProfileForm(p => ({ ...p, password: '' })) // Clear password field after save
     } catch {
       alert('Failed to update profile.')
@@ -1960,6 +1972,17 @@ function AccountsSection({ organizerId, currentUser }) {
               </Field>
               <Field label="Email Address">
                 <input required type="email" value={profileForm.email} onChange={e => setProfileForm(p => ({ ...p, email: e.target.value }))} style={{ ...inputStyle, marginBottom: 14 }} />
+              </Field>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                <Field label="Phone Number">
+                  <input type="tel" value={profileForm.phone} onChange={e => setProfileForm(p => ({ ...p, phone: e.target.value }))} style={inputStyle} />
+                </Field>
+                <Field label="Age">
+                  <input type="number" min="13" max="120" value={profileForm.age} onChange={e => setProfileForm(p => ({ ...p, age: e.target.value }))} style={inputStyle} />
+                </Field>
+              </div>
+              <Field label="Short Bio">
+                <textarea rows={3} value={profileForm.bio} onChange={e => setProfileForm(p => ({ ...p, bio: e.target.value }))} style={{ ...inputStyle, marginBottom: 14, resize: 'vertical' }} />
               </Field>
               <Field label="New Password (leave blank to keep current)">
                 <input type="password" placeholder="Enter new password" value={profileForm.password} onChange={e => setProfileForm(p => ({ ...p, password: e.target.value }))} style={{ ...inputStyle, marginBottom: 20 }} />

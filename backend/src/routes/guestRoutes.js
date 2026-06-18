@@ -52,6 +52,9 @@ router.get('/dashboard/:eventId', getDayOfDashboard)
 // Check-in route — :eventId makes check-in per-event
 router.patch('/:id/checkin/:eventId', checkInGuest)
 
+// By user ID — keep ABOVE /:id
+router.get('/by-user/:userId', getGuestByUserId)
+
 // Single guest — keep LAST so it doesn't swallow /lookup, /messages, etc.
 router.get('/:id', getGuestById)
 

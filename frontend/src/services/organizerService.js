@@ -85,6 +85,19 @@ export const sendMessage = (eventId, data) =>
   API.post(`/organizer/messages/${eventId}`, data)
 
 // ── Feedback & Reports ─────────────────────────────────────────────────────────
+export const sendTaskReminders = (organizerId) =>
+  API.post(`/organizer/tasks/reminders/${organizerId}`)
+
+// ── Direct Messages (Staff & Vendor) ──────────────────────────────────────────
+export const getDirectContacts = (organizerId, role) =>
+  API.get(`/direct-messages/contacts/${organizerId}`, { params: { role } })
+
+export const getDirectThread = (userId, otherId) =>
+  API.get(`/direct-messages/thread/${userId}/${otherId}`)
+
+export const sendDirectMessage = (senderId, receiverId, content) =>
+  API.post('/direct-messages/send', { senderId, receiverId, content })
+
 export const getOrganizerFeedback = (organizerId) =>
   API.get(`/organizer/feedback/${organizerId}`)
 

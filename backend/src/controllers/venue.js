@@ -45,7 +45,7 @@ const getVenueById = async (req, res) => {
 
 const createVenue = async (req, res) => {
   try {
-    const { name, description, location, city, capacity, areaM2, amenities, pricePerDay, photos, ownerId } = req.body
+    const { name, description, location, city, capacity, areaM2, amenities, pricePerDay, photos, layoutDocuments, ownerId } = req.body
     if (!name || !location || !city || !capacity || !pricePerDay || !ownerId) {
       return res.status(400).json({ error: 'name, location, city, capacity, pricePerDay and ownerId are required' })
     }
@@ -57,6 +57,7 @@ const createVenue = async (req, res) => {
         amenities,
         pricePerDay: parseFloat(pricePerDay),
         photos: photos || [],
+        layoutDocuments: layoutDocuments || [],
         ownerId: parseInt(ownerId)
       }
     })
@@ -69,9 +70,24 @@ const createVenue = async (req, res) => {
 
 const updateVenue = async (req, res) => {
   try {
+    const { name, description, location, city, capacity, areaM2, amenities, pricePerDay, photos, layoutDocuments, isActive, availableDates } = req.body
+    const data = {}
+    if (name !== undefined) data.name = name
+    if (description !== undefined) data.description = description
+    if (location !== undefined) data.location = location
+    if (city !== undefined) data.city = city
+    if (capacity !== undefined) data.capacity = parseInt(capacity)
+    if (areaM2 !== undefined) data.areaM2 = areaM2 ? parseFloat(areaM2) : null
+    if (amenities !== undefined) data.amenities = amenities
+    if (pricePerDay !== undefined) data.pricePerDay = parseFloat(pricePerDay)
+    if (photos !== undefined) data.photos = photos
+    if (layoutDocuments !== undefined) data.layoutDocuments = layoutDocuments
+    if (isActive !== undefined) data.isActive = isActive
+    if (availableDates !== undefined) data.availableDates = availableDates
+
     const venue = await prisma.venue.update({
       where: { id: parseInt(req.params.id) },
-      data: req.body
+      data
     })
     res.json(venue)
   } catch (err) {

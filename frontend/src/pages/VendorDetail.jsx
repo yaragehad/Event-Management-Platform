@@ -4,26 +4,26 @@ import { OrganizerSidebar } from '../components/Sidebar';
 import { getVendorById } from '../services/api';
 
 const styles = {
-  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#FBF7F4' },
-  main: { marginLeft: '240px', padding: '30px', flex: 1 },
-  backBtn: { background: 'none', border: 'none', color: '#C4622D', cursor: 'pointer', fontSize: '14px', marginBottom: '16px', padding: 0 },
-  title: { fontSize: '24px', fontWeight: 'bold', color: '#2C1810', marginBottom: '24px' },
-  card: { backgroundColor: '#FFFFFF', border: '1px solid #EDE0D9', borderRadius: '10px', padding: '30px', maxWidth: '650px', marginBottom: '20px' },
-  sectionTitle: { fontSize: '16px', fontWeight: '600', color: '#2C1810', marginBottom: '16px' },
-  row: { display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #EDE0D9' },
-  label: { color: '#8B6555', fontSize: '13px' },
-  value: { color: '#2C1810', fontSize: '14px', fontWeight: '500' },
+  container: { display: 'flex', height: '100vh', backgroundColor: '#fdf4e9', fontFamily: "'Hanken Grotesk', system-ui, sans-serif", padding: '12px', gap: '12px', boxSizing: 'border-box', overflow: 'hidden' },
+  main: { flex: 1, padding: '20px 24px', overflowY: 'auto' },
+  backBtn: { background: 'none', border: 'none', color: '#ff5a2c', cursor: 'pointer', fontSize: '14px', marginBottom: '16px', padding: 0, fontWeight: '600' },
+  title: { fontSize: '24px', fontWeight: '800', color: '#241407', marginBottom: '24px', fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" },
+  card: { backgroundColor: '#ffffff', border: '1px solid #f0e3d2', borderRadius: '16px', padding: '30px', maxWidth: '650px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(27,15,6,0.05)' },
+  sectionTitle: { fontSize: '16px', fontWeight: '700', color: '#241407', marginBottom: '16px' },
+  row: { display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #f0e3d2' },
+  label: { color: '#8a7a68', fontSize: '13px' },
+  value: { color: '#241407', fontSize: '14px', fontWeight: '500' },
   badge: (color) => ({
-    backgroundColor: color === 'green' ? '#E8F5EE' : color === 'red' ? '#FDECEA' : '#F5EDE8',
-    color: color === 'green' ? '#2D7A4F' : color === 'red' ? '#C0392B' : '#C4622D',
+    backgroundColor: color === 'green' ? '#e7f7ee' : color === 'red' ? '#ffe7dc' : '#ffe7dc',
+    color: color === 'green' ? '#0f7a44' : color === 'red' ? '#c83e16' : '#ff5a2c',
     padding: '3px 10px',
     borderRadius: '20px',
     fontSize: '12px',
-    fontWeight: '500',
+    fontWeight: '600',
   }),
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', padding: '10px', borderBottom: '1px solid #EDE0D9', color: '#8B6555', fontSize: '13px' },
-  td: { padding: '10px', borderBottom: '1px solid #EDE0D9', color: '#2C1810', fontSize: '14px' },
+  th: { textAlign: 'left', padding: '10px', borderBottom: '1px solid #f0e3d2', color: '#8a7a68', fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  td: { padding: '10px', borderBottom: '1px solid #f0e3d2', color: '#241407', fontSize: '14px' },
 };
 
 function VendorDetail() {

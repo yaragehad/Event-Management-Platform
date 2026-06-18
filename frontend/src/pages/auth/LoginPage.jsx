@@ -1,19 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const API = 'http://localhost:3001';
-
-const styles = {
-  container: { minHeight: '100vh', backgroundColor: '#FBF7F4', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  card: { backgroundColor: '#FFFFFF', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 20px rgba(107,45,14,0.1)', width: '100%', maxWidth: '400px', border: '1px solid #EDE0D9' },
-  logo: { fontSize: '28px', fontWeight: 'bold', color: '#6B2D0E', textAlign: 'center', marginBottom: '8px' },
-  subtitle: { textAlign: 'center', color: '#8B6555', marginBottom: '30px', fontSize: '14px' },
-  label: { display: 'block', marginBottom: '6px', color: '#2C1810', fontSize: '14px', fontWeight: '500' },
-  input: { width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #EDE0D9', marginBottom: '16px', fontSize: '14px', boxSizing: 'border-box', color: '#2C1810' },
-  button: { width: '100%', padding: '12px', backgroundColor: '#C4622D', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontSize: '15px', fontWeight: '600', cursor: 'pointer' },
-  error: { color: '#C0392B', backgroundColor: '#FDECEA', padding: '10px', borderRadius: '6px', marginBottom: '16px', fontSize: '13px' },
-};
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -82,36 +71,50 @@ function LoginPage() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.logo}>🎟️ VenueHub</div>
-        <div style={styles.subtitle}>Event Management Platform</div>
+    <div style={{ minHeight: '100vh', backgroundColor: '#fdf4e9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+      <div style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '20px', boxShadow: '0 8px 32px rgba(27,15,6,0.12)', width: '100%', maxWidth: '400px', border: '1px solid #f0e3d2' }}>
 
-        {error && <div style={styles.error}>{error}</div>}
+        <h2 style={{ color: '#1b0f06', textAlign: 'center', marginBottom: '24px', fontSize: '26px', fontWeight: '800', fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}>
+          Welcome Back
+        </h2>
 
-        <form onSubmit={handleLogin}>
-          <label style={styles.label}>Email</label>
-          <input
-            style={styles.input}
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+        {error && <div style={{ backgroundColor: '#ffe7dc', color: '#c83e16', padding: '10px', borderRadius: '10px', marginBottom: '16px', textAlign: 'center' }}>{error}</div>}
 
-          <label style={styles.label}>Password</label>
-          <input
-            style={styles.input}
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', color: '#241407', marginBottom: '8px', fontSize: '14px', fontWeight: '600' }}>Email Address</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #f0e3d2', outline: 'none', boxSizing: 'border-box', fontSize: '14px', color: '#241407', background: '#fffaf3' }}
+            />
+          </div>
 
-          <button style={styles.button} type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+          <div>
+            <label style={{ display: 'block', color: '#241407', marginBottom: '8px', fontSize: '14px', fontWeight: '600' }}>Password</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #f0e3d2', outline: 'none', boxSizing: 'border-box', fontSize: '14px', color: '#241407', background: '#fffaf3' }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ backgroundColor: '#ff5a2c', color: '#ffffff', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', marginTop: '8px' }}
+          >
+            {loading ? 'Logging in...' : 'Login to Dashboard'}
           </button>
         </form>
+
+        <p style={{ textAlign: 'center', marginTop: '24px', color: '#8a7a68', fontSize: '14px' }}>
+          Don't have an account? <Link to="/register" style={{ color: '#ff5a2c', textDecoration: 'none', fontWeight: '700' }}>Register here</Link>
+        </p>
       </div>
     </div>
   );

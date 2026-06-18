@@ -17,6 +17,24 @@ const getGuests = async (req, res) => {
   }
 }
 
+// GET /api/guests/by-user/:userId - get guest profile by user ID
+const getGuestByUserId = async (req, res) => {
+  try {
+    const guest = await prisma.guest.findUnique({
+      where: { userId: parseInt(req.params.userId) },
+      include: {
+        user: { select: { name: true, email: true } },
+        events: true,
+        rsvps: true,
+      },
+    })
+    if (!guest) return res.status(404).json({ error: 'Guest profile not found' })
+    res.json(guest)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch guest profile' })
+  }
+}
+
 // GET /api/guests/lookup?email=&eventId= - first-time check
 const lookupGuest = async (req, res) => {
   try {

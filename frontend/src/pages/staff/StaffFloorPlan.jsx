@@ -63,7 +63,7 @@ const StaffFloorPlan = () => {
           <h2 style={{ color: colors.white, marginBottom: '20px' }}>VenueHub</h2>
           <a href="/staff/dashboard" style={{ color: colors.accentLight, textDecoration: 'none' }}>📋 My Events</a>
           <a href="/staff/tasks" style={{ color: colors.accentLight, textDecoration: 'none' }}>✅ My Tasks</a>
-          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none', fontWeight: 'bold' }}>🗺️ Floor Plan</a>
+          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none', fontWeight: 'bold' }}>🗺️ Venue Layout</a>
           <a href="/staff/checkin" style={{ color: colors.accentLight, textDecoration: 'none' }}>👥 Guest Check-In</a>
           <a href="/staff/vendors" style={{ color: colors.accentLight, textDecoration: 'none' }}>🚚 Vendor Arrival</a>
           <a href="/staff/dayof" style={{ color: colors.accentLight, textDecoration: 'none' }}>📊 Day-Of Dashboard</a>
@@ -88,7 +88,7 @@ const StaffFloorPlan = () => {
           >
             ☰
           </button>
-          <span style={{ fontWeight: 'bold', color: colors.text, fontSize: '18px' }}>Floor Plan</span>
+          <span style={{ fontWeight: 'bold', color: colors.text, fontSize: '18px' }}>Venue Layout</span>
           <span style={{
             backgroundColor: colors.accentLight,
             color: colors.accent,

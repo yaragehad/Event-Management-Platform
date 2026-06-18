@@ -38,6 +38,8 @@ import MyQRPage from './pages/MyQRPage';
 import FeedbackPage from './pages/FeedbackPage';
 import DayOfDashboardPage from './pages/DayOfDashboardPage';
 import SendInvitationPage from './pages/SendInvitationPage';
+import GuestDashboardPage from './pages/GuestDashboardPage';
+import MyEventsPage from './pages/MyEventsPage';
 
 // Vendor Pages (Member 3 - Your pages)
 import VendorDashboard from './pages/VendorDashboard';
@@ -124,6 +126,8 @@ function App() {
           <Route path="/staff/guest/:guestId" element={<ProtectedRoute allowedRole="STAFF"><GuestDetails /></ProtectedRoute>} />
 
           {/* --- MEMBER 4: GUEST ROUTES --- */}
+          <Route path="/my-events" element={<MyEventsPage />} />
+          <Route path="/guest-dashboard/:eventId" element={<GuestDashboardPage />} />
           <Route path="/invitation/:eventId" element={<InvitationPage />} />
           <Route path="/rsvp/:eventId" element={<RSVPPage />} />
           <Route path="/messages/:eventId" element={<DayOfMessagesPage />} />

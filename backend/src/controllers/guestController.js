@@ -339,14 +339,43 @@ const markThreadSeen = async (req, res) => {
 
 // ─── CHECK-IN & DASHBOARD ────────────────────────────────────────────────────
 
-// PATCH /api/guests/:id/checkin - check in guest (returns details for confirmation email)
+// PATCH /api/guests/:id/checkin/:eventId - check in guest for a specific event
 const checkInGuest = async (req, res) => {
   try {
-    const guest = await prisma.guest.update({
-      where: { id: parseInt(req.params.id) },
-      data: { checkInStatus: true },
+    const guestId = parseInt(req.params.id)
+    const eventId = parseInt(req.params.eventId)
+
+    // Verify the guest is actually invited to this event
+    const guest = await prisma.guest.findFirst({
+      where: { id: guestId, events: { some: { id: eventId } } },
       include: { user: { select: { name: true, email: true } } },
     })
+    if (!guest) {
+      return res.status(400).json({ error: 'This guest is not invited to this event.' })
+    }
+
+    // Find existing RSVP for this guest + event
+    const existingRsvp = await prisma.rSVP.findFirst({
+      where: { guestId, eventId },
+    })
+
+    if (existingRsvp) {
+      await prisma.rSVP.update({
+        where: { id: existingRsvp.id },
+        data: { checkedIn: true },
+      })
+    } else {
+      await prisma.rSVP.create({
+        data: { guestId, eventId, status: 'ATTENDING', checkedIn: true },
+      })
+    }
+
+    // Keep global checkInStatus = true for backward compatibility
+    await prisma.guest.update({
+      where: { id: guestId },
+      data: { checkInStatus: true },
+    })
+
     res.json({
       message: 'Guest checked in successfully!',
       guestId: guest.id,
@@ -354,24 +383,32 @@ const checkInGuest = async (req, res) => {
       email: guest.user.email,
     })
   } catch (err) {
+    console.error('CHECKIN ERROR:', err)
     res.status(500).json({ error: 'Failed to check in guest' })
   }
 }
 
-// GET /api/guests/checkin-list/:eventId - staff: all guests of an event + check-in status
+// GET /api/guests/checkin-list/:eventId - staff: all guests of an event + per-event check-in status
 const getCheckInList = async (req, res) => {
   try {
     const eventId = parseInt(req.params.eventId)
     const guests = await prisma.guest.findMany({
       where: { events: { some: { id: eventId } } },
-      include: { user: { select: { name: true, email: true } } },
+      include: {
+        user: { select: { name: true, email: true } },
+        rsvps: { where: { eventId } },
+      },
     })
-    res.json(guests.map(g => ({
-      guestId: g.id,
-      name: g.user.name,
-      email: g.user.email,
-      checkInStatus: g.checkInStatus,
-    })))
+    res.json(guests.map(g => {
+      const rsvp = g.rsvps[0]
+      return {
+        guestId: g.id,
+        name: g.user.name,
+        email: g.user.email,
+        checkInStatus: g.checkInStatus,   // kept for any backward-compat readers
+        checkedIn: rsvp ? rsvp.checkedIn : false,
+      }
+    }))
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch check-in list' })
   }

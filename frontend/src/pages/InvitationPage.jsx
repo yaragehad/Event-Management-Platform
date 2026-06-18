@@ -18,6 +18,7 @@ function InvitationPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const email = searchParams.get('email')
+  const guestIdParam = searchParams.get('guestId')
 
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -39,10 +40,16 @@ function InvitationPage() {
     setLoading(false)
   }
 
-  // Resolve the guest's id from their email, then go to RSVP with guestId
+  // Go to RSVP, carrying guestId forward however we got here
   const handleRSVP = async () => {
     setGoing(true)
     try {
+      // Came from dashboard (or any link with guestId) → use it directly
+      if (guestIdParam) {
+        navigate(`/rsvp/${eventId}?guestId=${guestIdParam}`)
+        return
+      }
+      // Came from an email link (with email) → resolve guestId from email
       if (email) {
         const res = await fetch(`${API}/api/guests/lookup?email=${encodeURIComponent(email)}&eventId=${eventId}`)
         const data = await res.json()
@@ -62,7 +69,7 @@ function InvitationPage() {
           return
         }
       }
-      // fallback: no email in link
+      // fallback: no guestId and no email
       navigate(`/rsvp/${eventId}`)
     } catch (err) {
       navigate(`/rsvp/${eventId}`)

@@ -36,7 +36,7 @@ function CheckInPage() {
   const doCheckIn = async (guestId) => {
     setError(''); setInfo('')
     try {
-      const res = await fetch(`${API}/api/guests/${guestId}/checkin`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' } })
+      const res = await fetch(`${API}/api/guests/${guestId}/checkin/${eventId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' } })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Check-in failed'); return }
       // send confirmation email
@@ -57,7 +57,7 @@ function CheckInPage() {
     if (!email.trim()) return
     const match = guests.find(g => g.email.toLowerCase() === email.toLowerCase().trim())
     if (!match) { setError('No guest with that email is registered for this event.'); return }
-    if (match.checkInStatus) { setError(`${match.name} is already checked in.`); return }
+    if (match.checkedIn) { setError(`${match.name} is already checked in.`); return }
     doCheckIn(match.guestId)
     setEmail('')
   }
@@ -137,7 +137,7 @@ function CheckInPage() {
                 <p style={{ color: colors.text, fontWeight: 'bold', margin: 0, fontSize: '14px' }}>{g.name}</p>
                 <p style={{ color: colors.textMuted, margin: '2px 0 0', fontSize: '12px' }}>{g.email}</p>
               </div>
-              {g.checkInStatus ? (
+              {g.checkedIn ? (
                 <span style={{ color: colors.green, fontWeight: 'bold', fontSize: '13px' }}>✓ Checked In</span>
               ) : (
                 <button onClick={() => doCheckIn(g.guestId)} style={{ padding: '8px 14px', backgroundColor: colors.accent, color: colors.white, border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Check In</button>

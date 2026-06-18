@@ -62,7 +62,6 @@ const NAV_ITEMS = [
   { key: 'vendors', icon: '🏪', label: 'Vendors' },
   { key: 'sourcing', icon: '📦', label: 'Sourcing' },
   { key: 'guests', icon: '🎟️', label: 'Guests' },
-  { key: 'invitations', icon: '✉️', label: 'Send Invitations' },
   { key: 'venues', icon: '🏛', label: 'Browse Venues', route: '/organizer/venues' },
   { key: 'layout', icon: '✏️', label: 'Layout Designer', route: '/organizer/layout' },
   { key: 'dayof', icon: '📡', label: 'Day-Of Ops' },
@@ -1048,8 +1047,11 @@ function SourcingSection({ organizerId }) {
   )
 }
 
-// ─── Guests Section ───────────────────────────────────────────────────────────
+// ─── Guests Section (with Send Invitations sub-tab) ──────────────────────────
 function GuestsSection({ organizerId }) {
+  const [activeTab, setActiveTab] = useState('list')
+
+  // Guest list state
   const [guests, setGuests] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -1057,8 +1059,18 @@ function GuestsSection({ organizerId }) {
   const [events, setEvents] = useState([])
   const [eventFilter, setEventFilter] = useState('')
 
+  // Invitations state
+  const [invEventId, setInvEventId] = useState('')
+  const [guestName, setGuestName] = useState('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [invLoading, setInvLoading] = useState(false)
+  const [info, setInfo] = useState(null)
+
   useEffect(() => {
-    getOrganizerEvents(organizerId).then(r => setEvents(r.data))
+    getOrganizerEvents(organizerId).then(r => {
+      setEvents(r.data)
+      if (r.data[0]) setInvEventId(String(r.data[0].id))
+    })
   }, [organizerId])
 
   const load = useCallback(async () => {
@@ -1087,58 +1099,165 @@ function GuestsSection({ organizerId }) {
     } catch { }
   }
 
+  const showInfo = (type, msg) => { setInfo({ type, msg }); setTimeout(() => setInfo(null), 5000) }
+
+  const handleSingle = async (e) => {
+    e.preventDefault()
+    setInvLoading(true)
+    try {
+      const res = await fetch('http://localhost:3001/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guestEmail, guestName, eventId: invEventId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send invitation')
+      showInfo('success', `Invitation sent to ${guestEmail}!`)
+      setGuestName('')
+      setGuestEmail('')
+    } catch (err) {
+      showInfo('error', err.message)
+    }
+    setInvLoading(false)
+  }
+
+  const handleAll = async () => {
+    if (!invEventId) return
+    setInvLoading(true)
+    try {
+      const res = await fetch('http://localhost:3001/api/email/send-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: invEventId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send invitations')
+      showInfo('success', data.message || 'Invitations sent!')
+    } catch (err) {
+      showInfo('error', err.message)
+    }
+    setInvLoading(false)
+  }
+
+  const tabStyle = (key) => ({
+    padding: '7px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
+    fontSize: 13, fontWeight: 600, transition: 'background .15s',
+    background: activeTab === key ? C.accent : C.cream,
+    color: activeTab === key ? '#fff' : C.textMuted,
+  })
+
   return (
     <div>
       <SectionHeader title="Guests" icon="🎟️">
-        <FilterInput value={search} onChange={setSearch} placeholder="Search guests..." />
-        <FilterSelect value={eventFilter} onChange={setEventFilter} placeholder="All Events"
-          options={events.map(e => ({ value: String(e.id), label: e.name }))} />
-        <FilterSelect value={rsvpFilter} onChange={setRsvpFilter} placeholder="All RSVPs"
-          options={['ATTENDING', 'NOT_ATTENDING', 'MAYBE', 'PENDING'].map(s => ({ value: s, label: s.replace('_', ' ') }))} />
-        <Btn onClick={() => alert('Invitations sent to all pending guests!')}>✉️ Send Invitations</Btn>
+        {activeTab === 'list' && <>
+          <FilterInput value={search} onChange={setSearch} placeholder="Search guests..." />
+          <FilterSelect value={eventFilter} onChange={setEventFilter} placeholder="All Events"
+            options={events.map(e => ({ value: String(e.id), label: e.name }))} />
+          <FilterSelect value={rsvpFilter} onChange={setRsvpFilter} placeholder="All RSVPs"
+            options={['ATTENDING', 'NOT_ATTENDING', 'MAYBE', 'PENDING'].map(s => ({ value: s, label: s.replace('_', ' ') }))} />
+        </>}
       </SectionHeader>
-      {loading ? <p style={{ color: C.textMuted }}>Loading...</p> : guests.length === 0 ? <EmptyState msg="No guests found." /> : (
-        <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 400 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <thead>
-              <tr style={{ background: C.cream }}>
-                {['Name', 'Email', 'Dietary Pref.', 'RSVP', 'Check-In', 'Action'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: C.textMuted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {guests.map(g => (
-                <tr key={g.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <td style={{ padding: '10px 14px', fontWeight: 600, color: C.text }}>{g.user?.name}</td>
-                  <td style={{ padding: '10px 14px', color: C.textMuted }}>{g.user?.email}</td>
-                  <td style={{ padding: '10px 14px', color: C.textMuted }}>{g.dietaryPreference || '—'}</td>
-                  <td style={{ padding: '10px 14px' }}>
-                    {g.rsvps?.[0] ? statusBadge(g.rsvps[0].status) : badge('No RSVP', '#F3F4F6', '#6B7280')}
-                  </td>
-                  <td style={{ padding: '10px 14px' }}>
-                    {g.checkInStatus ? badge('Checked In', C.greenBg, C.green) : badge('Pending', C.cream, C.textMuted)}
-                  </td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <button
-                      onClick={() => handleToggle(g.user?.id)}
-                      style={{
-                        padding: '4px 14px', borderRadius: 6, border: 'none',
-                        cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                        background: g.user?.isActive ? C.redBg : C.greenBg,
-                        color: g.user?.isActive ? C.red : C.green,
-                        transition: 'opacity .15s',
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
-                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                    >
-                      {g.user?.isActive ? 'Deactivate' : 'Reactivate'}
-                    </button>
-                  </td>
+
+      {/* Sub-tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button style={tabStyle('list')} onClick={() => setActiveTab('list')}>🎟️ Guest List</button>
+        <button style={tabStyle('invite')} onClick={() => setActiveTab('invite')}>✉️ Send Invitations</button>
+      </div>
+
+      {/* Guest List tab */}
+      {activeTab === 'list' && (
+        loading ? <p style={{ color: C.textMuted }}>Loading...</p> : guests.length === 0 ? <EmptyState msg="No guests found." /> : (
+          <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 400 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr style={{ background: C.cream }}>
+                  {['Name', 'Email', 'Dietary Pref.', 'RSVP', 'Check-In', 'Action'].map(h => (
+                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: C.textMuted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {guests.map(g => (
+                  <tr key={g.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                    <td style={{ padding: '10px 14px', fontWeight: 600, color: C.text }}>{g.user?.name}</td>
+                    <td style={{ padding: '10px 14px', color: C.textMuted }}>{g.user?.email}</td>
+                    <td style={{ padding: '10px 14px', color: C.textMuted }}>{g.dietaryPreference || '—'}</td>
+                    <td style={{ padding: '10px 14px' }}>
+                      {g.rsvps?.[0] ? statusBadge(g.rsvps[0].status) : badge('No RSVP', '#F3F4F6', '#6B7280')}
+                    </td>
+                    <td style={{ padding: '10px 14px' }}>
+                      {g.checkInStatus ? badge('Checked In', C.greenBg, C.green) : badge('Pending', C.cream, C.textMuted)}
+                    </td>
+                    <td style={{ padding: '10px 14px' }}>
+                      <button
+                        onClick={() => handleToggle(g.user?.id)}
+                        style={{
+                          padding: '4px 14px', borderRadius: 6, border: 'none',
+                          cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                          background: g.user?.isActive ? C.redBg : C.greenBg,
+                          color: g.user?.isActive ? C.red : C.green,
+                          transition: 'opacity .15s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
+                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                      >
+                        {g.user?.isActive ? 'Deactivate' : 'Reactivate'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
+
+      {/* Send Invitations tab */}
+      {activeTab === 'invite' && (
+        <div>
+          <div style={{ marginBottom: 16 }}>
+            <FilterSelect value={invEventId} onChange={setInvEventId} placeholder="Select event"
+              options={events.map(e => ({ value: String(e.id), label: e.name }))} />
+          </div>
+
+          {info && (
+            <div style={{
+              background: info.type === 'success' ? C.greenBg : C.redBg,
+              border: `1px solid ${info.type === 'success' ? C.green : C.red}`,
+              borderRadius: 8, padding: '10px 14px', marginBottom: 16,
+              fontSize: 13, color: info.type === 'success' ? C.green : C.red,
+            }}>
+              {info.msg}
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 860 }}>
+            <FormCard title="Send to a Single Guest" onClose={() => {}}>
+              <form onSubmit={handleSingle}>
+                <Field label="Guest Name *">
+                  <input required value={guestName} onChange={e => setGuestName(e.target.value)}
+                    placeholder="Enter guest name" style={{ ...inputStyle, marginBottom: 12 }} />
+                </Field>
+                <Field label="Guest Email *">
+                  <input required type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)}
+                    placeholder="Enter guest email" style={{ ...inputStyle, marginBottom: 16 }} />
+                </Field>
+                <Btn type="submit" disabled={invLoading || !invEventId}>
+                  {invLoading ? 'Sending...' : 'Send Invitation'}
+                </Btn>
+              </form>
+            </FormCard>
+
+            <FormCard title="Send to All Guests of Event" onClose={() => {}}>
+              <p style={{ color: C.textMuted, fontSize: 13, margin: '0 0 16px', lineHeight: 1.6 }}>
+                Sends a personalized invitation email to every guest linked to the selected event.
+                Guests who already have accounts will receive a direct login link; new guests will get their login credentials too.
+              </p>
+              <Btn onClick={handleAll} disabled={invLoading || !invEventId} style={{ width: '100%' }}>
+                {invLoading ? 'Sending...' : '✉️ Send to All Guests'}
+              </Btn>
+            </FormCard>
+          </div>
         </div>
       )}
     </div>
@@ -2046,110 +2165,6 @@ function AccountsSection({ organizerId, currentUser }) {
   )
 }
 
-// ─── Invitations Section ──────────────────────────────────────────────────────
-function InvitationsSection({ organizerId }) {
-  const [events, setEvents] = useState([])
-  const [eventId, setEventId] = useState('')
-  const [guestName, setGuestName] = useState('')
-  const [guestEmail, setGuestEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [info, setInfo] = useState(null)
-
-  useEffect(() => {
-    fetch('http://localhost:3001/api/events')
-      .then(r => r.json())
-      .then(data => { setEvents(data); if (data[0]) setEventId(String(data[0].id)) })
-      .catch(() => {})
-  }, [])
-
-  const showInfo = (type, msg) => { setInfo({ type, msg }); setTimeout(() => setInfo(null), 5000) }
-
-  const handleSingle = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      const res = await fetch('http://localhost:3001/api/email/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guestEmail, guestName, eventId }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to send invitation')
-      showInfo('success', `Invitation sent to ${guestEmail}!`)
-      setGuestName('')
-      setGuestEmail('')
-    } catch (err) {
-      showInfo('error', err.message)
-    }
-    setLoading(false)
-  }
-
-  const handleAll = async () => {
-    if (!eventId) return
-    setLoading(true)
-    try {
-      const res = await fetch('http://localhost:3001/api/email/send-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to send invitations')
-      showInfo('success', data.message || 'Invitations sent!')
-    } catch (err) {
-      showInfo('error', err.message)
-    }
-    setLoading(false)
-  }
-
-  return (
-    <div>
-      <SectionHeader title="Send Invitations" icon="✉️">
-        <FilterSelect value={eventId} onChange={setEventId} placeholder="Select event"
-          options={events.map(e => ({ value: String(e.id), label: e.name }))} />
-      </SectionHeader>
-
-      {info && (
-        <div style={{
-          background: info.type === 'success' ? C.greenBg : C.redBg,
-          border: `1px solid ${info.type === 'success' ? C.green : C.red}`,
-          borderRadius: 8, padding: '10px 14px', marginBottom: 16,
-          fontSize: 13, color: info.type === 'success' ? C.green : C.red,
-        }}>
-          {info.msg}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 860 }}>
-        <FormCard title="Send to a Single Guest" onClose={() => {}}>
-          <form onSubmit={handleSingle}>
-            <Field label="Guest Name *">
-              <input required value={guestName} onChange={e => setGuestName(e.target.value)}
-                placeholder="Enter guest name" style={{ ...inputStyle, marginBottom: 12 }} />
-            </Field>
-            <Field label="Guest Email *">
-              <input required type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)}
-                placeholder="Enter guest email" style={{ ...inputStyle, marginBottom: 16 }} />
-            </Field>
-            <Btn type="submit" disabled={loading || !eventId}>
-              {loading ? 'Sending...' : 'Send Invitation'}
-            </Btn>
-          </form>
-        </FormCard>
-
-        <FormCard title="Send to All Guests of Event" onClose={() => {}}>
-          <p style={{ color: C.textMuted, fontSize: 13, margin: '0 0 16px', lineHeight: 1.6 }}>
-            Sends a personalized invitation email to every guest linked to the selected event above.
-            Guests who already have accounts will receive a direct login link; new guests will get their login credentials too.
-          </p>
-          <Btn onClick={handleAll} disabled={loading || !eventId} style={{ width: '100%' }}>
-            {loading ? 'Sending...' : '✉️ Send to All Guests'}
-          </Btn>
-        </FormCard>
-      </div>
-    </div>
-  )
-}
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function OrganizerDashboard() {
@@ -2465,7 +2480,6 @@ export default function OrganizerDashboard() {
           {activeSection === 'vendors' && <VendorsSection />}
           {activeSection === 'sourcing' && <SourcingSection organizerId={user?.id} />}
           {activeSection === 'guests' && <GuestsSection organizerId={user?.id} />}
-          {activeSection === 'invitations' && <InvitationsSection organizerId={user?.id} />}
           {activeSection === 'dayof' && <DayOfOpsSection organizerId={user?.id} />}
           {activeSection === 'messages' && <MessagesSection organizerId={user?.id} currentUserId={user?.id} />}
           {activeSection === 'feedback' && <FeedbackSection organizerId={user?.id} />}

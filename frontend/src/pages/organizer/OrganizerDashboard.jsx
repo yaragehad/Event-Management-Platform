@@ -196,10 +196,10 @@ function Btn({ children, onClick, type = 'button', variant = 'primary', small, d
     fontWeight: 600, transition: 'opacity .15s', opacity: disabled ? 0.6 : 1, ...extra,
   }
   const v = {
-    primary:  { background: C.accent,  color: C.white },
-    danger:   { background: C.redBg,   color: C.red   },
-    ghost:    { background: C.cream,   color: C.text,  border: `1px solid ${C.border}` },
-    success:  { background: C.greenBg, color: C.green  },
+    primary: { background: C.accent, color: C.white },
+    danger: { background: C.redBg, color: C.red },
+    ghost: { background: C.cream, color: C.text, border: `1px solid ${C.border}` },
+    success: { background: C.greenBg, color: C.green },
   }
   return (
     <button type={type} onClick={onClick} disabled={disabled} style={{ ...base, ...v[variant] }}
@@ -316,7 +316,7 @@ function EventsSection({ organizerId }) {
                 </div>
                 {statusBadge(ev.status)}
                 {ev.booking?.venue?.id && (
-                  <Btn small variant="ghost" onClick={() => window.open(`/venue-layout/${ev.booking.venue.id}`, '_blank')}>🗺️ Design Layout</Btn>
+                  <Btn small variant="ghost" onClick={() => window.open(`/organizer/layout/${ev.booking.venue.id}`, '_blank')}>🗺️ Design Layout</Btn>
                 )}
               </div>
             </div>
@@ -474,9 +474,11 @@ function TasksSection({ organizerId }) {
                   </td>
                   <td style={{ padding: '11px 14px' }}>
                     <select value={t.status} onChange={e => handleStatus(t.id, e.target.value)}
-                      style={{ ...inputStyle, padding: '4px 8px', minWidth: 110,
+                      style={{
+                        ...inputStyle, padding: '4px 8px', minWidth: 110,
                         background: t.status === 'DONE' ? C.greenBg : t.status === 'IN_PROGRESS' ? C.accentLight : C.cream,
-                        color: t.status === 'DONE' ? C.green : t.status === 'IN_PROGRESS' ? C.accent : C.text }}>
+                        color: t.status === 'DONE' ? C.green : t.status === 'IN_PROGRESS' ? C.accent : C.text
+                      }}>
                       <option value="PENDING">Pending</option>
                       <option value="IN_PROGRESS">In Progress</option>
                       <option value="DONE">Done</option>
@@ -1020,9 +1022,11 @@ function SourcingSection({ organizerId }) {
                       <td style={{ padding: '11px 14px', color: C.textMuted }}>{inv.sourcingRequest?.itemDetails || '—'}</td>
                       <td style={{ padding: '11px 14px' }}>
                         <select value={inv.status} onChange={e => handleInvoiceStatus(inv.id, e.target.value)}
-                          style={{ ...inputStyle, padding: '4px 8px', minWidth: 120,
+                          style={{
+                            ...inputStyle, padding: '4px 8px', minWidth: 120,
                             background: ['PAID', 'APPROVED'].includes(inv.status) ? C.greenBg : C.cream,
-                            color: ['PAID', 'APPROVED'].includes(inv.status) ? C.green : C.text }}>
+                            color: ['PAID', 'APPROVED'].includes(inv.status) ? C.green : C.text
+                          }}>
                           <option value="PENDING_REVIEW">Pending Review</option>
                           <option value="APPROVED">Approved</option>
                           <option value="PAID">Paid</option>
@@ -1213,7 +1217,7 @@ function DayOfOpsSection({ organizerId }) {
             )}
           </div>
 
-          <FormCard title="Broadcast Message" onClose={() => {}}>
+          <FormCard title="Broadcast Message" onClose={() => { }}>
             <form onSubmit={handleSendMsg}>
               <Field label="Audience">
                 <select value={msgForm.audience} onChange={e => setMsgForm(p => ({ ...p, audience: e.target.value }))} style={{ ...inputStyle, marginBottom: 12 }}>
@@ -1258,7 +1262,7 @@ function GuestMessagesTab({ organizerId }) {
   useEffect(() => {
     getOrganizerEvents(organizerId)
       .then(r => { setEvents(r.data); if (r.data[0]) setEventId(String(r.data[0].id)) })
-      .catch(() => {})
+      .catch(() => { })
   }, [organizerId])
 
   useEffect(() => {
@@ -1350,8 +1354,10 @@ function GuestMessagesTab({ organizerId }) {
             {threads.length === 0 && <div style={{ padding: 14, fontSize: 13, color: C.textMuted }}>No guests for this event.</div>}
             {threads.map(t => (
               <div key={t.guestId} onClick={() => openThread(t.guestId)}
-                style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
-                  background: activeGuest === t.guestId ? C.accentLight : C.white }}>
+                style={{
+                  padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
+                  background: activeGuest === t.guestId ? C.accentLight : C.white
+                }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{t.name}</span>
                   {t.unreadFromGuest > 0 && (
@@ -1384,8 +1390,10 @@ function GuestMessagesTab({ organizerId }) {
                   const mine = m.senderRole === 'ORGANIZER'
                   return (
                     <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
-                      <div style={{ maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
-                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text }}>
+                      <div style={{
+                        maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
+                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text
+                      }}>
                         <div>{m.content}</div>
                         <div style={{ fontSize: 10, opacity: 0.75, marginTop: 3, textAlign: 'right' }}>
                           {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1424,7 +1432,7 @@ function VenueMessagesTab({ organizerId, currentUserId }) {
     if (!organizerId) return
     getBookings({ organizerId })
       .then(r => setBookings(r.data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false))
   }, [organizerId])
 
@@ -1463,8 +1471,10 @@ function VenueMessagesTab({ organizerId, currentUserId }) {
         <div style={{ maxHeight: 460, overflowY: 'auto' }}>
           {bookings.map(b => (
             <div key={b.id} onClick={() => openBooking(b.id)}
-              style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
-                background: activeBookingId === b.id ? C.accentLight : C.white }}>
+              style={{
+                padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
+                background: activeBookingId === b.id ? C.accentLight : C.white
+              }}>
               <div style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{b.venue?.name || `Venue #${b.venueId}`}</div>
               <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
                 {fmt(b.eventDate)} · {b.status}
@@ -1493,8 +1503,10 @@ function VenueMessagesTab({ organizerId, currentUserId }) {
                 return (
                   <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
                     <div>
-                      <div style={{ maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
-                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text }}>
+                      <div style={{
+                        maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
+                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text
+                      }}>
                         {m.content}
                       </div>
                       <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2, textAlign: mine ? 'right' : 'left' }}>
@@ -1535,7 +1547,7 @@ function DirectMessagesTab({ organizerId, currentUserId, role }) {
     setLoading(true)
     getDirectContacts(organizerId, role)
       .then(r => setContacts(r.data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false))
   }, [organizerId, role])
 
@@ -1576,8 +1588,10 @@ function DirectMessagesTab({ organizerId, currentUserId, role }) {
         <div style={{ maxHeight: 460, overflowY: 'auto' }}>
           {contacts.map(c => (
             <div key={c.id} onClick={() => openThread(c.id)}
-              style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
-                background: activeId === c.id ? C.accentLight : C.white }}>
+              style={{
+                padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
+                background: activeId === c.id ? C.accentLight : C.white
+              }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{c.name}</span>
                 {c.unread > 0 && (
@@ -1615,8 +1629,10 @@ function DirectMessagesTab({ organizerId, currentUserId, role }) {
                 return (
                   <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
                     <div>
-                      <div style={{ maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
-                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text }}>
+                      <div style={{
+                        maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
+                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text
+                      }}>
                         {m.content}
                       </div>
                       <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2, textAlign: mine ? 'right' : 'left' }}>
@@ -1666,10 +1682,10 @@ function MessagesSection({ organizerId, currentUserId }) {
           ))}
         </div>
       </SectionHeader>
-      {tab === 'guests'  && <GuestMessagesTab organizerId={organizerId} />}
-      {tab === 'staff'   && <DirectMessagesTab organizerId={organizerId} currentUserId={currentUserId} role="STAFF" />}
+      {tab === 'guests' && <GuestMessagesTab organizerId={organizerId} />}
+      {tab === 'staff' && <DirectMessagesTab organizerId={organizerId} currentUserId={currentUserId} role="STAFF" />}
       {tab === 'vendors' && <DirectMessagesTab organizerId={organizerId} currentUserId={currentUserId} role="VENDOR" />}
-      {tab === 'venues'  && <VenueMessagesTab  organizerId={organizerId} currentUserId={currentUserId} />}
+      {tab === 'venues' && <VenueMessagesTab organizerId={organizerId} currentUserId={currentUserId} />}
     </div>
   )
 }
@@ -1683,7 +1699,7 @@ function FeedbackSection({ organizerId }) {
   useEffect(() => {
     getOrganizerFeedback(organizerId)
       .then(r => setFeedback(r.data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false))
   }, [organizerId])
 
@@ -1956,7 +1972,7 @@ function AccountsSection({ organizerId, currentUser }) {
 
       {activeTab === 'profile' && (
         <div style={{ maxWidth: 500 }}>
-          <FormCard title="Update My Profile" onClose={() => {}}>
+          <FormCard title="Update My Profile" onClose={() => { }}>
             <form onSubmit={handleUpdateProfile}>
               <Field label="Full Name">
                 <input required value={profileForm.name} onChange={e => setProfileForm(p => ({ ...p, name: e.target.value }))} style={{ ...inputStyle, marginBottom: 14 }} />
@@ -1972,7 +1988,7 @@ function AccountsSection({ organizerId, currentUser }) {
 
       {activeTab === 'create' && (
         <div style={{ maxWidth: 600 }}>
-          <FormCard title="Create Stakeholder Account" onClose={() => {}}>
+          <FormCard title="Create Stakeholder Account" onClose={() => { }}>
             <form onSubmit={handleCreateAccount}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
                 <Field label="Role *">
@@ -2041,14 +2057,14 @@ export default function OrganizerDashboard() {
     fetch(`http://localhost:3001/api/notifications/${user.id}`)
       .then(r => r.json())
       .then(data => Array.isArray(data) && setNotifications(data))
-      .catch(() => {})
+      .catch(() => { })
   }, [user?.id])
 
   const markAllRead = () => {
     if (!user?.id) return
     fetch(`http://localhost:3001/api/notifications/read-all/${user.id}`, { method: 'PUT' })
       .then(() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true }))))
-      .catch(() => {})
+      .catch(() => { })
   }
 
   const handleLogout = () => { logout(); navigate('/login') }

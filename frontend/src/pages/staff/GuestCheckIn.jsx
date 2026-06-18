@@ -23,12 +23,20 @@ const GuestCheckIn = () => {
   const [search, setSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState('1');
   const navigate = useNavigate();
+
+  const events = [
+    { id: '1', name: 'Annual Tech Summit 2026' },
+    { id: '2', name: 'Summer Gala Dinner' },
+    { id: '3', name: 'Product Launch: NovaTech X1' },
+  ];
 
   useEffect(() => {
     const fetchGuests = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/staff/guests/1');
+        setLoading(true);
+        const response = await axios.get(`http://localhost:3001/api/staff/guests/${selectedEvent}`);
         setGuests(response.data);
       } catch (err) {
         console.error('Failed to fetch guests:', err);
@@ -37,12 +45,13 @@ const GuestCheckIn = () => {
       }
     };
     fetchGuests();
-  }, []);
+  }, [selectedEvent]);
 
   const handleCheckIn = async (id, currentStatus) => {
     try {
       await axios.patch(`http://localhost:3001/api/staff/guests/${id}/checkin`, {
-        checkedIn: !currentStatus
+        checkedIn: !currentStatus,
+        eventId: parseInt(selectedEvent)
       });
       setGuests(guests.map(g => g.id === id ? { ...g, checkedIn: !currentStatus } : g));
     } catch (err) {
@@ -85,6 +94,21 @@ const GuestCheckIn = () => {
         </div>
 
         <div style={{ padding: '24px' }}>
+
+          <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <label style={{ color: colors.text, fontWeight: 'bold' }}>Select Event:</label>
+            {events.map(event => (
+              <button key={event.id} onClick={() => { setSelectedEvent(event.id); setFilterStatus('All'); setSearch(''); }}
+                style={{
+                  padding: '6px 14px', borderRadius: '20px', border: `1px solid ${colors.border}`, cursor: 'pointer',
+                  backgroundColor: selectedEvent === event.id ? colors.accent : colors.white,
+                  color: selectedEvent === event.id ? colors.white : colors.text,
+                  fontWeight: selectedEvent === event.id ? 'bold' : 'normal'
+                }}>
+                {event.name}
+              </button>
+            ))}
+          </div>
 
           <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <input

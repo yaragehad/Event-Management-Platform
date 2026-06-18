@@ -40,6 +40,20 @@ const createBooking = async (req, res) => {
     if (!venueId || !organizerId || !eventDate) {
       return res.status(400).json({ error: 'venueId, organizerId and eventDate are required' })
     }
+
+    // ── Availability gate ─────────────────────────────────────────────────────
+    const venue = await prisma.venue.findUnique({ where: { id: parseInt(venueId) } })
+    if (!venue) return res.status(404).json({ error: 'Venue not found' })
+
+    const requestedDateStr = new Date(eventDate).toISOString().split('T')[0]
+    const isAvailable = venue.availableDates.some(
+      d => new Date(d).toISOString().split('T')[0] === requestedDateStr
+    )
+    if (!isAvailable) {
+      return res.status(400).json({ error: 'The selected date is not available for this venue. Please choose an available date.' })
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const booking = await prisma.booking.create({
       data: {
         venueId: parseInt(venueId),

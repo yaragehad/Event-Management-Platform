@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import VenueLayout, { COLORS } from './VenueLayout'
 import { AuthContext } from '../../context/AuthContext'
-import { getAllVenues, deleteVenue, permanentlyDeleteVenue } from '../../services/venueService'
+import { getAllVenues, deleteVenue, permanentlyDeleteVenue, updateVenue } from '../../services/venueService'
 
 export default function VenueListingsPage() {
   const [venues, setVenues] = useState([])
@@ -28,7 +28,13 @@ export default function VenueListingsPage() {
   const handleDeactivate = async (id) => {
     if (!window.confirm('Deactivate this venue? It will be hidden from organizers but stay in the database.')) return
     await deleteVenue(id)
-    setVenues(venues.map(v => v.id === id ? { ...v, isActive: false } : v))
+    setVenues(prev => prev.map(v => v.id === id ? { ...v, isActive: false } : v))
+  }
+
+  const handleReactivate = async (id) => {
+    if (!window.confirm('Reactivate this venue? It will become visible to organizers again.')) return
+    await updateVenue(id, { isActive: true })
+    setVenues(prev => prev.map(v => v.id === id ? { ...v, isActive: true } : v))
   }
 
   const handlePermanentDelete = async (id, name) => {
@@ -153,12 +159,21 @@ export default function VenueListingsPage() {
                 >
                   Calendar
                 </button>
-                <button
-                  onClick={() => handleDeactivate(venue.id)}
-                  style={{ padding: '0.5rem 1rem', background: COLORS.redBg, border: `1px solid #f5c6c2`, borderRadius: '7px', cursor: 'pointer', fontSize: '13px', color: COLORS.red, fontWeight: '500' }}
-                >
-                  Deactivate
-                </button>
+                {venue.isActive ? (
+                  <button
+                    onClick={() => handleDeactivate(venue.id)}
+                    style={{ padding: '0.5rem 1rem', background: COLORS.redBg, border: `1px solid #f5c6c2`, borderRadius: '7px', cursor: 'pointer', fontSize: '13px', color: COLORS.red, fontWeight: '500' }}
+                  >
+                    Deactivate
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleReactivate(venue.id)}
+                    style={{ padding: '0.5rem 1rem', background: COLORS.greenBg, border: `1px solid #86EFAC`, borderRadius: '7px', cursor: 'pointer', fontSize: '13px', color: COLORS.green, fontWeight: '600' }}
+                  >
+                    ✓ Reactivate
+                  </button>
+                )}
                 <button
                   onClick={() => handlePermanentDelete(venue.id, venue.name)}
                   style={{ padding: '0.5rem 1rem', background: COLORS.red, border: 'none', borderRadius: '7px', cursor: 'pointer', fontSize: '13px', color: COLORS.white, fontWeight: '600' }}

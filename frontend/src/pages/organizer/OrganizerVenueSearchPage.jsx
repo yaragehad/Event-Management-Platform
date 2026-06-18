@@ -315,15 +315,73 @@ export default function OrganizerVenueSearchPage() {
                 </div>
               )}
 
+              {/* Available Dates */}
+              {(() => {
+                const today = new Date(); today.setHours(0,0,0,0)
+                const upcoming = (selectedVenue.availableDates || [])
+                  .map(d => new Date(d))
+                  .filter(d => d >= today)
+                  .sort((a, b) => a - b)
+                return (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Available Dates</div>
+                    {upcoming.length === 0 ? (
+                      <div style={{
+                        background: '#fef2f2', border: '1px solid #fca5a5',
+                        borderRadius: 8, padding: '10px 14px',
+                        fontSize: 13, color: '#b91c1c', fontWeight: 500,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                      }}>
+                        <span>🚫</span> No upcoming available dates — contact the venue owner.
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: 6 }}>
+                          {upcoming.slice(0, 12).map((d, i) => (
+                            <span key={i} style={{
+                              padding: '3px 10px', background: C.greenBg,
+                              border: '1px solid #86EFAC', borderRadius: 20,
+                              fontSize: 12, color: C.green, fontWeight: 600,
+                            }}>
+                              🗓 {d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </span>
+                          ))}
+                          {upcoming.length > 12 && (
+                            <span style={{ padding: '3px 10px', background: C.cream, border: `1px solid ${C.border}`, borderRadius: 20, fontSize: 12, color: C.textMuted, fontWeight: 600 }}>
+                              +{upcoming.length - 12} more
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 12, color: C.textMuted }}>{upcoming.length} date{upcoming.length !== 1 ? 's' : ''} available</div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
               {/* Book button */}
-              <button
-                onClick={() => { setSelectedVenue(null); navigate(`/organizer/bookings/new?venueId=${selectedVenue.id}`) }}
-                style={{ width: '100%', padding: '0.85rem', background: C.accent, color: C.white, border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-              >
-                Book This Venue
-              </button>
+              {(() => {
+                const today = new Date(); today.setHours(0,0,0,0)
+                const hasAvailable = (selectedVenue.availableDates || []).some(d => new Date(d) >= today)
+                return (
+                  <button
+                    onClick={() => { if (hasAvailable) { setSelectedVenue(null); navigate(`/organizer/bookings/new?venueId=${selectedVenue.id}`) } }}
+                    disabled={!hasAvailable}
+                    style={{
+                      width: '100%', padding: '0.85rem',
+                      background: hasAvailable ? C.accent : '#D1D5DB',
+                      color: C.white, border: 'none', borderRadius: 10,
+                      fontSize: 15, fontWeight: 700,
+                      cursor: hasAvailable ? 'pointer' : 'not-allowed',
+                      transition: 'opacity 0.15s',
+                    }}
+                    onMouseEnter={e => { if (hasAvailable) e.currentTarget.style.opacity = '0.88' }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+                  >
+                    {hasAvailable ? 'Book This Venue' : '🚫 No Available Dates'}
+                  </button>
+                )
+              })()}
             </div>
           </div>
         </div>

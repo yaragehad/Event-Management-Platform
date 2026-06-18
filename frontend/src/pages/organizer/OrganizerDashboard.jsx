@@ -62,6 +62,7 @@ const NAV_ITEMS = [
   { key: 'vendors', icon: '🏪', label: 'Vendors' },
   { key: 'sourcing', icon: '📦', label: 'Sourcing' },
   { key: 'guests', icon: '🎟️', label: 'Guests' },
+  { key: 'invitations', icon: '✉️', label: 'Send Invitations' },
   { key: 'venues', icon: '🏛', label: 'Browse Venues', route: '/organizer/venues' },
   { key: 'layout', icon: '✏️', label: 'Layout Designer', route: '/organizer/layout' },
   { key: 'dayof', icon: '📡', label: 'Day-Of Ops' },
@@ -1247,7 +1248,7 @@ function DayOfOpsSection({ organizerId }) {
   )
 }
 
-// ─── Messages Section ─────────────────────────────────────────────────────────
+// ─── Messages Section (Guest tab — Member 4's version) ────────────────────────
 function GuestMessagesTab({ organizerId }) {
   const [events, setEvents] = useState([])
   const [eventId, setEventId] = useState('')
@@ -1255,15 +1256,16 @@ function GuestMessagesTab({ organizerId }) {
   const [activeGuest, setActiveGuest] = useState(null)
   const [thread, setThread] = useState([])
   const [broadcast, setBroadcast] = useState('')
+  const [followUp, setFollowUp] = useState('')
   const [reply, setReply] = useState('')
   const [info, setInfo] = useState('')
-  const [broadcasting, setBroadcasting] = useState(false)
 
   useEffect(() => {
-    getOrganizerEvents(organizerId)
-      .then(r => { setEvents(r.data); if (r.data[0]) setEventId(String(r.data[0].id)) })
+    fetch('http://localhost:3001/api/events')
+      .then(r => r.json())
+      .then(data => { setEvents(data); if (data[0]) setEventId(String(data[0].id)) })
       .catch(() => { })
-  }, [organizerId])
+  }, [])
 
   useEffect(() => {
     if (eventId) { fetchThreads(); setActiveGuest(null); setThread([]) }
@@ -1273,7 +1275,7 @@ function GuestMessagesTab({ organizerId }) {
     try {
       const res = await fetch(`http://localhost:3001/api/guests/messages/event/${eventId}/threads`)
       setThreads(await res.json())
-    } catch { }
+    } catch { setInfo('Failed to load guests') }
   }
 
   const openThread = async (guestId) => {
@@ -1286,12 +1288,11 @@ function GuestMessagesTab({ organizerId }) {
         body: JSON.stringify({ eventId: Number(eventId), guestId, reader: 'ORGANIZER' }),
       })
       fetchThreads()
-    } catch { }
+    } catch { setInfo('Failed to open thread') }
   }
 
-  const handleBroadcast = async () => {
-    if (!broadcast.trim() || !eventId) return
-    setBroadcasting(true)
+  const sendBroadcast = async () => {
+    if (!broadcast.trim()) return
     try {
       await fetch(`http://localhost:3001/api/guests/messages/organizer-broadcast`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1303,10 +1304,25 @@ function GuestMessagesTab({ organizerId }) {
       if (activeGuest) openThread(activeGuest)
       setTimeout(() => setInfo(''), 3000)
     } catch { setInfo('Failed to broadcast') }
-    setBroadcasting(false)
   }
 
-  const handleReply = async () => {
+  const sendFollowUp = async () => {
+    if (!followUp.trim()) return
+    try {
+      const res = await fetch(`http://localhost:3001/api/guests/messages/follow-up`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: Number(eventId), content: followUp }),
+      })
+      const data = await res.json()
+      setFollowUp('')
+      setInfo(data.message || 'Follow-up sent!')
+      fetchThreads()
+      if (activeGuest) openThread(activeGuest)
+      setTimeout(() => setInfo(''), 4000)
+    } catch { setInfo('Failed to send follow-up') }
+  }
+
+  const sendReply = async () => {
     if (!reply.trim() || !activeGuest) return
     try {
       await fetch(`http://localhost:3001/api/guests/messages/send`, {
@@ -1316,100 +1332,99 @@ function GuestMessagesTab({ organizerId }) {
       setReply('')
       openThread(activeGuest)
       fetchThreads()
-    } catch { }
+    } catch { setInfo('Failed to send') }
   }
-
-  const activeThread = threads.find(t => t.guestId === activeGuest)
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: C.textMuted }}>Event:</span>
-        <FilterSelect value={eventId} onChange={setEventId} placeholder="Select event"
-          options={events.map(e => ({ value: String(e.id), label: e.name }))} />
+      {/* Event selector */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ color: C.textMuted, fontWeight: 600, marginRight: 8, fontSize: 13 }}>Event:</label>
+        <FilterSelect value={eventId} onChange={v => { setEventId(v); setActiveGuest(null); setThread([]) }}
+          placeholder="Select event" options={events.map(e => ({ value: String(e.id), label: e.name }))} />
       </div>
 
       {info && (
-        <div style={{ background: C.greenBg, border: `1px solid ${C.green}`, borderRadius: 8, padding: '8px 14px', marginBottom: 12, fontSize: 13, color: C.green }}>
+        <div style={{ background: C.greenBg, border: `1px solid ${C.green}`, borderRadius: 8, padding: '10px 14px', marginBottom: 14, color: C.green, fontSize: 13 }}>
           {info}
         </div>
       )}
 
-      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: C.text, marginBottom: 8 }}>Broadcast to All Guests</div>
-        <textarea value={broadcast} onChange={e => setBroadcast(e.target.value)} rows={2}
-          placeholder="Send a message to every guest (directions, schedule changes, welcome)..."
-          style={{ ...inputStyle, resize: 'none', marginBottom: 8 }} />
-        <Btn onClick={handleBroadcast} disabled={broadcasting || !broadcast.trim() || !eventId}>
-          {broadcasting ? 'Sending...' : 'Send to All Guests'}
-        </Btn>
+      {/* Broadcast + Follow-up side by side */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+        <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, padding: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: C.text, marginBottom: 8 }}>Broadcast to All Guests</div>
+          <textarea value={broadcast} onChange={e => setBroadcast(e.target.value)} rows={2}
+            placeholder="Message every guest (directions, schedule changes, welcome)..."
+            style={{ ...inputStyle, resize: 'none', marginBottom: 8 }} />
+          <Btn onClick={sendBroadcast} disabled={!broadcast.trim() || !eventId}>Send to All Guests</Btn>
+        </div>
+
+        <div style={{ background: C.white, borderRadius: 12, border: `2px solid ${C.red}`, padding: 16 }}>
+          <div style={{ color: C.red, fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Send Follow-Up to Unseen Guests</div>
+          <div style={{ color: C.textMuted, fontSize: 12, marginBottom: 8 }}>Only guests who haven't seen your previous message will receive this.</div>
+          <textarea value={followUp} onChange={e => setFollowUp(e.target.value)} rows={2}
+            placeholder="Reminder for guests who missed your message..."
+            style={{ ...inputStyle, resize: 'none', marginBottom: 8 }} />
+          <Btn variant="danger" onClick={sendFollowUp} disabled={!followUp.trim() || !eventId}>Send Follow-Up</Btn>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 14 }}>
-        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+      {/* Guest list + thread */}
+      <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+        <div style={{ flex: '0 0 260px', background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
           <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
             Guests ({threads.length})
           </div>
-          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
-            {threads.length === 0 && <div style={{ padding: 14, fontSize: 13, color: C.textMuted }}>No guests for this event.</div>}
-            {threads.map(t => (
+          {threads.length === 0
+            ? <div style={{ padding: 14, fontSize: 13, color: C.textMuted }}>No guests for this event.</div>
+            : threads.map(t => (
               <div key={t.guestId} onClick={() => openThread(t.guestId)}
-                style={{
-                  padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
-                  background: activeGuest === t.guestId ? C.accentLight : C.white
-                }}>
+                style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer', background: activeGuest === t.guestId ? C.accentLight : C.white }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{t.name}</span>
+                  <span style={{ color: C.text, fontWeight: 600, fontSize: 14 }}>{t.name}</span>
                   {t.unreadFromGuest > 0 && (
-                    <span style={{ background: C.red, color: C.white, borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>
-                      {t.unreadFromGuest}
-                    </span>
+                    <span style={{ background: C.red, color: C.white, borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>{t.unreadFromGuest}</span>
                   )}
                 </div>
-                <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ color: C.textMuted, marginTop: 4, fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {t.lastMessage || 'No messages yet'}
                 </div>
               </div>
-            ))}
-          </div>
+            ))
+          }
         </div>
 
-        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, display: 'flex', flexDirection: 'column', minHeight: 380 }}>
+        <div style={{ flex: 1, background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, minHeight: 400, display: 'flex', flexDirection: 'column' }}>
           {!activeGuest ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted, fontSize: 14 }}>
-              Select a guest to view the conversation
-            </div>
+            <div style={{ color: C.textMuted, textAlign: 'center', marginTop: 180, fontSize: 14 }}>Select a guest to view the conversation</div>
           ) : (
             <>
-              <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
-                {activeThread?.name}
-              </div>
-              <div style={{ flex: 1, padding: 14, overflowY: 'auto', maxHeight: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {thread.length === 0 && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>No messages yet.</div>}
-                {thread.map(m => {
-                  const mine = m.senderRole === 'ORGANIZER'
-                  return (
-                    <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
-                      <div style={{
-                        maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
-                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text
-                      }}>
-                        <div>{m.content}</div>
-                        <div style={{ fontSize: 10, opacity: 0.75, marginTop: 3, textAlign: 'right' }}>
-                          {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          {mine && (m.seenByGuest ? ' · Seen' : ' · Sent')}
+              <div style={{ flex: 1, padding: 20, overflowY: 'auto', maxHeight: 420 }}>
+                {thread.length === 0
+                  ? <div style={{ color: C.textMuted, textAlign: 'center', fontSize: 13 }}>No messages yet.</div>
+                  : thread.map(m => {
+                    const mine = m.senderRole === 'ORGANIZER'
+                    return (
+                      <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginBottom: 10 }}>
+                        <div style={{ maxWidth: '70%', background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text, padding: '10px 14px', borderRadius: 12 }}>
+                          <div style={{ fontSize: 14 }}>{m.content}</div>
+                          <div style={{ marginTop: 4, fontSize: 10, opacity: 0.8, textAlign: 'right' }}>
+                            {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {mine && (m.seenByGuest ? ' · Seen' : ' · Sent')}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })
+                }
               </div>
-              <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, padding: 16, borderTop: `1px solid ${C.border}` }}>
                 <input value={reply} onChange={e => setReply(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleReply()}
+                  onKeyDown={e => e.key === 'Enter' && sendReply()}
                   placeholder="Type a reply..."
                   style={{ ...inputStyle, flex: 1 }} />
-                <Btn onClick={handleReply} disabled={!reply.trim()}>Send</Btn>
+                <Btn onClick={sendReply} disabled={!reply.trim()}>Send</Btn>
               </div>
             </>
           )}
@@ -2028,6 +2043,111 @@ function AccountsSection({ organizerId, currentUser }) {
   )
 }
 
+// ─── Invitations Section ──────────────────────────────────────────────────────
+function InvitationsSection({ organizerId }) {
+  const [events, setEvents] = useState([])
+  const [eventId, setEventId] = useState('')
+  const [guestName, setGuestName] = useState('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [info, setInfo] = useState(null)
+
+  useEffect(() => {
+    fetch('http://localhost:3001/api/events')
+      .then(r => r.json())
+      .then(data => { setEvents(data); if (data[0]) setEventId(String(data[0].id)) })
+      .catch(() => {})
+  }, [])
+
+  const showInfo = (type, msg) => { setInfo({ type, msg }); setTimeout(() => setInfo(null), 5000) }
+
+  const handleSingle = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const res = await fetch('http://localhost:3001/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guestEmail, guestName, eventId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send invitation')
+      showInfo('success', `Invitation sent to ${guestEmail}!`)
+      setGuestName('')
+      setGuestEmail('')
+    } catch (err) {
+      showInfo('error', err.message)
+    }
+    setLoading(false)
+  }
+
+  const handleAll = async () => {
+    if (!eventId) return
+    setLoading(true)
+    try {
+      const res = await fetch('http://localhost:3001/api/email/send-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send invitations')
+      showInfo('success', data.message || 'Invitations sent!')
+    } catch (err) {
+      showInfo('error', err.message)
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div>
+      <SectionHeader title="Send Invitations" icon="✉️">
+        <FilterSelect value={eventId} onChange={setEventId} placeholder="Select event"
+          options={events.map(e => ({ value: String(e.id), label: e.name }))} />
+      </SectionHeader>
+
+      {info && (
+        <div style={{
+          background: info.type === 'success' ? C.greenBg : C.redBg,
+          border: `1px solid ${info.type === 'success' ? C.green : C.red}`,
+          borderRadius: 8, padding: '10px 14px', marginBottom: 16,
+          fontSize: 13, color: info.type === 'success' ? C.green : C.red,
+        }}>
+          {info.msg}
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 860 }}>
+        <FormCard title="Send to a Single Guest" onClose={() => {}}>
+          <form onSubmit={handleSingle}>
+            <Field label="Guest Name *">
+              <input required value={guestName} onChange={e => setGuestName(e.target.value)}
+                placeholder="Enter guest name" style={{ ...inputStyle, marginBottom: 12 }} />
+            </Field>
+            <Field label="Guest Email *">
+              <input required type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)}
+                placeholder="Enter guest email" style={{ ...inputStyle, marginBottom: 16 }} />
+            </Field>
+            <Btn type="submit" disabled={loading || !eventId}>
+              {loading ? 'Sending...' : 'Send Invitation'}
+            </Btn>
+          </form>
+        </FormCard>
+
+        <FormCard title="Send to All Guests of Event" onClose={() => {}}>
+          <p style={{ color: C.textMuted, fontSize: 13, margin: '0 0 16px', lineHeight: 1.6 }}>
+            Sends a personalized invitation email to every guest linked to the selected event above.
+            Guests who already have accounts will receive a direct login link; new guests will get their login credentials too.
+          </p>
+          <Btn onClick={handleAll} disabled={loading || !eventId} style={{ width: '100%' }}>
+            {loading ? 'Sending...' : '✉️ Send to All Guests'}
+          </Btn>
+        </FormCard>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function OrganizerDashboard() {
   const { user, logout } = useContext(AuthContext)
@@ -2323,7 +2443,7 @@ export default function OrganizerDashboard() {
         </div>
 
         {/* ── Page content ─────────────────────────────────────────────────── */}
-        <div style={{ padding: '2rem', flex: 1 }}>
+        <div style={{ padding: '2rem', flex: 1, overflowY: 'auto' }}>
           {/* Welcome banner — overview only */}
           {activeSection === 'overview' && (
             <div style={{
@@ -2354,6 +2474,7 @@ export default function OrganizerDashboard() {
           {activeSection === 'vendors' && <VendorsSection />}
           {activeSection === 'sourcing' && <SourcingSection organizerId={user?.id} />}
           {activeSection === 'guests' && <GuestsSection organizerId={user?.id} />}
+          {activeSection === 'invitations' && <InvitationsSection organizerId={user?.id} />}
           {activeSection === 'dayof' && <DayOfOpsSection organizerId={user?.id} />}
           {activeSection === 'messages' && <MessagesSection organizerId={user?.id} currentUserId={user?.id} />}
           {activeSection === 'feedback' && <FeedbackSection organizerId={user?.id} />}

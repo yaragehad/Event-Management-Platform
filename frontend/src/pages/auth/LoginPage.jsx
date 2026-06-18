@@ -43,8 +43,8 @@ function LoginPage() {
         try {
           const gRes = await fetch(`${API}/api/guests/by-user/${data.user.id}`);
           const gData = await gRes.json();
-          if (gRes.ok && gData.guestId) {
-            navigate(`/my-events?guestId=${gData.guestId}`);
+          if (gRes.ok && gData.id) {
+            navigate(`/my-events?guestId=${gData.id}`);
           } else {
             setError('No guest profile found for this account.');
             setLoading(false);

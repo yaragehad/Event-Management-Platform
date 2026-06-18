@@ -310,19 +310,31 @@ const createStakeholderAccount = async (req, res) => {
       : password;
 
     const hashed = await bcrypt.hash(plainPassword, 10);
-    const user = await prisma.user.create({ data: { name, email, password: hashed, role, age: age ? parseInt(age) : null } });
 
-    if (role === 'STAFF' && eventId) {
-      await prisma.staffAssignment.create({
-        data: { userId: user.id, eventId: parseInt(eventId), specialty, employmentType }
-      });
-    } else if (role === 'GUEST') {
-      await prisma.guest.create({ data: { userId: user.id, dietaryPreference } });
-    } else if (role === 'VENDOR') {
-      await prisma.vendor.create({
-        data: { userId: user.id, companyName, suppliesOffered, location, contactEmail, contactPhone }
-      });
-    }
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({ data: { name, email, password: hashed, role, age: age ? parseInt(age) : null } });
+
+      if (role === 'STAFF' && eventId) {
+        await tx.staffAssignment.create({
+          data: { userId: newUser.id, eventId: parseInt(eventId), specialty, employmentType }
+        });
+      } else if (role === 'GUEST') {
+        await tx.guest.create({ data: { userId: newUser.id, dietaryPreference } });
+      } else if (role === 'VENDOR') {
+        await tx.vendor.create({
+          data: {
+            userId: newUser.id,
+            companyName: companyName || '',
+            suppliesOffered: suppliesOffered || '',
+            location: location || '',
+            contactEmail: contactEmail || email,
+            contactPhone: contactPhone || null,
+          }
+        });
+      }
+
+      return newUser;
+    });
 
     // Email credentials to the new staff/vendor member (fire-and-forget; don't fail the request on email error)
     if (rolePrefix) {

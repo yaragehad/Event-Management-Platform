@@ -5,11 +5,23 @@ const bcrypt = require('bcrypt')
 
 function getTransporter() {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error('Email not configured — set EMAIL_USER and EMAIL_PASS in .env')
+    console.warn('⚠️ EMAIL_USER and EMAIL_PASS not set in .env. Emails will be logged to console instead of sent.')
+    return {
+      sendMail: async (options) => {
+        console.log(`\n[MOCK EMAIL] To: ${options.to} | Subject: ${options.subject}\n`)
+        return true
+      }
+    }
   }
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    tls: {
+      rejectUnauthorized: false
+    },
+    family: 4 // force IPv4
   })
 }
 
@@ -30,15 +42,12 @@ const sendInvitationEmail = async (req, res) => {
       include: { guestProfile: true },
     })
 
-    // Track the plain password ONLY for brand-new accounts (so we can email it)
-    let plainPassword = null
+    // Always generate a temp password so guests receive fresh login credentials
+    const plainPassword = `${event.name.split(' ')[0].replace(/[^a-zA-Z]/g, '') || 'Event'}-${Math.floor(1000 + Math.random() * 9000)}`
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(plainPassword, salt)
 
     if (!user) {
-      // friendly readable temp password e.g. "Gala-7421"
-      plainPassword = `${event.name.split(' ')[0].replace(/[^a-zA-Z]/g, '') || 'Event'}-${Math.floor(1000 + Math.random() * 9000)}`
-      // hash it the same way auth/register does, so login's bcrypt.compare works
-      const salt = await bcrypt.genSalt(10)
-      const hashedPassword = await bcrypt.hash(plainPassword, salt)
       user = await prisma.user.create({
         data: {
           name: guestName || cleanEmail.split('@')[0],
@@ -47,6 +56,11 @@ const sendInvitationEmail = async (req, res) => {
           role: 'GUEST',
         },
         include: { guestProfile: true },
+      })
+    } else {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
       })
     }
 
@@ -65,15 +79,11 @@ const sendInvitationEmail = async (req, res) => {
     const loginLink = `http://localhost:3000/login`
     const eventDate = new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
-    // Credentials block — only shown for newly created accounts
-    const credentialsBlock = plainPassword ? `
+    const credentialsBlock = `
       <div style="background:#ffffff;border:1px solid #EDE0D9;border-radius:12px;padding:20px;margin:24px 0;">
         <p style="margin:0 0 12px;color:#2C1810;font-weight:bold;font-size:15px;">🔑 Your login details</p>
         <p style="margin:0 0 6px;color:#8B6555;font-size:14px;">Email: <strong style="color:#2C1810;">${cleanEmail}</strong></p>
         <p style="margin:0;color:#8B6555;font-size:14px;">Password: <strong style="color:#2C1810;">${plainPassword}</strong></p>
-      </div>` : `
-      <div style="background:#ffffff;border:1px solid #EDE0D9;border-radius:12px;padding:20px;margin:24px 0;">
-        <p style="margin:0;color:#8B6555;font-size:14px;">Log in with the account you already have to RSVP and manage your events.</p>
       </div>`
 
     const mailOptions = {
@@ -142,25 +152,43 @@ const sendInvitationsToAll = async (req, res) => {
     let sentCount = 0
 
     for (const guest of event.guests) {
-      const invitationLink = `http://localhost:3000/invitation/${eventId}?email=${encodeURIComponent(guest.user.email)}`
+      const plainPassword = `${event.name.split(' ')[0].replace(/[^a-zA-Z]/g, '') || 'Event'}-${Math.floor(1000 + Math.random() * 9000)}`
+      const salt = await bcrypt.genSalt(10)
+      const hashedPassword = await bcrypt.hash(plainPassword, salt)
+      await prisma.user.update({ where: { id: guest.user.id }, data: { password: hashedPassword } })
+
+      const loginLink = `http://localhost:3000/login`
+      const eventDate = new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: guest.user.email,
-        subject: `You're Invited to ${event.name}!`,
+        subject: `🎉 You're Invited to ${event.name}!`,
         html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background-color: #C4622D; padding: 32px; text-align: center;">
-              <h1 style="color: white; margin: 0;">You're Invited!</h1>
+          <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#FBF7F4;">
+            <div style="background:linear-gradient(135deg,#6B2D0E 0%,#C4622D 100%);padding:44px 32px;text-align:center;">
+              <p style="color:#F5EDE8;margin:0 0 8px;font-size:14px;letter-spacing:2px;text-transform:uppercase;">You're invited</p>
+              <h1 style="color:#ffffff;margin:0;font-size:30px;">${event.name}</h1>
+              <p style="color:#F5EDE8;margin:12px 0 0;font-size:15px;">📅 ${eventDate}</p>
             </div>
-            <div style="padding: 32px; background-color: #FBF7F4;">
-              <h2 style="color: #2C1810;">Dear ${guest.user.name},</h2>
-              <p style="color: #8B6555;">You have been invited to <strong>${event.name}</strong></p>
-              <p style="color: #8B6555;">Date: <strong>${new Date(event.date).toLocaleDateString()}</strong></p>
-              ${event.booking?.venue ? `<p style="color: #8B6555;">Venue: <strong>${event.booking.venue.name}</strong></p>` : ''}
-              <a href="${invitationLink}" 
-                 style="display: block; margin-top: 24px; background-color: #C4622D; color: white; text-align: center; padding: 14px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                View Invitation & RSVP
+            <div style="padding:32px;">
+              <h2 style="color:#2C1810;margin:0 0 8px;">Hi ${guest.user.name}! 👋</h2>
+              <p style="color:#8B6555;font-size:15px;line-height:1.6;margin:0 0 4px;">
+                You've been personally invited to <strong style="color:#2C1810;">${event.name}</strong>!
+              </p>
+              ${event.booking?.venue ? `<p style="color:#8B6555;font-size:15px;margin:8px 0 0;">📍 ${event.booking.venue.name}</p>` : ''}
+              <a href="${loginLink}" style="display:block;margin:28px 0 8px;background:#C4622D;color:#ffffff;text-align:center;padding:16px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:16px;">
+                Log In &amp; RSVP →
               </a>
+              <div style="background:#ffffff;border:1px solid #EDE0D9;border-radius:12px;padding:20px;margin:24px 0;">
+                <p style="margin:0 0 12px;color:#2C1810;font-weight:bold;font-size:15px;">🔑 Your login details</p>
+                <p style="margin:0 0 6px;color:#8B6555;font-size:14px;">Email: <strong style="color:#2C1810;">${guest.user.email}</strong></p>
+                <p style="margin:0;color:#8B6555;font-size:14px;">Password: <strong style="color:#2C1810;">${plainPassword}</strong></p>
+              </div>
+              <p style="color:#B89B8C;margin-top:24px;font-size:12px;">If the button doesn't work, copy this link: ${loginLink}</p>
+            </div>
+            <div style="background:#6B2D0E;padding:20px 32px;text-align:center;">
+              <p style="color:#F5EDE8;margin:0;font-size:13px;">See you there! — The ${event.name} Team</p>
             </div>
           </div>
         `,

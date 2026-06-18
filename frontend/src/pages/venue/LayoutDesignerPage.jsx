@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useContext } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { saveLayout } from '../../services/venueService'
+import { saveLayout, getLayout, getAllVenues } from '../../services/venueService'
 import { getOrganizerStaff } from '../../services/organizerService'
 import { AuthContext } from '../../context/AuthContext'
 
@@ -274,6 +274,35 @@ export default function LayoutDesignerPage() {
   const [staffLoading, setStaffLoading] = useState(false)
   const [shareConfirmed, setShareConfirmed] = useState(null)
   const [sharing, setSharing] = useState(false)
+  const [showSaveDropdown, setShowSaveDropdown] = useState(false)
+  const [venues, setVenues] = useState([])
+  const [venuesLoading, setVenuesLoading] = useState(false)
+  const saveDropdownRef = useRef(null)
+
+  // Load existing layout when venueId is present in the URL
+  useEffect(() => {
+    if (!venueIdParam) return
+    getLayout(parseInt(venueIdParam))
+      .then(res => {
+        if (res.data?.elements?.length) {
+          setPlaced(res.data.elements)
+          setSaved(true)
+        }
+      })
+      .catch(() => {})
+  }, [venueIdParam])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showSaveDropdown) return
+    const handler = (e) => {
+      if (saveDropdownRef.current && !saveDropdownRef.current.contains(e.target)) {
+        setShowSaveDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showSaveDropdown])
 
   const colorOf = (type) => ELEMENT_DEFS.find(e => e.type === type)?.color || '#888'
 
@@ -348,18 +377,34 @@ export default function LayoutDesignerPage() {
     }
   }
 
- const handleSave = async () => {
-  if (!placed.length) { alert('Add some elements first.'); return }
-  setSaving(true)
-  try {
-    await saveLayout({ venueId: currentVenueId, elements: placed })
-    setSaved(true)
-  } catch {
-    alert('Failed to save layout. Make sure the backend is running.')
-  } finally {
-    setSaving(false)
+  const handleOpenSaveDropdown = async () => {
+    if (!placed.length) { alert('Add some elements first.'); return }
+    setShowSaveDropdown(true)
+    if (!venues.length) {
+      setVenuesLoading(true)
+      try {
+        const res = await getAllVenues()
+        setVenues(Array.isArray(res.data) ? res.data : [])
+      } catch {
+        setVenues([])
+      } finally {
+        setVenuesLoading(false)
+      }
+    }
   }
-}
+
+  const handleSaveToVenue = async (venueId) => {
+    setShowSaveDropdown(false)
+    setSaving(true)
+    try {
+      await saveLayout({ venueId, elements: placed })
+      setSaved(true)
+    } catch {
+      alert('Failed to save layout. Make sure the backend is running.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   // Export as PNG
   const handleExportImage = () => {
@@ -552,13 +597,56 @@ export default function LayoutDesignerPage() {
           <button onClick={handleExportPDF} disabled={!placed.length} style={btnStyle(!!placed.length, '#FEF3C7', '#92400E', '#F59E0B')}>
             📄 Export PDF
           </button>
-          <button onClick={handleSave} disabled={saving || !placed.length} style={{
-            padding: '0.45rem 1rem', background: saved ? COLORS.green : placed.length ? COLORS.accent : '#eee',
-            border: 'none', borderRadius: '7px', cursor: placed.length ? 'pointer' : 'not-allowed',
-            fontSize: '12px', color: placed.length ? COLORS.white : '#aaa', fontWeight: '700'
-          }}>
-            {saving ? '...' : saved ? '✓ Saved' : '💾 Save'}
-          </button>
+          <div ref={saveDropdownRef} style={{ position: 'relative' }}>
+            <button
+              onClick={handleOpenSaveDropdown}
+              disabled={saving || !placed.length}
+              style={{
+                padding: '0.45rem 1rem',
+                background: saved ? COLORS.green : placed.length ? COLORS.accent : '#eee',
+                border: 'none', borderRadius: '7px',
+                cursor: placed.length ? 'pointer' : 'not-allowed',
+                fontSize: '12px', color: placed.length ? COLORS.white : '#aaa', fontWeight: '700',
+                display: 'flex', alignItems: 'center', gap: '0.35rem'
+              }}
+            >
+              {saving ? '...' : saved ? '✓ Saved' : '💾 Save'} {!saving && <span style={{ fontSize: '10px', opacity: 0.85 }}>▼</span>}
+            </button>
+            {showSaveDropdown && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+                background: COLORS.white, border: `1px solid ${COLORS.border}`,
+                borderRadius: '10px', boxShadow: '0 6px 20px rgba(44,24,16,0.12)',
+                zIndex: 200, minWidth: '210px', maxHeight: '260px', overflowY: 'auto'
+              }}>
+                <div style={{ padding: '8px 12px 6px', fontSize: '11px', fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${COLORS.border}` }}>
+                  Save layout to venue
+                </div>
+                {venuesLoading ? (
+                  <div style={{ padding: '12px 14px', color: COLORS.textMuted, fontSize: '13px' }}>Loading venues…</div>
+                ) : venues.length === 0 ? (
+                  <div style={{ padding: '12px 14px', color: COLORS.textMuted, fontSize: '13px' }}>No venues found</div>
+                ) : (
+                  venues.map(v => (
+                    <button
+                      key={v.id}
+                      onClick={() => handleSaveToVenue(v.id)}
+                      style={{
+                        display: 'block', width: '100%', padding: '9px 14px',
+                        background: 'none', border: 'none', textAlign: 'left',
+                        cursor: 'pointer', fontSize: '13px', color: COLORS.text,
+                        fontWeight: '500', borderBottom: `1px solid ${COLORS.border}`,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = COLORS.accentLight}
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                      🏛 {v.name}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
           <button
             onClick={() => {
               setShowShareModal(true)

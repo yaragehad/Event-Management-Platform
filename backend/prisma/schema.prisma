@@ -15,9 +15,10 @@ model User {
   password  String
   role      Role     @default(STAFF)
   isActive  Boolean  @default(true)
-  age       Int?
-  phone     String?
-  bio       String?
+  age         Int?
+  phone       String?
+  bio         String?
+  companyName String?
   createdAt DateTime @default(now())
   organizedEvents  Event[]          @relation("OrganizerEvents")
   staffAssignments StaffAssignment[]

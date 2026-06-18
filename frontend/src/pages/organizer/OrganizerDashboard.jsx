@@ -316,7 +316,7 @@ function EventsSection({ organizerId }) {
                 </div>
                 {statusBadge(ev.status)}
                 {ev.booking?.venue?.id && (
-                  <Btn small variant="ghost" onClick={() => window.open(`/organizer/layout/${ev.booking.venue.id}`, '_blank')}>🗺️ Design Layout</Btn>
+                  <Btn small variant="ghost" onClick={() => window.open(`/organizer/layout/${ev.booking.venue.id}`, '_blank')}>🗺️ Layout Design</Btn>
                 )}
               </div>
             </div>

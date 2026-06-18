@@ -11,6 +11,9 @@ exports.getProfile = async (req, res) => {
         email: true,
         role: true,
         isActive: true,
+        phone: true,
+        bio: true,
+        companyName: true,
         createdAt: true,
         _count: {
           select: {
@@ -31,14 +34,27 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email, currentPassword, newPassword } = req.body;
+    const { name, email, phone, bio, companyName, currentPassword, newPassword } = req.body;
 
     const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
+    // ── DEBUG ─────────────────────────────────────────────────────────────────
+    console.log('[updateProfile] body:', { name, email, phone, bio, companyName });
+    console.log('[updateProfile] db  :', { name: user.name, email: user.email, phone: user.phone, bio: user.bio, companyName: user.companyName });
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Normalize: treat empty string the same as null for optional text fields
+    const norm = (v) => (v === undefined || v === null || v === '') ? null : String(v).trim();
+
     const updateData = {};
 
-    if (name && name !== user.name) updateData.name = name;
+    if (name && name.trim() !== user.name) updateData.name = name.trim();
+    if (norm(phone) !== user.phone) updateData.phone = norm(phone);
+    if (norm(bio) !== user.bio) updateData.bio = norm(bio);
+    if (norm(companyName) !== user.companyName) updateData.companyName = norm(companyName);
+
+    console.log('[updateProfile] updateData:', updateData);
 
     if (email && email !== user.email) {
       const taken = await prisma.user.findUnique({ where: { email } });
@@ -63,7 +79,7 @@ exports.updateProfile = async (req, res) => {
     const updated = await prisma.user.update({
       where: { id: req.user.userId },
       data: updateData,
-      select: { id: true, name: true, email: true, role: true },
+      select: { id: true, name: true, email: true, role: true, phone: true, bio: true, companyName: true },
     });
 
     res.json({ message: 'Profile updated successfully.', user: updated });

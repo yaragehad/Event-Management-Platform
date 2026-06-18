@@ -82,6 +82,7 @@ const StaffTaskList = () => {
           <a href="/staff/tasks" style={{ color: colors.accentLight, textDecoration: 'none', fontWeight: 'bold' }}>✅ My Tasks</a>
           <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none' }}>🗺️ Venue Layout</a>
           <a href="/staff/checkin" style={{ color: colors.accentLight, textDecoration: 'none' }}>👥 Guest Check-In</a>
+          <a href="/checkin/1" style={{ color: colors.accentLight, textDecoration: 'none' }}>📷 QR Check-In</a>
           <a href="/staff/vendors" style={{ color: colors.accentLight, textDecoration: 'none' }}>🚚 Vendor Arrival</a>
           <a href="/staff/dayof" style={{ color: colors.accentLight, textDecoration: 'none' }}>📊 Day-Of Dashboard</a>
         </div>

@@ -30,9 +30,11 @@ function LoginPage() {
         } else if (data.user.role === 'ORGANIZER') {
           navigate('/organizer/dashboard');
         } else if (data.user.role === 'VENDOR') {
-          navigate('/vendor/dashboard'); 
-        }else {
-          navigate('/login'); // Default fallback
+          navigate('/vendor/dashboard');
+        } else if (data.user.role === 'STAFF') {
+          navigate('/staff/dashboard');
+        } else {
+          navigate('/login');
         }
       } else {
         setError(data.message || 'Login failed');

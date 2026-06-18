@@ -49,8 +49,9 @@ model Venue {
   areaM2      Float?
   amenities   String?
   pricePerDay Float
-  photos         String[]   
-  availableDates DateTime[] 
+  photos           String[]
+  layoutDocuments  String[]
+  availableDates   DateTime[]
   isActive    Boolean  @default(true)
   ownerId     Int
   createdAt   DateTime @default(now())

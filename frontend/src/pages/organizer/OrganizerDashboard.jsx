@@ -33,18 +33,18 @@ import {
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 const C = {
-  sidebar: '#6B2D0E',
-  accent: '#C4622D',
-  accentLight: '#F5EDE8',
-  cream: '#FBF7F4',
-  border: '#EDE0D9',
-  text: '#2C1810',
-  textMuted: '#8B6555',
-  white: '#FFFFFF',
-  green: '#2D7A4F',
-  greenBg: '#E8F5EE',
-  red: '#C0392B',
-  redBg: '#FDECEA',
+  sidebar: '#1b0f06',
+  accent: '#ff5a2c',
+  accentLight: '#ffe7dc',
+  cream: '#fdf4e9',
+  border: '#f0e3d2',
+  text: '#241407',
+  textMuted: '#8a7a68',
+  white: '#ffffff',
+  green: '#0f7a44',
+  greenBg: '#e7f7ee',
+  red: '#c83e16',
+  redBg: '#ffe7dc',
 }
 
 // ─── Nav Sections ─────────────────────────────────────────────────────────────
@@ -1450,14 +1450,12 @@ export default function OrganizerDashboard() {
     : 'O'
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif", background: C.cream }}>
+    <div style={{ display: 'flex', height: '100vh', fontFamily: "'Hanken Grotesk', system-ui, sans-serif", background: C.cream, padding: 12, gap: 12, boxSizing: 'border-box', overflow: 'hidden' }}>
 
-      {/* ── Sidebar (fixed) ───────────────────────────────────────────────── */}
+      {/* ── Sidebar — floating rounded card ──────────────────────────────── */}
       <div style={{
-        width: sidebarWidth, height: '100vh', background: C.sidebar,
-        display: 'flex', flexDirection: 'column', position: 'fixed',
-        top: 0, left: 0, zIndex: 100,
-        overflow: 'hidden',
+        borderRadius: 20, overflow: 'hidden', height: '100%',
+        width: sidebarOpen ? 260 : 0, flexShrink: 0,
         transition: 'width 0.3s ease',
       }}>
         <style>{`
@@ -1466,7 +1464,7 @@ export default function OrganizerDashboard() {
           .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
         `}</style>
-        <div style={{ width: '260px', display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <div className="custom-scrollbar" style={{ width: '260px', height: '100%', background: C.sidebar, display: 'flex', flexDirection: 'column', overflowY: 'auto', boxSizing: 'border-box' }}>
 
           {/* Logo with hover dropdown */}
           <div
@@ -1479,10 +1477,11 @@ export default function OrganizerDashboard() {
               style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
             >
               <div style={{
-                width: '38px', height: '38px', background: 'rgba(255,255,255,0.15)',
-                borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '18px', flexShrink: 0,
-              }}>🏛</div>
+                width: '38px', height: '38px', background: C.accent,
+                borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: '18px', color: C.sidebar, flexShrink: 0,
+                fontFamily: "'Bricolage Grotesque', system-ui, sans-serif",
+              }}>E</div>
               <div>
                 <div style={{ color: C.white, fontWeight: '700', fontSize: '16px', whiteSpace: 'nowrap' }}>EventHub</div>
                 <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>Organizer</div>
@@ -1560,10 +1559,10 @@ export default function OrganizerDashboard() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: '0.75rem',
                     padding: '0.7rem 1rem', borderRadius: '8px', marginBottom: '0.25rem',
-                    cursor: 'pointer', color: isActive ? C.white : 'rgba(255,255,255,0.7)',
-                    background: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
-                    fontWeight: isActive ? '600' : '400', fontSize: '14px',
-                    transition: 'all 0.15s', whiteSpace: 'nowrap',
+                    cursor: 'pointer', color: isActive ? C.white : '#c9b9a8',
+                    background: isActive ? C.accent : 'transparent',
+                    fontWeight: isActive ? '600' : '500', fontSize: '14px',
+                    transition: 'all 0.15s', whiteSpace: 'nowrap', borderRadius: '12px',
                   }}
                   onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
                   onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
@@ -1593,11 +1592,11 @@ export default function OrganizerDashboard() {
         </div>
       </div>
 
-      {/* ── Main content (shifts with margin) ────────────────────────────── */}
+      {/* ── Main content ─────────────────────────────────────────────────── */}
       <div style={{
-        marginLeft: sidebarWidth, flex: 1,
+        flex: 1,
         display: 'flex', flexDirection: 'column',
-        transition: 'margin-left 0.3s ease',
+        overflow: 'hidden', minWidth: 0,
       }}>
 
         {/* ── Top bar ─────────────────────────────────────────────────────── */}

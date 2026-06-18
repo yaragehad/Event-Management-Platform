@@ -3,20 +3,22 @@ import VenueLayout, { COLORS } from './VenueLayout'
 import { getVenueAnalytics } from '../../services/venueService'
 import { AuthContext } from '../../context/AuthContext'
 
-function MetricCard({ icon, value, label, sub, color }) {
+const bricolage = "'Bricolage Grotesque', system-ui, sans-serif"
+
+function MetricCard({ icon, value, label, sub, iconBg }) {
   return (
     <div style={{
       background: COLORS.white, border: `1px solid ${COLORS.border}`,
-      borderRadius: '12px', padding: '1.25rem 1.5rem', flex: 1
+      borderRadius: 22, padding: 20, flex: 1
     }}>
       <div style={{
-        width: '40px', height: '40px', background: color || COLORS.accentLight,
-        borderRadius: '8px', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', fontSize: '18px', marginBottom: '0.75rem'
+        width: 40, height: 40, background: iconBg || COLORS.accentLight,
+        borderRadius: 11, display: 'flex', alignItems: 'center',
+        justifyContent: 'center', fontSize: 18, marginBottom: 14
       }}>{icon}</div>
-      <div style={{ fontSize: '26px', fontWeight: '800', color: COLORS.text, marginBottom: '0.2rem' }}>{value}</div>
-      <div style={{ fontSize: '14px', color: COLORS.textMuted }}>{label}</div>
-      {sub && <div style={{ fontSize: '12px', color: COLORS.textMuted, marginTop: '0.2rem' }}>{sub}</div>}
+      <div style={{ fontSize: 30, fontWeight: 800, color: COLORS.text, fontFamily: bricolage, marginBottom: 4 }}>{value}</div>
+      <div style={{ fontSize: 13.5, color: COLORS.textMuted }}>{label}</div>
+      {sub && <div style={{ fontSize: 12, color: COLORS.textFaint, marginTop: 3 }}>{sub}</div>}
     </div>
   )
 }
@@ -61,9 +63,9 @@ export default function VenueAnalyticsPage() {
       'Revenue (EGP)': d.revenue
     }))
     if (rows.length === 0) {
-    alert('No monthly booking data to export yet. Create and approve some bookings first.')
-    return
-  }
+      alert('No monthly booking data to export yet. Create and approve some bookings first.')
+      return
+    }
     exportToCSV(rows, 'monthly-bookings-report.csv')
   }
 
@@ -87,7 +89,7 @@ export default function VenueAnalyticsPage() {
   const { summary, monthlyData, venueBreakdown } = data
 
   return (
-    <VenueLayout title="Analytics & Reports">
+    <VenueLayout title="Analytics & Reports" subtitle="Performance overview for all your venues">
 
       {/* Export buttons */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', justifyContent: 'flex-end' }}>
@@ -101,9 +103,10 @@ export default function VenueAnalyticsPage() {
             onClick={btn.fn}
             style={{
               padding: '0.6rem 1.1rem', background: COLORS.white,
-              border: `1px solid ${COLORS.border}`, borderRadius: '8px',
+              border: `1px solid ${COLORS.border}`, borderRadius: 11,
               cursor: 'pointer', fontSize: '13px', fontWeight: '600',
-              color: COLORS.text, display: 'flex', alignItems: 'center', gap: '0.4rem'
+              color: COLORS.text, display: 'flex', alignItems: 'center', gap: '0.4rem',
+              fontFamily: 'inherit'
             }}
             onMouseEnter={e => { e.currentTarget.style.background = COLORS.accentLight; e.currentTarget.style.borderColor = COLORS.accent }}
             onMouseLeave={e => { e.currentTarget.style.background = COLORS.white; e.currentTarget.style.borderColor = COLORS.border }}
@@ -114,26 +117,26 @@ export default function VenueAnalyticsPage() {
       </div>
 
       {/* Summary Metrics */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-        <MetricCard icon="🏛" value={summary.activeVenues} label="Active Venues" sub={`of ${summary.totalVenues} total`} />
-        <MetricCard icon="📅" value={summary.totalBookings} label="Total Bookings" sub={`${summary.pendingBookings} pending`} />
-        <MetricCard icon="📈" value={`${summary.conversionRate}%`} label="Conversion Rate" sub="Requests → Approved" color="#E8F5EE" />
-        <MetricCard icon="💰" value={`EGP ${summary.estimatedRevenue.toLocaleString()}`} label="Est. Revenue" sub="From approved bookings" color="#FEF9C3" />
+      <div style={{ display: 'flex', gap: 16, marginBottom: 18 }}>
+        <MetricCard icon="🏛" iconBg={COLORS.goldBg} value={summary.activeVenues} label="Active Venues" sub={`of ${summary.totalVenues} total`} />
+        <MetricCard icon="📅" iconBg={COLORS.accentLight} value={summary.totalBookings} label="Total Bookings" sub={`${summary.pendingBookings} pending`} />
+        <MetricCard icon="📈" iconBg={COLORS.greenBg} value={`${summary.conversionRate}%`} label="Conversion Rate" sub="Requests → Approved" />
+        <MetricCard icon="💰" iconBg="#fff9c4" value={`EGP ${summary.estimatedRevenue.toLocaleString()}`} label="Est. Revenue" sub="From approved bookings" />
       </div>
 
-      {/* Booking breakdown */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+      {/* Booking status breakdown */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 18 }}>
         {[
-          { label: 'Approved', value: summary.approvedBookings, color: COLORS.greenBg, text: COLORS.green },
-          { label: 'Pending', value: summary.pendingBookings, color: '#FEF9C3', text: '#92400E' },
-          { label: 'Declined', value: summary.declinedBookings, color: COLORS.redBg, text: COLORS.red },
+          { label: 'Approved', value: summary.approvedBookings, bg: COLORS.greenBg, text: COLORS.green },
+          { label: 'Pending', value: summary.pendingBookings, bg: COLORS.goldBg, text: COLORS.goldText },
+          { label: 'Declined', value: summary.declinedBookings, bg: COLORS.redBg, text: COLORS.red },
         ].map((item, i) => (
           <div key={i} style={{
-            flex: 1, background: item.color, border: `1px solid ${COLORS.border}`,
-            borderRadius: '10px', padding: '1rem 1.5rem', textAlign: 'center'
+            flex: 1, background: item.bg, border: `1px solid ${COLORS.border}`,
+            borderRadius: 22, padding: '20px 24px', textAlign: 'center'
           }}>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: item.text }}>{item.value}</div>
-            <div style={{ fontSize: '13px', color: item.text, fontWeight: '600' }}>{item.label}</div>
+            <div style={{ fontSize: 30, fontWeight: 800, color: item.text, fontFamily: bricolage }}>{item.value}</div>
+            <div style={{ fontSize: 13, color: item.text, fontWeight: 600, marginTop: 4 }}>{item.label}</div>
           </div>
         ))}
       </div>
@@ -141,27 +144,30 @@ export default function VenueAnalyticsPage() {
       {/* Per Venue Breakdown */}
       <div style={{
         background: COLORS.white, border: `1px solid ${COLORS.border}`,
-        borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem'
+        borderRadius: 22, padding: '20px 24px', marginBottom: 18
       }}>
-        <h2 style={{ margin: '0 0 1rem', fontSize: '16px', fontWeight: '700', color: COLORS.text }}>Venue Performance</h2>
-        {venueBreakdown.length === 0 && <p style={{ color: COLORS.textMuted }}>No venues yet.</p>}
+        <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: COLORS.text, fontFamily: bricolage }}>Venue Performance</h2>
+        {venueBreakdown.length === 0 && <p style={{ color: COLORS.textMuted, margin: 0 }}>No venues yet.</p>}
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
           <thead>
             <tr style={{ borderBottom: `2px solid ${COLORS.border}` }}>
               {['Venue', 'City', 'Price/Day', 'Total Bookings', 'Approved', 'Pending', 'Revenue (EGP)'].map(h => (
-                <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: COLORS.textMuted, fontWeight: '600', fontSize: '13px' }}>{h}</th>
+                <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: COLORS.textFaint, fontWeight: '600', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {venueBreakdown.map(v => (
-              <tr key={v.id} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
+            {venueBreakdown.map((v, i) => (
+              <tr key={v.id} style={{ borderBottom: i < venueBreakdown.length - 1 ? `1px solid ${COLORS.borderFaint}` : 'none' }}
+                onMouseEnter={e => e.currentTarget.style.background = COLORS.cream}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
                 <td style={{ padding: '0.75rem', fontWeight: '600', color: COLORS.text }}>{v.name}</td>
                 <td style={{ padding: '0.75rem', color: COLORS.textMuted }}>{v.city}</td>
                 <td style={{ padding: '0.75rem', color: COLORS.textMuted }}>{v.pricePerDay.toLocaleString()}</td>
                 <td style={{ padding: '0.75rem', textAlign: 'center' }}>{v.totalBookings}</td>
                 <td style={{ padding: '0.75rem', textAlign: 'center', color: COLORS.green, fontWeight: '600' }}>{v.approved}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'center', color: '#92400E' }}>{v.pending}</td>
+                <td style={{ padding: '0.75rem', textAlign: 'center', color: COLORS.goldText }}>{v.pending}</td>
                 <td style={{ padding: '0.75rem', fontWeight: '700', color: COLORS.text }}>{v.revenue.toLocaleString()}</td>
               </tr>
             ))}
@@ -172,21 +178,24 @@ export default function VenueAnalyticsPage() {
       {/* Monthly History */}
       <div style={{
         background: COLORS.white, border: `1px solid ${COLORS.border}`,
-        borderRadius: '12px', padding: '1.5rem'
+        borderRadius: 22, padding: '20px 24px'
       }}>
-        <h2 style={{ margin: '0 0 1rem', fontSize: '16px', fontWeight: '700', color: COLORS.text }}>Historical Booking Data</h2>
-        {Object.keys(monthlyData).length === 0 && <p style={{ color: COLORS.textMuted }}>No booking history yet.</p>}
+        <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: COLORS.text, fontFamily: bricolage }}>Historical Booking Data</h2>
+        {Object.keys(monthlyData).length === 0 && <p style={{ color: COLORS.textMuted, margin: 0 }}>No booking history yet.</p>}
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
           <thead>
             <tr style={{ borderBottom: `2px solid ${COLORS.border}` }}>
               {['Month', 'Total Bookings', 'Approved', 'Revenue (EGP)'].map(h => (
-                <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: COLORS.textMuted, fontWeight: '600', fontSize: '13px' }}>{h}</th>
+                <th key={h} style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: COLORS.textFaint, fontWeight: '600', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {Object.entries(monthlyData).map(([month, d]) => (
-              <tr key={month} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
+            {Object.entries(monthlyData).map(([month, d], i, arr) => (
+              <tr key={month} style={{ borderBottom: i < arr.length - 1 ? `1px solid ${COLORS.borderFaint}` : 'none' }}
+                onMouseEnter={e => e.currentTarget.style.background = COLORS.cream}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
                 <td style={{ padding: '0.75rem', fontWeight: '600', color: COLORS.text }}>{month}</td>
                 <td style={{ padding: '0.75rem', textAlign: 'center' }}>{d.bookings}</td>
                 <td style={{ padding: '0.75rem', textAlign: 'center', color: COLORS.green, fontWeight: '600' }}>{d.approved}</td>

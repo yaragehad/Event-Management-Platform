@@ -16,11 +16,24 @@ const labelStyle = {
   fontSize: '13px', fontWeight: '600', color: COLORS.text
 }
 
+const BACKEND = 'http://localhost:3001'
+
+async function uploadFiles(endpoint, files) {
+  const formData = new FormData()
+  const field = endpoint === 'photos' ? 'photos' : 'documents'
+  files.forEach(f => formData.append(field, f))
+  const res = await fetch(`${BACKEND}/api/upload/${endpoint}`, { method: 'POST', body: formData })
+  const data = await res.json()
+  return data.urls.map(u => `${BACKEND}${u}`)
+}
+
 export default function CreateVenuePage() {
   const navigate = useNavigate()
   const { user } = useContext(AuthContext)
   const [submitting, setSubmitting] = useState(false)
-  const [photoUrls, setPhotoUrls] = useState([''])
+  const [photoFiles, setPhotoFiles] = useState([])
+  const [photoPreviews, setPhotoPreviews] = useState([])
+  const [docFiles, setDocFiles] = useState([])
   const [form, setForm] = useState({
     name: '', description: '', location: '', city: '',
     capacity: '', areaM2: '', amenities: '', pricePerDay: ''
@@ -28,13 +41,22 @@ export default function CreateVenuePage() {
 
   const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
 
-  const handlePhotoChange = (index, value) => {
-    setPhotoUrls(prev => {
-      const updated = [...prev]
-      updated[index] = value
-      return updated
-    })
+  const handlePhotoSelect = (e) => {
+    const files = Array.from(e.target.files)
+    setPhotoFiles(prev => [...prev, ...files])
+    setPhotoPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))])
   }
+
+  const removePhoto = (i) => {
+    setPhotoFiles(prev => prev.filter((_, idx) => idx !== i))
+    setPhotoPreviews(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  const handleDocSelect = (e) => {
+    setDocFiles(prev => [...prev, ...Array.from(e.target.files)])
+  }
+
+  const removeDoc = (i) => setDocFiles(prev => prev.filter((_, idx) => idx !== i))
 
   const handleSubmit = async () => {
     if (!form.name || !form.location || !form.city || !form.capacity || !form.pricePerDay) {
@@ -51,13 +73,16 @@ export default function CreateVenuePage() {
     }
     setSubmitting(true)
     try {
+      const photos = photoFiles.length ? await uploadFiles('photos', photoFiles) : []
+      const layoutDocuments = docFiles.length ? await uploadFiles('documents', docFiles) : []
       await createVenue({
         ...form,
         ownerId: user.id,
         capacity: parseInt(form.capacity),
         areaM2: form.areaM2 ? parseFloat(form.areaM2) : null,
         pricePerDay: parseFloat(form.pricePerDay),
-        photos: photoUrls.filter(u => u.trim() !== '')
+        photos,
+        layoutDocuments,
       })
       alert('Venue created successfully!')
       navigate('/venue/listings')
@@ -143,27 +168,62 @@ export default function CreateVenuePage() {
 
           {/* Photos */}
           <h3 style={{ margin: '0 0 1.25rem', fontSize: '15px', fontWeight: '700', color: COLORS.text, borderBottom: `1px solid ${COLORS.border}`, paddingBottom: '0.75rem' }}>
-            Photos
+            Property Photos
+          </h3>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.6rem 1rem', background: COLORS.accentLight,
+              border: `1px dashed ${COLORS.accent}`, borderRadius: '8px',
+              cursor: 'pointer', fontSize: '13px', color: COLORS.accent, fontWeight: '600', width: 'fit-content'
+            }}>
+              📷 Choose Photos
+              <input type="file" accept="image/*" multiple onChange={handlePhotoSelect} style={{ display: 'none' }} />
+            </label>
+            <p style={{ margin: '6px 0 10px', fontSize: '12px', color: COLORS.textMuted }}>JPG, PNG, WEBP — up to 10 photos, 10MB each</p>
+            {photoPreviews.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                {photoPreviews.map((src, i) => (
+                  <div key={i} style={{ position: 'relative' }}>
+                    <img src={src} alt="" style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: '8px', border: `1px solid ${COLORS.border}` }} />
+                    <button onClick={() => removePhoto(i)} style={{
+                      position: 'absolute', top: -6, right: -6, width: 20, height: 20,
+                      background: '#C0392B', color: '#fff', border: 'none', borderRadius: '50%',
+                      cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Layout Documents */}
+          <h3 style={{ margin: '0 0 1.25rem', fontSize: '15px', fontWeight: '700', color: COLORS.text, borderBottom: `1px solid ${COLORS.border}`, paddingBottom: '0.75rem' }}>
+            Spatial Layout Documents
           </h3>
           <div style={{ marginBottom: '2rem' }}>
-            {photoUrls.map((url, i) => (
-              <input
-                key={i} value={url}
-                onChange={e => handlePhotoChange(i, e.target.value)}
-                placeholder="Paste image URL here"
-                style={{ ...inputStyle, marginBottom: '0.5rem' }}
-              />
-            ))}
-            <button
-              onClick={() => setPhotoUrls(prev => [...prev, ''])}
-              style={{
-                background: 'none', border: `1px dashed ${COLORS.border}`,
-                padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer',
-                color: COLORS.textMuted, fontSize: '13px'
-              }}
-            >
-              + Add another photo
-            </button>
+            <label style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.6rem 1rem', background: '#EEF2FF',
+              border: '1px dashed #818CF8', borderRadius: '8px',
+              cursor: 'pointer', fontSize: '13px', color: '#4F46E5', fontWeight: '600', width: 'fit-content'
+            }}>
+              📄 Upload Floor Plans / Documents
+              <input type="file" accept="image/*,.pdf" multiple onChange={handleDocSelect} style={{ display: 'none' }} />
+            </label>
+            <p style={{ margin: '6px 0 10px', fontSize: '12px', color: COLORS.textMuted }}>PDF or image files — up to 5 documents</p>
+            {docFiles.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {docFiles.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: '#EEF2FF', borderRadius: '8px', fontSize: '13px' }}>
+                    <span>{f.name.endsWith('.pdf') ? '📄' : '🖼'}</span>
+                    <span style={{ flex: 1, color: '#4F46E5', fontWeight: '500' }}>{f.name}</span>
+                    <span style={{ color: COLORS.textMuted, fontSize: '11px' }}>{(f.size / 1024).toFixed(0)} KB</span>
+                    <button onClick={() => removeDoc(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C0392B', fontWeight: '700' }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Actions */}

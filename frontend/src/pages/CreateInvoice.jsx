@@ -5,18 +5,18 @@ import { VendorSidebar } from '../components/Sidebar';
 import { createInvoice } from '../services/api';
 
 const styles = {
-  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#FBF7F4' },
-  main: { marginLeft: '240px', padding: '30px', flex: 1 },
-  backBtn: { background: 'none', border: 'none', color: '#C4622D', cursor: 'pointer', fontSize: '14px', marginBottom: '16px', padding: 0 },
-  title: { fontSize: '24px', fontWeight: 'bold', color: '#2C1810', marginBottom: '24px' },
-  card: { backgroundColor: '#FFFFFF', border: '1px solid #EDE0D9', borderRadius: '10px', padding: '30px', maxWidth: '600px' },
-  label: { display: 'block', marginBottom: '6px', color: '#2C1810', fontSize: '14px', fontWeight: '500' },
-  input: { width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #EDE0D9', marginBottom: '16px', fontSize: '14px', boxSizing: 'border-box', color: '#2C1810' },
-  textarea: { width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #EDE0D9', marginBottom: '16px', fontSize: '14px', boxSizing: 'border-box', color: '#2C1810', minHeight: '100px', resize: 'vertical' },
-  fileInput: { width: '100%', padding: '10px 0', marginBottom: '16px', fontSize: '14px', color: '#2C1810' },
-  button: { padding: '10px 24px', backgroundColor: '#C4622D', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-  success: { color: '#2D7A4F', backgroundColor: '#E8F5EE', padding: '10px', borderRadius: '6px', marginBottom: '16px', fontSize: '13px' },
-  error: { color: '#C0392B', backgroundColor: '#FDECEA', padding: '10px', borderRadius: '6px', marginBottom: '16px', fontSize: '13px' },
+  container: { display: 'flex', height: '100vh', backgroundColor: '#fdf4e9', fontFamily: "'Hanken Grotesk', system-ui, sans-serif", padding: '12px', gap: '12px', boxSizing: 'border-box', overflow: 'hidden' },
+  main: { flex: 1, padding: '20px 24px', overflowY: 'auto' },
+  backBtn: { background: 'none', border: 'none', color: '#ff5a2c', cursor: 'pointer', fontSize: '14px', marginBottom: '16px', padding: 0, fontWeight: '600' },
+  title: { fontSize: '24px', fontWeight: '800', color: '#241407', marginBottom: '24px', fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" },
+  card: { backgroundColor: '#ffffff', border: '1px solid #f0e3d2', borderRadius: '16px', padding: '30px', maxWidth: '600px', boxShadow: '0 2px 8px rgba(27,15,6,0.05)' },
+  label: { display: 'block', marginBottom: '6px', color: '#241407', fontSize: '14px', fontWeight: '600' },
+  input: { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #f0e3d2', marginBottom: '16px', fontSize: '14px', boxSizing: 'border-box', color: '#241407', background: '#fffaf3' },
+  textarea: { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #f0e3d2', marginBottom: '16px', fontSize: '14px', boxSizing: 'border-box', color: '#241407', minHeight: '100px', resize: 'vertical', background: '#fffaf3' },
+  fileInput: { width: '100%', padding: '10px 0', marginBottom: '16px', fontSize: '14px', color: '#241407' },
+  button: { padding: '10px 24px', backgroundColor: '#ff5a2c', color: '#ffffff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
+  success: { color: '#0f7a44', backgroundColor: '#e7f7ee', padding: '10px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px' },
+  error: { color: '#c83e16', backgroundColor: '#ffe7dc', padding: '10px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px' },
 };
 
 function CreateInvoice() {

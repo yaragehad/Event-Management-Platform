@@ -4,18 +4,18 @@ import { OrganizerSidebar } from '../components/Sidebar';
 import { getVendors } from '../services/api';
 
 const styles = {
-  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#FBF7F4' },
-  main: { marginLeft: '240px', padding: '30px', flex: 1 },
-  title: { fontSize: '24px', fontWeight: 'bold', color: '#2C1810', marginBottom: '24px' },
+  container: { display: 'flex', height: '100vh', backgroundColor: '#fdf4e9', fontFamily: "'Hanken Grotesk', system-ui, sans-serif", padding: '12px', gap: '12px', boxSizing: 'border-box', overflow: 'hidden' },
+  main: { flex: 1, padding: '20px 24px', overflowY: 'auto' },
+  title: { fontSize: '24px', fontWeight: '800', color: '#241407', marginBottom: '24px', fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" },
   searchRow: { display: 'flex', gap: '12px', marginBottom: '20px' },
-  searchInput: { flex: 1, padding: '10px 12px', borderRadius: '6px', border: '1px solid #EDE0D9', fontSize: '14px', color: '#2C1810' },
-  searchBtn: { padding: '10px 20px', backgroundColor: '#C4622D', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' },
-  card: { backgroundColor: '#FFFFFF', border: '1px solid #EDE0D9', borderRadius: '10px', padding: '20px', marginBottom: '12px', cursor: 'pointer' },
+  searchInput: { flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid #f0e3d2', fontSize: '14px', color: '#241407', background: '#fffaf3' },
+  searchBtn: { padding: '10px 20px', backgroundColor: '#ff5a2c', color: '#ffffff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
+  card: { backgroundColor: '#ffffff', border: '1px solid #f0e3d2', borderRadius: '14px', padding: '20px', marginBottom: '12px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(27,15,6,0.05)' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-  cardTitle: { fontWeight: '600', color: '#2C1810', fontSize: '15px' },
-  cardMeta: { color: '#8B6555', fontSize: '13px', marginTop: '4px' },
-  viewBtn: { padding: '6px 16px', backgroundColor: '#F5EDE8', color: '#C4622D', border: '1px solid #C4622D', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' },
-  empty: { textAlign: 'center', color: '#8B6555', padding: '40px' },
+  cardTitle: { fontWeight: '700', color: '#241407', fontSize: '15px' },
+  cardMeta: { color: '#8a7a68', fontSize: '13px', marginTop: '4px' },
+  viewBtn: { padding: '6px 16px', backgroundColor: '#ffe7dc', color: '#ff5a2c', border: '1px solid #ff5a2c', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontWeight: '600' },
+  empty: { textAlign: 'center', color: '#8a7a68', padding: '40px' },
 };
 
 function VendorList() {

@@ -3,18 +3,18 @@ import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
 
 const colors = {
-  sidebar: '#6B2D0E',
-  accent: '#C4622D',
-  accentLight: '#F5EDE8',
-  cream: '#FBF7F4',
-  border: '#EDE0D9',
-  text: '#2C1810',
-  textMuted: '#8B6555',
-  white: '#FFFFFF',
-  green: '#2D7A4F',
-  greenBg: '#E8F5EE',
-  red: '#C0392B',
-  redBg: '#FDECEA',
+  sidebar: '#1b0f06',
+  accent: '#ff5a2c',
+  accentLight: '#ffe7dc',
+  cream: '#fdf4e9',
+  border: '#f0e3d2',
+  text: '#241407',
+  textMuted: '#8a7a68',
+  white: '#ffffff',
+  green: '#0f7a44',
+  greenBg: '#e7f7ee',
+  red: '#c83e16',
+  redBg: '#ffe7dc',
 };
 
 const StaffTaskList = () => {
@@ -65,25 +65,28 @@ const StaffTaskList = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: 'sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", padding: '12px', gap: '12px', boxSizing: 'border-box' }}>
 
       {sidebarOpen && (
         <div style={{
-          width: '220px',
-          backgroundColor: colors.sidebar,
-          color: colors.white,
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
+          width: '220px', height: 'calc(100vh - 24px)',
+          backgroundColor: colors.sidebar, borderRadius: '20px',
+          color: colors.white, padding: '24px 16px',
+          display: 'flex', flexDirection: 'column', gap: '4px',
+          position: 'sticky', top: 0, alignSelf: 'flex-start',
+          overflowY: 'auto', boxSizing: 'border-box', flexShrink: 0,
         }}>
-          <h2 style={{ color: colors.white, marginBottom: '20px' }}>VenueHub</h2>
-          <a href="/staff/dashboard" style={{ color: colors.accentLight, textDecoration: 'none' }}>📋 My Events</a>
-          <a href="/staff/tasks" style={{ color: colors.accentLight, textDecoration: 'none', fontWeight: 'bold' }}>✅ My Tasks</a>
-          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none' }}>🗺️ Venue Layout</a>
-          <a href="/staff/checkin" style={{ color: colors.accentLight, textDecoration: 'none' }}>👥 Guest Check-In</a>
-          <a href="/staff/vendors" style={{ color: colors.accentLight, textDecoration: 'none' }}>🚚 Vendor Arrival</a>
-          <a href="/staff/dayof" style={{ color: colors.accentLight, textDecoration: 'none' }}>📊 Day-Of Dashboard</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '20px', borderBottom: '1px solid rgba(255,90,44,0.25)', marginBottom: '16px', flexShrink: 0 }}>
+            <div style={{ width: 32, height: 32, background: colors.accent, borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, color: colors.sidebar, flexShrink: 0 }}>S</div>
+            <span style={{ color: '#ffffff', fontWeight: 800, fontSize: '17px', fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}>StaffHub</span>
+          </div>
+          <div style={{ color: '#6b574a', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px', flexShrink: 0 }}>Menu</div>
+          <a href="/staff/dashboard" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>📋 My Events</a>
+          <a href="/staff/tasks" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>✅ My Tasks</a>
+          <a href="/staff/floorplan" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>🗺️ Venue Layout</a>
+          <a href="/staff/checkin" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>👥 Guest Check-In</a>
+          <a href="/staff/vendors" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>🚚 Vendor Arrival</a>
+          <a href="/staff/dayof" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>📊 Day-Of Dashboard</a>
         </div>
       )}
 

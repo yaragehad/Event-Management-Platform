@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { AuthContext } from '../context/AuthContext'
 
 const C = {
-  sidebar: '#6B2D0E',
-  accent: '#C4622D',
-  accentLight: '#F5EDE8',
-  cream: '#FBF7F4',
-  border: '#EDE0D9',
-  text: '#2C1810',
-  textMuted: '#8B6555',
-  white: '#FFFFFF',
-  green: '#2D7A4F',
-  greenBg: '#E8F5EE',
-  red: '#C0392B',
-  redBg: '#FDECEA',
+  sidebar: '#1b0f06',
+  accent: '#ff5a2c',
+  accentLight: '#ffe7dc',
+  cream: '#fdf4e9',
+  border: '#f0e3d2',
+  text: '#241407',
+  textMuted: '#8a7a68',
+  white: '#ffffff',
+  green: '#0f7a44',
+  greenBg: '#e7f7ee',
+  red: '#c83e16',
+  redBg: '#ffe7dc',
 }
 
 const API = 'http://localhost:3001'
@@ -74,21 +75,23 @@ const NAV_ITEMS = [
 function MyEventsPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const guestId = parseInt(searchParams.get('guestId')) || 1
+  const { user } = useContext(AuthContext)
 
+  const [guestId, setGuestId] = useState(null)
   const [guestName, setGuestName] = useState('')
   const [events, setEvents] = useState([])
   const [rsvps, setRsvps] = useState([])
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { if (user?.id) loadData() }, [user])
 
   const loadData = async () => {
     try {
-      const res = await fetch(`${API}/api/guests/${guestId}`)
+      const res = await fetch(`${API}/api/guests/by-user/${user.id}`)
       const guest = await res.json()
       if (guest.user?.name) setGuestName(guest.user.name)
+      setGuestId(guest.id)
       setEvents(guest.events || [])
       setRsvps(guest.rsvps || [])
     } catch (err) {
@@ -110,14 +113,14 @@ function MyEventsPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: C.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+      <div style={{ minHeight: '100vh', background: C.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
         <p style={{ color: C.textMuted }}>Loading your events...</p>
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: C.cream, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: C.cream, fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
 
       {/* Sidebar */}
       {sidebarOpen && (

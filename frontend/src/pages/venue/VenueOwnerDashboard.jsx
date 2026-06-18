@@ -4,29 +4,50 @@ import VenueLayout, { COLORS } from './VenueLayout'
 import { AuthContext } from '../../context/AuthContext'
 import { getAllVenues, getBookings } from '../../services/venueService'
 
-function StatCard({ icon, value, label, sub, trend, onClick }) {
+const bricolage = "'Bricolage Grotesque', system-ui, sans-serif"
+
+function KpiCard({ icon, iconBg, value, label, trend, trendBg, trendColor, dark, chip, chipBg, chipColor, progress, onClick }) {
   return (
     <div
       onClick={onClick}
       style={{
-        background: COLORS.white, border: `1px solid ${COLORS.border}`,
-        borderRadius: '12px', padding: '1.25rem 1.5rem', flex: 1,
+        background: dark ? COLORS.sidebar : COLORS.white,
+        border: `1px solid ${dark ? 'transparent' : COLORS.border}`,
+        borderRadius: 20, padding: 20, flex: 1, minWidth: 0,
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'box-shadow 0.15s, transform 0.15s',
+        transition: 'transform 0.15s, box-shadow 0.15s',
       }}
-      onMouseEnter={e => { if (onClick) { e.currentTarget.style.boxShadow = '0 4px 16px rgba(107,45,14,0.12)'; e.currentTarget.style.transform = 'translateY(-2px)' } }}
-      onMouseLeave={e => { if (onClick) { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)' } }}
+      onMouseEnter={e => { if (onClick) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(27,15,6,0.12)' } }}
+      onMouseLeave={e => { if (onClick) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none' } }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div style={{
-          width: '40px', height: '40px', background: COLORS.accentLight,
-          borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
+          width: 40, height: 40, borderRadius: 11,
+          background: dark ? 'rgba(255,90,44,0.22)' : (iconBg || COLORS.accentLight),
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0
         }}>{icon}</div>
-        {trend && <span style={{ color: COLORS.green, fontSize: '13px', fontWeight: '600' }}>↗ {trend}</span>}
+        {trend && (
+          <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 9px', borderRadius: 8, background: trendBg || COLORS.greenBg, color: trendColor || COLORS.green }}>
+            {trend}
+          </span>
+        )}
+        {chip && (
+          <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 9px', borderRadius: 8, background: chipBg || COLORS.goldBg, color: chipColor || COLORS.goldText }}>
+            {chip}
+          </span>
+        )}
       </div>
-      <div style={{ fontSize: '28px', fontWeight: '800', color: COLORS.text, marginBottom: '0.2rem' }}>{value}</div>
-      <div style={{ fontSize: '14px', color: COLORS.textMuted }}>{label}</div>
-      {sub && <div style={{ fontSize: '12px', color: COLORS.textMuted, marginTop: '0.2rem' }}>{sub}</div>}
+      <div style={{ fontSize: 30, fontWeight: 800, color: dark ? '#ffffff' : COLORS.text, fontFamily: bricolage, marginBottom: 4, lineHeight: 1 }}>
+        {value}
+      </div>
+      <div style={{ fontSize: 13.5, color: dark ? '#a8917f' : COLORS.textMuted }}>{label}</div>
+      {progress != null && (
+        <div style={{ marginTop: 10 }}>
+          <div style={{ height: 4, background: COLORS.border, borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${Math.min(progress, 100)}%`, background: COLORS.greenFill, borderRadius: 4 }} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -46,6 +67,10 @@ export default function VenueOwnerDashboard() {
   const pending = bookings.filter(b => b.status === 'PENDING').length
   const approved = bookings.filter(b => b.status === 'APPROVED').length
   const revenue = venues.reduce((sum, v) => sum + (v.pricePerDay * approved), 0)
+  const occupancyPct = venues.length ? Math.min(100, Math.round((approved / Math.max(venues.length * 4, 1)) * 100)) : 0
+
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening'
 
   const quickActions = [
     { icon: '+', label: 'New Listing', path: '/venue/create' },
@@ -54,128 +79,290 @@ export default function VenueOwnerDashboard() {
     { icon: '📋', label: 'View Bookings', path: '/venue/bookings' },
   ]
 
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening'
-
   return (
     <VenueLayout title="Dashboard">
 
-      {/* Welcome banner */}
-      <div style={{
-        background: `linear-gradient(135deg, ${COLORS.sidebar} 0%, ${COLORS.accent} 100%)`,
-        borderRadius: 16, padding: '24px 28px', marginBottom: 28, color: COLORS.white,
-        boxShadow: '0 4px 20px rgba(107,45,14,0.25)',
-      }}>
-        <div style={{ fontSize: 22, fontWeight: 800 }}>
-          Good {greeting}, {user?.name?.split(' ')[0]} 👋
+      {/* Welcome */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 24, fontWeight: 800, fontFamily: bricolage, color: COLORS.text }}>
+          Good {greeting}, {user?.name?.split(' ')[0] || 'there'} 👋
         </div>
-        <div style={{ fontSize: 14, opacity: 0.8, marginTop: 4 }}>
+        <div style={{ fontSize: 13.5, color: COLORS.textMuted, marginTop: 4 }}>
           {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </div>
-        <div style={{ display: 'flex', gap: 20, marginTop: 16, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 14, opacity: 0.9 }}>🏛 <strong>{venues.filter(v => v.isActive).length}</strong> active venues</div>
-          <div style={{ fontSize: 14, opacity: 0.9 }}>✓ <strong>{approved}</strong> confirmed bookings</div>
-          <div style={{ fontSize: 14, opacity: 0.9 }}>⏳ <strong>{pending}</strong> pending requests</div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-        <StatCard icon="🏛" value={venues.filter(v => v.isActive).length} label="Active listings" trend="+1 this month" onClick={() => navigate('/venue/listings')} />
-        <StatCard icon="📅" value={bookings.length} label="Total bookings" trend="+12%" onClick={() => navigate('/venue/bookings')} />
-        <StatCard icon="💰" value={`EGP ${revenue.toLocaleString()}`} label="Est. revenue" sub="Based on confirmed bookings" trend="+8%" onClick={() => navigate('/venue/analytics')} />
-        <StatCard icon="⭐" value={pending} label="Pending requests" sub="Awaiting your response" onClick={() => navigate('/venue/bookings')} />
-      </div>
-
-      {/* Quick Actions */}
-      <div style={{
-        background: COLORS.white, border: `1px solid ${COLORS.border}`,
-        borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem'
-      }}>
-        <h2 style={{ margin: '0 0 1rem', fontSize: '16px', fontWeight: '700', color: COLORS.text }}>Quick Actions</h2>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          {quickActions.map((action, i) => (
-            <button
-              key={i}
-              onClick={() => navigate(action.path)}
-              style={{
-                flex: 1, padding: '1rem', background: COLORS.cream,
-                border: `1px solid ${COLORS.border}`, borderRadius: '10px',
-                cursor: 'pointer', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', gap: '0.5rem', fontSize: '13px',
-                fontWeight: '500', color: COLORS.text, transition: 'all 0.15s'
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = COLORS.accentLight; e.currentTarget.style.borderColor = COLORS.accent }}
-              onMouseLeave={e => { e.currentTarget.style.background = COLORS.cream; e.currentTarget.style.borderColor = COLORS.border }}
-            >
-              <span style={{ fontSize: '22px' }}>{action.icon}</span>
-              {action.label}
-            </button>
-          ))}
+          {' · '}
+          <span>{venues.filter(v => v.isActive).length} active venues</span>
+          {' · '}
+          <span style={{ color: COLORS.green }}>{approved} confirmed</span>
+          {' · '}
+          <span style={{ color: COLORS.accent }}>{pending} pending</span>
         </div>
       </div>
 
-      {/* Your Venues */}
-      <div style={{
-        background: COLORS.white, border: `1px solid ${COLORS.border}`,
-        borderRadius: '12px', padding: '1.5rem'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: COLORS.text }}>Your Venues</h2>
-          <button
-            onClick={() => navigate('/venue/listings')}
-            style={{ background: 'none', border: 'none', color: COLORS.accent, cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}
-          >
-            View all →
-          </button>
-        </div>
+      {/* KPI row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+        <KpiCard
+          icon="$"
+          iconBg={COLORS.accentLight}
+          value={`EGP ${revenue.toLocaleString()}`}
+          label="Est. revenue"
+          trend="+12%"
+          trendBg={COLORS.greenBg}
+          trendColor={COLORS.green}
+          onClick={() => navigate('/venue/analytics')}
+        />
+        <KpiCard
+          icon="🏛"
+          iconBg={COLORS.goldBg}
+          value={venues.filter(v => v.isActive).length}
+          label="Active listings"
+          chip="Total"
+          chipBg={COLORS.goldBg}
+          chipColor={COLORS.goldText}
+          onClick={() => navigate('/venue/listings')}
+        />
+        <KpiCard
+          icon="✓"
+          iconBg={COLORS.greenBg}
+          value={approved}
+          label="Confirmed bookings"
+          progress={occupancyPct}
+          onClick={() => navigate('/venue/bookings')}
+        />
+        <KpiCard
+          icon="⏳"
+          value={pending}
+          label="Pending requests"
+          dark
+          onClick={() => navigate('/venue/bookings')}
+        />
+      </div>
 
-        {venues.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: COLORS.textMuted }}>
-            <div style={{ fontSize: '32px', marginBottom: '0.5rem' }}>🏛</div>
-            <p>No venues yet. Create your first listing.</p>
-            <button
-              onClick={() => navigate('/venue/create')}
-              style={{ padding: '0.6rem 1.2rem', background: COLORS.accent, color: COLORS.white, border: 'none', borderRadius: '8px', cursor: 'pointer' }}
-            >
-              + New Listing
-            </button>
-          </div>
-        )}
+      {/* Two-column body */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 18, alignItems: 'start' }}>
 
-        {venues.slice(0, 5).map(venue => (
-          <div key={venue.id} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '1rem 0', borderBottom: `1px solid ${COLORS.border}`
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '42px', height: '42px', background: COLORS.accentLight,
-                borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
-              }}>🏛</div>
-              <div>
-                <div style={{ fontWeight: '600', fontSize: '15px', color: COLORS.text }}>{venue.name}</div>
-                <div style={{ fontSize: '13px', color: COLORS.textMuted }}>{venue.location}, {venue.city}</div>
-              </div>
+        {/* Left column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+          {/* Quick Actions */}
+          <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 22, padding: 20 }}>
+            <h2 style={{ margin: '0 0 14px', fontSize: 18, fontWeight: 700, color: COLORS.text, fontFamily: bricolage }}>Quick Actions</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+              {quickActions.map((action, i) => (
+                <button
+                  key={i}
+                  onClick={() => navigate(action.path)}
+                  style={{
+                    padding: '14px 8px', background: COLORS.cream,
+                    border: `1px solid ${COLORS.border}`, borderRadius: 13,
+                    cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', gap: 6, fontSize: 13,
+                    fontWeight: 600, color: COLORS.text, transition: 'all 0.15s',
+                    fontFamily: 'inherit'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = COLORS.accentLight
+                    e.currentTarget.style.borderColor = COLORS.accent
+                    e.currentTarget.style.color = COLORS.accent
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = COLORS.cream
+                    e.currentTarget.style.borderColor = COLORS.border
+                    e.currentTarget.style.color = COLORS.text
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>{action.icon}</span>
+                  {action.label}
+                </button>
+              ))}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-              <div style={{ fontWeight: '600', color: COLORS.text }}>EGP {venue.pricePerDay}/day</div>
-              <span style={{
-                padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '13px', fontWeight: '600',
-                background: venue.isActive ? COLORS.greenBg : COLORS.redBg,
-                color: venue.isActive ? COLORS.green : COLORS.red
-              }}>
-                {venue.isActive ? '● Active' : '● Inactive'}
-              </span>
+          </div>
+
+          {/* Recent Bookings */}
+          <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 22, padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: COLORS.text, fontFamily: bricolage }}>Recent Bookings</h2>
               <button
-                onClick={() => navigate(`/venue/edit/${venue.id}`)}
-                style={{ padding: '0.4rem 0.8rem', background: COLORS.cream, border: `1px solid ${COLORS.border}`, borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: COLORS.text }}
+                onClick={() => navigate('/venue/bookings')}
+                style={{ background: 'none', border: 'none', color: COLORS.accent, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit' }}
               >
-                Edit
+                View all →
               </button>
             </div>
+
+            {bookings.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: COLORS.textMuted }}>
+                <div style={{
+                  width: 48, height: 48, background: COLORS.greenBg, borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 22, margin: '0 auto 10px'
+                }}>✓</div>
+                <p style={{ margin: 0, fontSize: 14, color: COLORS.textMuted }}>No bookings yet.</p>
+              </div>
+            ) : (
+              bookings.slice(0, 5).map((b, i) => {
+                const organizerName = b.organizer?.name || 'Organizer'
+                const initials = organizerName.trim().split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
+                const displayTitle = b.eventType || b.notes || `Booking #${b.id}`
+                const venueName = b.venue?.name || ''
+                const dateStr = b.eventDate
+                  ? new Date(b.eventDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : ''
+                const guests = b.attendeeCount ? `${b.attendeeCount} guests` : ''
+
+                return (
+                  <div
+                    key={b.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '12px 8px', borderRadius: 12,
+                      borderBottom: i < Math.min(bookings.length, 5) - 1 ? `1px solid ${COLORS.borderFaint}` : 'none',
+                      cursor: 'pointer', transition: 'background 0.12s'
+                    }}
+                    onClick={() => navigate('/venue/bookings')}
+                    onMouseEnter={e => e.currentTarget.style.background = COLORS.cream}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{
+                        width: 42, height: 42, background: COLORS.goldBg, borderRadius: 11,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 13, fontWeight: 700, color: COLORS.goldText, flexShrink: 0
+                      }}>
+                        {initials}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.text }}>{displayTitle}</div>
+                        <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>
+                          {[venueName, dateStr, guests].filter(Boolean).join(' · ')}
+                        </div>
+                        <div style={{ fontSize: 11, color: COLORS.textFaint, marginTop: 1 }}>{organizerName}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{
+                        fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 8,
+                        background: b.status === 'APPROVED' ? COLORS.greenBg
+                          : b.status === 'PENDING' ? COLORS.accentLight
+                          : COLORS.goldBg,
+                        color: b.status === 'APPROVED' ? COLORS.green
+                          : b.status === 'PENDING' ? COLORS.red
+                          : COLORS.goldText
+                      }}>{b.status}</span>
+                      <span style={{ color: COLORS.textFaint, fontSize: 16 }}>›</span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </div>
-        ))}
+        </div>
+
+        {/* Right column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+          {/* Your Venues */}
+          <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 22, padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: COLORS.text, fontFamily: bricolage }}>Your Venues</h2>
+              <button
+                onClick={() => navigate('/venue/listings')}
+                style={{ background: 'none', border: 'none', color: COLORS.accent, cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }}
+              >
+                View all →
+              </button>
+            </div>
+
+            {venues.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '1.5rem 1rem', color: COLORS.textMuted }}>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🏛</div>
+                <p style={{ margin: '0 0 14px', fontSize: 13 }}>No venues yet. Create your first listing.</p>
+                <button
+                  onClick={() => navigate('/venue/create')}
+                  style={{
+                    padding: '8px 18px', background: COLORS.accent, color: '#fff',
+                    border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 13,
+                    fontWeight: 600, boxShadow: '0 4px 12px rgba(255,90,44,.28)', fontFamily: 'inherit'
+                  }}
+                >
+                  + New Listing
+                </button>
+              </div>
+            ) : (
+              venues.slice(0, 5).map((venue, i) => (
+                <div key={venue.id} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 0',
+                  borderBottom: i < Math.min(venues.length, 5) - 1 ? `1px solid ${COLORS.borderFaint}` : 'none'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                      background: venue.isActive ? COLORS.greenFill : COLORS.textFaint
+                    }} />
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13.5, color: COLORS.text }}>{venue.name}</div>
+                      <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 1 }}>
+                        {venue.city} · {venue.capacity} guests
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: venue.isActive ? COLORS.greenFill : COLORS.textMuted }}>
+                      {venue.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    <button
+                      onClick={() => navigate(`/venue/edit/${venue.id}`)}
+                      style={{
+                        padding: '4px 10px', background: COLORS.cream, border: `1px solid ${COLORS.border}`,
+                        borderRadius: 8, cursor: 'pointer', fontSize: 12, color: COLORS.text, fontFamily: 'inherit'
+                      }}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Analytics shortcut */}
+          <div
+            onClick={() => navigate('/venue/analytics')}
+            style={{
+              background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 22,
+              padding: 20, cursor: 'pointer', transition: 'background 0.12s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = COLORS.cream}
+            onMouseLeave={e => e.currentTarget.style.background = COLORS.white}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: COLORS.text, fontFamily: bricolage }}>Analytics</h2>
+                <div style={{ fontSize: 13, color: COLORS.textMuted }}>Revenue & occupancy charts</div>
+              </div>
+              <div style={{ width: 40, height: 40, background: COLORS.accentLight, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📊</div>
+            </div>
+          </div>
+
+          {/* Profile shortcut */}
+          <div
+            onClick={() => navigate('/venue/profile')}
+            style={{
+              background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 22,
+              padding: 20, cursor: 'pointer', transition: 'background 0.12s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = COLORS.cream}
+            onMouseLeave={e => e.currentTarget.style.background = COLORS.white}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: COLORS.text, fontFamily: bricolage }}>My Profile</h2>
+                <div style={{ fontSize: 13, color: COLORS.textMuted }}>Account settings & details</div>
+              </div>
+              <div style={{ width: 40, height: 40, background: COLORS.goldBg, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>👤</div>
+            </div>
+          </div>
+        </div>
       </div>
     </VenueLayout>
   )

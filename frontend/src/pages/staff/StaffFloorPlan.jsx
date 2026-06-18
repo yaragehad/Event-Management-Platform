@@ -1,29 +1,154 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getLayout } from '../../services/venueService';
 
 const colors = {
-  sidebar: '#6B2D0E',
-  accent: '#C4622D',
-  accentLight: '#F5EDE8',
-  cream: '#FBF7F4',
-  border: '#EDE0D9',
-  text: '#2C1810',
-  textMuted: '#8B6555',
-  white: '#FFFFFF',
-  green: '#2D7A4F',
-  greenBg: '#E8F5EE',
-  red: '#C0392B',
-  redBg: '#FDECEA',
+  sidebar: '#1b0f06',
+  accent: '#ff5a2c',
+  accentLight: '#ffe7dc',
+  cream: '#fdf4e9',
+  border: '#f0e3d2',
+  text: '#241407',
+  textMuted: '#8a7a68',
+  white: '#ffffff',
+  green: '#0f7a44',
 };
 
-const COLORS = {
-  'Table': '#3b82f6',
-  'Stage': '#8b5cf6',
-  'Chair': '#f59e0b',
-  'Bar': '#ec4899',
-  'Exit': '#10b981',
-  'Dance Floor': '#f97316'
-};
+const ELEMENT_DEFS = [
+  { type: 'Round Table', color: '#8B5E3C' },
+  { type: 'Rect Table',  color: '#6B4226' },
+  { type: 'Chair',       color: '#C4622D' },
+  { type: 'Stage',       color: '#5B4DB5' },
+  { type: 'Dance Floor', color: '#B5384D' },
+  { type: 'Bar',         color: '#2D7A4F' },
+  { type: 'Exit',        color: '#C0392B' },
+  { type: 'Restroom',    color: '#2D5F7A' },
+];
+
+function getElementSize(type) {
+  const sizes = {
+    'Round Table': { w: 80, h: 80 },
+    'Rect Table':  { w: 110, h: 70 },
+    'Chair':       { w: 50, h: 50 },
+    'Stage':       { w: 140, h: 70 },
+    'Dance Floor': { w: 110, h: 110 },
+    'Bar':         { w: 110, h: 55 },
+    'Exit':        { w: 55, h: 55 },
+    'Restroom':    { w: 55, h: 55 },
+  };
+  return sizes[type] || { w: 60, h: 60 };
+}
+
+function drawElement(ctx, type, color, w, h, rotation) {
+  ctx.save();
+  ctx.translate(w / 2, h / 2);
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.translate(-w / 2, -h / 2);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 2;
+
+  if (type === 'Round Table') {
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, w / 2 - 4, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    [0, 45, 90, 135, 180, 225, 270, 315].forEach(angle => {
+      const rad = (angle * Math.PI) / 180;
+      const cx = w / 2 + (w / 2 - 2) * Math.cos(rad);
+      const cy = h / 2 + (h / 2 - 2) * Math.sin(rad);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+    });
+  } else if (type === 'Rect Table') {
+    ctx.beginPath(); ctx.roundRect(8, 8, w - 16, h - 16, 4); ctx.fill(); ctx.stroke();
+    [12, w - 24].forEach(x => {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath(); ctx.roundRect(x, 0, 16, 7, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(x, h - 7, 16, 7, 2); ctx.fill();
+    });
+    [8, h - 20].forEach(y => {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath(); ctx.roundRect(0, y, 7, 14, 2); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(w - 7, y, 7, 14, 2); ctx.fill();
+    });
+  } else if (type === 'Chair') {
+    ctx.beginPath(); ctx.roundRect(4, 2, w - 8, h * 0.45, 3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = color; ctx.globalAlpha = 0.8;
+    ctx.beginPath(); ctx.roundRect(2, h * 0.5, w - 4, h * 0.3, 3); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath(); ctx.roundRect(4, h * 0.82, 6, h * 0.16, 2); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(w - 10, h * 0.82, 6, h * 0.16, 2); ctx.fill();
+  } else if (type === 'Stage') {
+    ctx.beginPath(); ctx.roundRect(2, 6, w - 4, h - 8, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.beginPath(); ctx.roundRect(2, h - 8, w - 4, 5, 2); ctx.fill();
+    [w * 0.2, w * 0.5, w * 0.8].forEach(x => {
+      ctx.fillStyle = 'rgba(255,255,0,0.4)';
+      ctx.beginPath(); ctx.arc(x, h * 0.4, 5, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
+    ctx.fillText('STAGE', w / 2, h * 0.65);
+  } else if (type === 'Dance Floor') {
+    ctx.beginPath(); ctx.roundRect(2, 2, w - 4, h - 4, 4); ctx.fill();
+    const cols = 4, rows = 4, tw = (w - 4) / cols, th = (h - 4) / rows;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      if ((r + c) % 2 === 0) {
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillRect(2 + c * tw, 2 + r * th, tw, th);
+      }
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'center';
+    ctx.fillText('DANCE FLOOR', w / 2, h / 2 + 4);
+  } else if (type === 'Bar') {
+    ctx.beginPath(); ctx.roundRect(2, 6, w - 4, h - 8, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.beginPath(); ctx.roundRect(2, 6, w - 4, 8, 4); ctx.fill();
+    [w * 0.25, w * 0.5, w * 0.75].forEach(x => {
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.beginPath(); ctx.arc(x, h * 0.62, 4, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'center';
+    ctx.fillText('BAR', w / 2, h * 0.88);
+  } else if (type === 'Exit') {
+    ctx.beginPath(); ctx.roundRect(2, 2, w - 4, h - 4, 4); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 12px Segoe UI'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('EXIT', w / 2, h / 2);
+  } else if (type === 'Restroom') {
+    ctx.beginPath(); ctx.roundRect(2, 2, w - 4, h - 4, 4); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = '20px Segoe UI'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🚻', w / 2, h / 2);
+  } else {
+    ctx.beginPath(); ctx.roundRect(2, 2, w - 4, h - 4, 4); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function ElementCanvas({ type, color, rotation = 0, width, height }) {
+  const canvasRef = useRef(null);
+  const dpr = window.devicePixelRatio || 1;
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, width, height);
+    drawElement(ctx, type, color, width, height, rotation);
+  }, [type, color, rotation, width, height]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={width * dpr}
+      height={height * dpr}
+      style={{ width, height, display: 'block' }}
+    />
+  );
+}
 
 const StaffFloorPlan = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -46,27 +171,28 @@ const StaffFloorPlan = () => {
     fetchLayout();
   }, []);
 
+  const typeCounts = ELEMENT_DEFS.map(def => ({
+    ...def,
+    count: elements.filter(e => e.type === def.type).length
+  })).filter(d => d.count > 0);
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: 'sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", padding: '12px', gap: '12px', boxSizing: 'border-box' }}>
 
       {/* Sidebar */}
       {sidebarOpen && (
-        <div style={{
-          width: '220px',
-          backgroundColor: colors.sidebar,
-          color: colors.white,
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}>
-          <h2 style={{ color: colors.white, marginBottom: '20px' }}>VenueHub</h2>
-          <a href="/staff/dashboard" style={{ color: colors.accentLight, textDecoration: 'none' }}>📋 My Events</a>
-          <a href="/staff/tasks" style={{ color: colors.accentLight, textDecoration: 'none' }}>✅ My Tasks</a>
-          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none', fontWeight: 'bold' }}>🗺️ Venue Layout</a>
-          <a href="/staff/checkin" style={{ color: colors.accentLight, textDecoration: 'none' }}>👥 Guest Check-In</a>
-          <a href="/staff/vendors" style={{ color: colors.accentLight, textDecoration: 'none' }}>🚚 Vendor Arrival</a>
-          <a href="/staff/dayof" style={{ color: colors.accentLight, textDecoration: 'none' }}>📊 Day-Of Dashboard</a>
+        <div style={{ width: '220px', height: 'calc(100vh - 24px)', backgroundColor: colors.sidebar, borderRadius: '20px', color: colors.white, padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '4px', position: 'sticky', top: 0, alignSelf: 'flex-start', overflowY: 'auto', boxSizing: 'border-box', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '20px', borderBottom: '1px solid rgba(255,90,44,0.25)', marginBottom: '16px', flexShrink: 0 }}>
+            <div style={{ width: 32, height: 32, background: colors.accent, borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, color: colors.sidebar, flexShrink: 0 }}>S</div>
+            <span style={{ color: '#ffffff', fontWeight: 800, fontSize: '17px', fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}>StaffHub</span>
+          </div>
+          <div style={{ color: '#6b574a', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px', flexShrink: 0 }}>Menu</div>
+          <a href="/staff/dashboard" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>📋 My Events</a>
+          <a href="/staff/tasks" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>✅ My Tasks</a>
+          <a href="/staff/floorplan" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>🗺️ Venue Layout</a>
+          <a href="/staff/checkin" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>👥 Guest Check-In</a>
+          <a href="/staff/vendors" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>🚚 Vendor Arrival</a>
+          <a href="/staff/dayof" style={{ color: '#c9b9a8', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block' }}>📊 Day-Of Dashboard</a>
         </div>
       )}
 
@@ -74,117 +200,79 @@ const StaffFloorPlan = () => {
       <div style={{ flex: 1 }}>
 
         {/* Topbar */}
-        <div style={{
-          backgroundColor: colors.white,
-          borderBottom: `1px solid ${colors.border}`,
-          padding: '14px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px'
-        }}>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: colors.text }}
-          >
-            ☰
-          </button>
+        <div style={{ backgroundColor: colors.white, borderBottom: `1px solid ${colors.border}`, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: colors.text }}>☰</button>
           <span style={{ fontWeight: 'bold', color: colors.text, fontSize: '18px' }}>Venue Layout</span>
-          <span style={{
-            backgroundColor: colors.accentLight,
-            color: colors.accent,
-            padding: '4px 10px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: 'bold'
-          }}>
+          <span style={{ backgroundColor: colors.accentLight, color: colors.accent, padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
             READ ONLY
           </span>
+          {!loading && !error && elements.length > 0 && (
+            <span style={{ marginLeft: 'auto', fontSize: '13px', color: colors.textMuted }}>
+              {elements.length} element{elements.length !== 1 ? 's' : ''} • Shared by Organizer
+            </span>
+          )}
         </div>
 
-        {/* Page Content */}
         <div style={{ padding: '24px' }}>
-          <div style={{
-            backgroundColor: colors.white,
-            border: `1px solid ${colors.border}`,
-            borderRadius: '8px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              padding: '16px 20px',
-              borderBottom: `1px solid ${colors.border}`,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h2 style={{ color: colors.text, margin: 0 }}>Venue Layout</h2>
-              <span style={{ color: colors.textMuted, fontSize: '13px' }}>Shared by Organizer • View Only</span>
-            </div>
+          <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '8px', overflow: 'hidden' }}>
 
-            <div style={{ padding: '24px' }}>
-              {loading ? (
-                <p style={{ color: colors.textMuted }}>Loading layout...</p>
-              ) : error ? (
-                <div style={{
-                  backgroundColor: colors.accentLight,
-                  border: `1px solid ${colors.accent}`,
-                  borderRadius: '8px',
-                  padding: '16px',
-                  color: colors.accent
-                }}>
-                  {error}
+            {loading ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: colors.textMuted }}>Loading layout...</div>
+            ) : error ? (
+              <div style={{ margin: '24px', padding: '16px', backgroundColor: colors.accentLight, border: `1px solid ${colors.accent}`, borderRadius: '8px', color: colors.accent }}>
+                {error}
+              </div>
+            ) : elements.length === 0 ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: colors.textMuted }}>
+                <div style={{ fontSize: '40px', opacity: 0.3, marginBottom: '12px' }}>🏛</div>
+                No layout has been shared yet.
+              </div>
+            ) : (
+              <>
+                {/* Canvas */}
+                <div style={{ padding: '24px' }}>
+                  <div style={{
+                    width: '100%', height: '580px',
+                    border: `2px solid ${colors.border}`, borderRadius: '8px',
+                    backgroundColor: colors.cream, position: 'relative',
+                    backgroundImage: `linear-gradient(${colors.border} 1px, transparent 1px), linear-gradient(90deg, ${colors.border} 1px, transparent 1px)`,
+                    backgroundSize: '40px 40px',
+                    overflow: 'hidden'
+                  }}>
+                    {elements.map(el => {
+                      const color = ELEMENT_DEFS.find(d => d.type === el.type)?.color || colors.accent;
+                      const { w, h } = getElementSize(el.type);
+                      return (
+                        <div
+                          key={el.id}
+                          style={{
+                            position: 'absolute', left: el.x, top: el.y,
+                            width: w, height: h,
+                            transform: `rotate(${el.rotation || 0}deg)`,
+                            transformOrigin: 'center center',
+                            userSelect: 'none',
+                            pointerEvents: 'none',
+                          }}
+                        >
+                          <ElementCanvas type={el.type} color={color} rotation={0} width={w} height={h} />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              ) : elements.length === 0 ? (
-                <p style={{ color: colors.textMuted }}>No layout has been shared yet.</p>
-              ) : (
-                <div style={{
-                  width: '100%',
-                  height: '550px',
-                  border: `2px dashed ${colors.border}`,
-                  borderRadius: '8px',
-                  backgroundColor: colors.cream,
-                  position: 'relative'
-                }}>
-                  {elements.map(el => (
-                    <div
-                      key={el.id}
-                      style={{
-                        position: 'absolute',
-                        left: el.x,
-                        top: el.y,
-                        backgroundColor: COLORS[el.type] || colors.accent,
-                        color: colors.white,
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        transform: 'translate(-50%, -50%)',
-                        userSelect: 'none',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                      }}
-                    >
-                      {el.type}
+
+                {/* Legend */}
+                <div style={{ padding: '14px 24px', borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '4px' }}>Legend</span>
+                  {typeCounts.map(({ type, color, count }) => (
+                    <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ width: '14px', height: '14px', backgroundColor: color, borderRadius: '3px' }} />
+                      <span style={{ color: colors.textMuted, fontSize: '13px' }}>{type}</span>
+                      <span style={{ background: color, color: '#fff', borderRadius: '10px', padding: '1px 6px', fontWeight: '700', fontSize: '11px' }}>{count}</span>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-
-            {/* Legend */}
-            {!loading && !error && elements.length > 0 && (
-              <div style={{
-                padding: '16px 24px',
-                borderTop: `1px solid ${colors.border}`,
-                display: 'flex',
-                gap: '24px',
-                flexWrap: 'wrap'
-              }}>
-                {Object.entries(COLORS).map(([type, color]) => (
-                  <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '16px', height: '16px', backgroundColor: color, borderRadius: '3px' }} />
-                    <span style={{ color: colors.textMuted, fontSize: '13px' }}>{type}</span>
-                  </div>
-                ))}
-              </div>
+              </>
             )}
           </div>
         </div>

@@ -5,18 +5,18 @@ import { getNotifications, markNotificationRead, markAllNotificationsRead } from
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 const C = {
-  sidebar: '#6B2D0E',
-  accent: '#C4622D',
-  accentLight: '#F5EDE8',
-  cream: '#FBF7F4',
-  border: '#EDE0D9',
-  text: '#2C1810',
-  textMuted: '#8B6555',
-  white: '#FFFFFF',
-  green: '#2D7A4F',
-  greenBg: '#E8F5EE',
-  red: '#C0392B',
-  redBg: '#FDECEA',
+  sidebar: '#1b0f06',
+  accent: '#ff5a2c',
+  accentLight: '#ffe7dc',
+  cream: '#fdf4e9',
+  border: '#f0e3d2',
+  text: '#241407',
+  textMuted: '#8a7a68',
+  white: '#ffffff',
+  green: '#0f7a44',
+  greenBg: '#e7f7ee',
+  red: '#c83e16',
+  redBg: '#ffe7dc',
 }
 
 function timeAgo(date) {
@@ -163,113 +163,122 @@ export default function OrganizerLayout({ title, subtitle, children }) {
     : 'OG'
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: C.cream, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+    <div style={{
+      display: 'flex', height: '100vh',
+      background: C.cream,
+      fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+      padding: 12, gap: 12, boxSizing: 'border-box', overflow: 'hidden',
+    }}>
 
-      {/* ── Sidebar ──────────────────────────────────────────────────────── */}
-      <aside style={{
-        width: 240,
-        background: C.sidebar,
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'fixed',
-        top: 0, left: 0, bottom: 0,
-        zIndex: 100,
-        boxShadow: '4px 0 20px rgba(107,45,14,0.25)',
-      }}>
-        {/* Logo */}
-        <div style={{
-          padding: '24px 20px 20px',
-          borderBottom: 'rgba(255,255,255,0.1) 1px solid',
+      {/* ── Sidebar — floating rounded card ──────────────────────────────── */}
+      <div style={{ borderRadius: 20, overflow: 'hidden', height: '100%', width: 240, flexShrink: 0 }}>
+        <aside style={{
+          width: '100%', height: '100%',
+          background: C.sidebar,
+          display: 'flex', flexDirection: 'column',
+          padding: '24px 16px', boxSizing: 'border-box',
+          overflowY: 'auto',
         }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: C.white, letterSpacing: '-0.5px' }}>
-            📅 EventHub
+          {/* Logo */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            paddingBottom: 20, borderBottom: '1px solid rgba(255,90,44,0.25)',
+            marginBottom: 20, flexShrink: 0,
+          }}>
+            <div style={{
+              width: 36, height: 36, background: C.accent, borderRadius: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 800, fontSize: 18, color: C.sidebar, flexShrink: 0,
+              fontFamily: "'Bricolage Grotesque', system-ui, sans-serif",
+            }}>E</div>
+            <div>
+              <div style={{ color: C.white, fontWeight: 800, fontSize: 18, fontFamily: "'Bricolage Grotesque', system-ui, sans-serif", whiteSpace: 'nowrap' }}>EventHub</div>
+              <div style={{ color: '#8a7466', fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Organizer</div>
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 3, fontWeight: 500, textTransform: 'uppercase', letterSpacing: 1 }}>
-            Venue Management
+
+          {/* Menu label */}
+          <div style={{ color: '#6b574a', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, flexShrink: 0 }}>
+            Menu
           </div>
-        </div>
 
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {NAV_LINKS.map(({ to, icon, label }) => {
-            const active = pathname === to
-            return (
-              <Link
-                key={to}
-                to={to}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 14px', borderRadius: 10, textDecoration: 'none',
-                  background: active ? 'rgba(255,255,255,0.18)' : 'transparent',
-                  color: active ? C.white : 'rgba(255,255,255,0.7)',
-                  fontWeight: active ? 700 : 500, fontSize: 14,
-                  transition: 'background 0.15s, color 0.15s',
-                  borderLeft: active ? `3px solid ${C.accent}` : '3px solid transparent',
-                }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
-              >
-                <span style={{ fontSize: 16 }}>{icon}</span>
-                {label}
-              </Link>
-            )
-          })}
-        </nav>
+          {/* Nav */}
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
+            {NAV_LINKS.map(({ to, icon, label }) => {
+              const active = pathname === to || pathname.startsWith(to + '/')
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '11px 14px', borderRadius: 12, textDecoration: 'none',
+                    background: active ? C.accent : 'transparent',
+                    color: active ? C.white : '#c9b9a8',
+                    fontWeight: active ? 600 : 500, fontSize: 15,
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                >
+                  <span style={{ fontSize: 16 }}>{icon}</span>
+                  {label}
+                </Link>
+              )
+            })}
+          </nav>
 
-        {/* Footer */}
-        <div style={{
-          padding: '16px 20px',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          display: 'flex', justifyContent: 'center'
-        }}>
+          {/* User chip */}
+          <div style={{ borderTop: '1px solid #2e1d12', paddingTop: 14, marginTop: 'auto', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: '50%',
+                background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 700, fontSize: 14, color: C.white, flexShrink: 0,
+              }}>{initials}</div>
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ color: '#e8d5c4', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name}</div>
+                <div style={{ color: '#8a7466', fontSize: 11 }}>Organizer</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Logout */}
           <button
             onClick={() => navigate(-1)}
             style={{
-              background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer',
-              fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-              borderRadius: 8, transition: 'background 0.15s, color 0.15s'
+              marginTop: 10, padding: '11px 14px',
+              background: C.accent, color: C.white,
+              border: 'none', borderRadius: 12,
+              fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(255,90,44,.35)', fontFamily: 'inherit', flexShrink: 0,
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = C.white; e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}
           >
             ← Go Back
           </button>
-        </div>
-      </aside>
+        </aside>
+      </div>
 
       {/* ── Main area ────────────────────────────────────────────────────── */}
-      <div style={{ marginLeft: 240, flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
         {/* Top bar */}
         <div style={{
-          background: C.white,
-          borderBottom: `1px solid ${C.border}`,
-          padding: '1rem 2rem',
+          height: 64, flexShrink: 0,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          position: 'sticky', top: 0, zIndex: 50,
-          boxShadow: '0 1px 4px rgba(107,45,14,0.07)',
+          padding: '0 8px',
         }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.text }}>{title}</h1>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: C.text, fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}>{title}</h1>
             {subtitle && <p style={{ margin: '2px 0 0', fontSize: 13, color: C.textMuted }}>{subtitle}</p>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <NotificationBell userId={user?.id} />
-            <div
-              onClick={() => navigate('/organizer/dashboard')}
-              title={user?.name}
-              style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: C.accent, color: C.white,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              }}
-            >{initials}</div>
           </div>
         </div>
 
         {/* Page content */}
-        <div style={{ padding: '2rem', flex: 1 }}>
+        <div style={{ flex: 1, overflow: 'auto', padding: '0 8px 24px 0' }}>
           {children}
         </div>
       </div>

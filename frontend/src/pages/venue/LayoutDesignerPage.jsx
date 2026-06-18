@@ -273,6 +273,7 @@ export default function LayoutDesignerPage() {
   const [selectedStaff, setSelectedStaff] = useState([])
   const [staffLoading, setStaffLoading] = useState(false)
   const [shareConfirmed, setShareConfirmed] = useState(null)
+  const [sharing, setSharing] = useState(false)
 
   const colorOf = (type) => ELEMENT_DEFS.find(e => e.type === type)?.color || '#888'
 
@@ -837,7 +838,7 @@ export default function LayoutDesignerPage() {
             {/* Confirmation message */}
             {shareConfirmed && (
               <div style={{ margin: '0 12px', padding: '10px 14px', background: COLORS.greenBg, borderRadius: 8, fontSize: 12, color: COLORS.green, fontWeight: 600 }}>
-                ✓ Floor plan exported and shared with: {shareConfirmed}
+                ✓ Layout saved and now visible to: {shareConfirmed}
               </div>
             )}
 
@@ -847,26 +848,22 @@ export default function LayoutDesignerPage() {
                 {selectedStaff.length === 0 ? 'Select recipients above' : `${selectedStaff.length} selected`}
               </span>
               <button
-                disabled={selectedStaff.length === 0}
-                onClick={() => {
-                  handleExportImage()
-                  const names = staffList.filter(s => selectedStaff.includes(s.user.id)).map(s => s.user.name).join(', ')
-                  setShareConfirmed(names)
+                disabled={selectedStaff.length === 0 || sharing}
+                onClick={async () => {
+                  setSharing(true)
+                  try {
+                    await saveLayout({ venueId: currentVenueId, elements: placed })
+                    const names = staffList.filter(s => selectedStaff.includes(s.user.id)).map(s => s.user.name).join(', ')
+                    setShareConfirmed(names)
+                  } catch {
+                    alert('Failed to share layout. Make sure the backend is running.')
+                  } finally {
+                    setSharing(false)
+                  }
                 }}
-                style={{ padding: '8px 14px', background: selectedStaff.length ? '#EEF2FF' : '#f5f5f5', border: `1px solid ${selectedStaff.length ? '#818CF8' : '#e5e5e5'}`, borderRadius: 7, cursor: selectedStaff.length ? 'pointer' : 'not-allowed', fontSize: 12, color: selectedStaff.length ? '#4F46E5' : '#aaa', fontWeight: 600 }}
+                style={{ padding: '8px 18px', background: selectedStaff.length ? COLORS.accent : '#f5f5f5', border: 'none', borderRadius: 7, cursor: selectedStaff.length ? 'pointer' : 'not-allowed', fontSize: 12, color: selectedStaff.length ? COLORS.white : '#aaa', fontWeight: 700 }}
               >
-                🖼 Export Image
-              </button>
-              <button
-                disabled={selectedStaff.length === 0}
-                onClick={() => {
-                  handleExportPDF()
-                  const names = staffList.filter(s => selectedStaff.includes(s.user.id)).map(s => s.user.name).join(', ')
-                  setShareConfirmed(names)
-                }}
-                style={{ padding: '8px 14px', background: selectedStaff.length ? '#FEF3C7' : '#f5f5f5', border: `1px solid ${selectedStaff.length ? '#F59E0B' : '#e5e5e5'}`, borderRadius: 7, cursor: selectedStaff.length ? 'pointer' : 'not-allowed', fontSize: 12, color: selectedStaff.length ? '#92400E' : '#aaa', fontWeight: 600 }}
-              >
-                📄 Export PDF
+                {sharing ? 'Sharing...' : '🔗 Share Layout'}
               </button>
             </div>
           </div>

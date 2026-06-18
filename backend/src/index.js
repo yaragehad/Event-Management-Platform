@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
 
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -32,6 +33,7 @@ const staffRoutes = require('./routes/staff')
 const guestRoutes = require('./routes/guestRoutes')
 const emailRoutes = require('./routes/emailRoutes')
 const eventRoutes = require('./routes/eventRoutes')
+const uploadRoutes = require('./routes/uploadRoutes')
 
 app.use('/api/auth', require('./routes/authRoutes'))
 app.use('/api/users', userRoutes)
@@ -50,6 +52,8 @@ app.use('/api/staff', staffRoutes)
 app.use('/api/guests', guestRoutes)
 app.use('/api/email', emailRoutes)
 app.use('/api/events', eventRoutes)
+app.use('/api/upload', uploadRoutes)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
 app.get('/', (req, res) => {
   res.send('Event Management Platform API')

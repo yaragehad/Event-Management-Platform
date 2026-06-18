@@ -7,6 +7,10 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  console.log('🧹 Clearing existing data...')
+  await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Message", "RSVP", "Feedback", "Delivery", "SourcingRequest", "Invoice", "Layout", "BookingMessage", "Booking", "Task", "Budget", "BudgetItem", "Expense", "StaffAssignment", "Event", "Notification", "Guest", "Vendor", "Venue", "User" RESTART IDENTITY CASCADE`)
+  console.log('✅ Database cleared')
+
   console.log('🌱 Seeding database...')
   const salt = await bcrypt.genSalt(10);
   const hashed = await bcrypt.hash('test12345', salt);

@@ -3,8 +3,8 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { QRCodeSVG as QRCode } from 'qrcode.react'
 
 const colors = {
-  accent: '#C4622D', accentLight: '#F5EDE8', cream: '#FBF7F4', border: '#EDE0D9',
-  text: '#2C1810', textMuted: '#8B6555', white: '#FFFFFF', green: '#2D7A4F', greenBg: '#E8F5EE',
+  accent: '#ff5a2c', accentLight: '#ffe7dc', cream: '#fdf4e9', border: '#f0e3d2',
+  text: '#241407', textMuted: '#8a7a68', white: '#ffffff', green: '#0f7a44', greenBg: '#e7f7ee',
 }
 
 function MyQRPage() {
@@ -26,7 +26,7 @@ function MyQRPage() {
   const qrValue = JSON.stringify({ guestId: Number(guestId), eventId: Number(eventId) })
 
   return (
-    <div style={{ backgroundColor: colors.cream, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', padding: '20px' }}>
+    <div style={{ backgroundColor: colors.cream, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Hanken Grotesk', system-ui, sans-serif", padding: '20px' }}>
       <div style={{ backgroundColor: colors.white, borderRadius: '12px', border: `1px solid ${colors.border}`, padding: '40px', textAlign: 'center', maxWidth: '400px' }}>
         <h1 style={{ color: colors.text, margin: '0 0 4px', fontSize: '22px' }}>Your Check-In Pass</h1>
         <p style={{ color: colors.textMuted, fontSize: '14px', margin: '0 0 24px' }}>Show this QR code to staff at the entrance</p>

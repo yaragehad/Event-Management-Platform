@@ -1,47 +1,50 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { AuthContext } from '../../context/AuthContext';
 
 const colors = {
-  sidebar: '#6B2D0E',
-  accent: '#C4622D',
-  accentLight: '#F5EDE8',
-  cream: '#FBF7F4',
-  border: '#EDE0D9',
-  text: '#2C1810',
-  textMuted: '#8B6555',
-  white: '#FFFFFF',
-  green: '#2D7A4F',
-  greenBg: '#E8F5EE',
-  red: '#C0392B',
-  redBg: '#FDECEA',
+  sidebar: '#1b0f06',
+  accent: '#ff5a2c',
+  accentLight: '#ffe7dc',
+  cream: '#fdf4e9',
+  border: '#f0e3d2',
+  text: '#241407',
+  textMuted: '#8a7a68',
+  white: '#ffffff',
+  green: '#0f7a44',
+  greenBg: '#e7f7ee',
+  red: '#c83e16',
+  redBg: '#ffe7dc',
 };
 
 const VendorArrival = () => {
+  const { user } = useContext(AuthContext);
+  const [events, setEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
   const [vendors, setVendors] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState('1');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [loading, setLoading] = useState(true);
-
-  const events = [
-    { id: '1', name: 'Annual Tech Summit 2026' },
-    { id: '2', name: 'Summer Gala Dinner' },
-    { id: '3', name: 'Product Launch: NovaTech X1' },
-  ];
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [loadingVendors, setLoadingVendors] = useState(false);
 
   useEffect(() => {
-    const fetchVendors = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`http://localhost:3001/api/staff/vendors/${selectedEvent}`);
-        setVendors(response.data);
-      } catch (err) {
-        console.error('Failed to fetch vendors:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchVendors();
-  }, [selectedEvent]);
+    if (!user?.id) return;
+    axios.get(`http://localhost:3001/api/staff/events/${user.id}`)
+      .then(res => {
+        setEvents(res.data);
+        if (res.data.length === 1) setSelectedEventId(String(res.data[0].id));
+      })
+      .catch(err => console.error('Failed to fetch events:', err))
+      .finally(() => setLoadingEvents(false));
+  }, [user]);
+
+  useEffect(() => {
+    if (!selectedEventId) { setVendors([]); return; }
+    setLoadingVendors(true);
+    axios.get(`http://localhost:3001/api/staff/vendors/${selectedEventId}`)
+      .then(res => setVendors(res.data))
+      .catch(err => console.error('Failed to fetch vendors:', err))
+      .finally(() => setLoadingVendors(false));
+  }, [selectedEventId]);
 
   const handleArrival = async (id, requestId, currentArrived) => {
     try {
@@ -54,41 +57,37 @@ const VendorArrival = () => {
     }
   };
 
+  const currentPath = window.location.pathname;
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: 'sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: colors.cream, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", padding: '12px', gap: '12px', boxSizing: 'border-box' }}>
 
       {/* Sidebar */}
       {sidebarOpen && (
         <div style={{
-          width: '220px',
-          backgroundColor: colors.sidebar,
-          color: colors.white,
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
+          width: '220px', height: 'calc(100vh - 24px)',
+          backgroundColor: colors.sidebar, borderRadius: '20px',
+          color: colors.white, padding: '24px 16px',
+          display: 'flex', flexDirection: 'column', gap: '4px',
+          position: 'sticky', top: 0, alignSelf: 'flex-start',
+          overflowY: 'auto', boxSizing: 'border-box', flexShrink: 0,
         }}>
-          <h2 style={{ color: colors.white, marginBottom: '20px' }}>VenueHub</h2>
-          <a href="/staff/dashboard" style={{ color: colors.accentLight, textDecoration: 'none' }}>📋 My Events</a>
-          <a href="/staff/tasks" style={{ color: colors.accentLight, textDecoration: 'none' }}>✅ My Tasks</a>
-          <a href="/staff/floorplan" style={{ color: colors.accentLight, textDecoration: 'none' }}>🗺️ Venue Layout</a>
-          <a href="/staff/checkin" style={{ color: colors.accentLight, textDecoration: 'none' }}>👥 Guest Check-In</a>
-          <a href="/checkin/1" style={{ color: colors.accentLight, textDecoration: 'none' }}>📷 QR Check-In</a>
-          <a href="/staff/vendors" style={{ color: colors.accentLight, textDecoration: 'none', fontWeight: 'bold' }}>🚚 Vendor Arrival</a>
-          <a href="/staff/dayof" style={{ color: colors.accentLight, textDecoration: 'none' }}>📊 Day-Of Dashboard</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '20px', borderBottom: '1px solid rgba(255,90,44,0.25)', marginBottom: '16px', flexShrink: 0 }}>
+            <div style={{ width: 32, height: 32, background: colors.accent, borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, color: colors.sidebar, flexShrink: 0 }}>S</div>
+            <span style={{ color: '#ffffff', fontWeight: 800, fontSize: '17px', fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}>StaffHub</span>
+          </div>
+          <div style={{ color: '#6b574a', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px', flexShrink: 0 }}>Menu</div>
+          <a href="/staff/dashboard" style={{ color: currentPath === '/staff/dashboard' ? colors.white : '#c9b9a8', background: currentPath === '/staff/dashboard' ? colors.accent : 'transparent', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block', fontWeight: currentPath === '/staff/dashboard' ? 600 : 400 }}>🏠 Dashboard</a>
+          <a href="/staff/tasks" style={{ color: currentPath === '/staff/tasks' ? colors.white : '#c9b9a8', background: currentPath === '/staff/tasks' ? colors.accent : 'transparent', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block', fontWeight: currentPath === '/staff/tasks' ? 600 : 400 }}>✅ My Tasks</a>
+          <a href="/staff/floorplan" style={{ color: currentPath === '/staff/floorplan' ? colors.white : '#c9b9a8', background: currentPath === '/staff/floorplan' ? colors.accent : 'transparent', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block', fontWeight: currentPath === '/staff/floorplan' ? 600 : 400 }}>🗺️ Venue Layout</a>
+          <a href="/staff/checkin" style={{ color: currentPath === '/staff/checkin' ? colors.white : '#c9b9a8', background: currentPath === '/staff/checkin' ? colors.accent : 'transparent', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block', fontWeight: currentPath === '/staff/checkin' ? 600 : 400 }}>👥 Guest Check-In</a>
+          <a href="/staff/vendors" style={{ color: currentPath === '/staff/vendors' ? colors.white : '#c9b9a8', background: currentPath === '/staff/vendors' ? colors.accent : 'transparent', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block', fontWeight: currentPath === '/staff/vendors' ? 600 : 400 }}>🚚 Vendor Arrival</a>
+          <a href="/staff/dayof" style={{ color: currentPath === '/staff/dayof' ? colors.white : '#c9b9a8', background: currentPath === '/staff/dayof' ? colors.accent : 'transparent', textDecoration: 'none', padding: '10px 12px', borderRadius: '11px', fontSize: '14px', display: 'block', fontWeight: currentPath === '/staff/dayof' ? 600 : 400 }}>📊 Day-Of Dashboard</a>
         </div>
       )}
 
       <div style={{ flex: 1 }}>
 
-        <div style={{
-          backgroundColor: colors.white,
-          borderBottom: `1px solid ${colors.border}`,
-          padding: '14px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px'
-        }}>
+        <div style={{ backgroundColor: colors.white, borderBottom: `1px solid ${colors.border}`, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button onClick={() => setSidebarOpen(!sidebarOpen)}
             style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: colors.text }}>
             ☰
@@ -98,101 +97,99 @@ const VendorArrival = () => {
 
         <div style={{ padding: '24px' }}>
 
-          {/* Event Filter */}
-          <div style={{
-            backgroundColor: colors.white,
-            border: `1px solid ${colors.border}`,
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap'
-          }}>
+          {/* Event Selector */}
+          <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '16px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <label style={{ color: colors.text, fontWeight: 'bold' }}>Select Event:</label>
-            {events.map(event => (
-              <button key={event.id} onClick={() => setSelectedEvent(event.id)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  border: `1px solid ${colors.border}`,
-                  cursor: 'pointer',
-                  backgroundColor: selectedEvent === event.id ? colors.accent : colors.white,
-                  color: selectedEvent === event.id ? colors.white : colors.text,
-                  fontWeight: selectedEvent === event.id ? 'bold' : 'normal'
-                }}>
-                {event.name}
-              </button>
-            ))}
-          </div>
-
-          {/* Stats */}
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ backgroundColor: colors.greenBg, border: `1px solid ${colors.green}`, borderRadius: '8px', padding: '16px 24px', flex: 1, textAlign: 'center' }}>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.green }}>{vendors.filter(v => v.arrived).length}</div>
-              <div style={{ color: colors.green, fontSize: '13px' }}>Arrived</div>
-            </div>
-            <div style={{ backgroundColor: colors.redBg, border: `1px solid ${colors.red}`, borderRadius: '8px', padding: '16px 24px', flex: 1, textAlign: 'center' }}>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.red }}>{vendors.filter(v => !v.arrived).length}</div>
-              <div style={{ color: colors.red, fontSize: '13px' }}>Not Arrived</div>
-            </div>
-            <div style={{ backgroundColor: colors.accentLight, border: `1px solid ${colors.accent}`, borderRadius: '8px', padding: '16px 24px', flex: 1, textAlign: 'center' }}>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.accent }}>{vendors.length}</div>
-              <div style={{ color: colors.accent, fontSize: '13px' }}>Total Vendors</div>
-            </div>
-          </div>
-
-          {/* Vendor Table */}
-          <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
-              <h2 style={{ color: colors.text, margin: 0 }}>Vendor List</h2>
-            </div>
-            {loading ? (
-              <p style={{ padding: '20px', color: colors.textMuted }}>Loading vendors...</p>
-            ) : vendors.length === 0 ? (
-              <p style={{ padding: '20px', color: colors.textMuted }}>No vendors for this event.</p>
+            {loadingEvents ? (
+              <span style={{ color: colors.textMuted }}>Loading events...</span>
+            ) : events.length === 0 ? (
+              <span style={{ color: colors.textMuted }}>You are not assigned to any events.</span>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: colors.accentLight }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Vendor Name</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Supplies</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Status</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {vendors.map((vendor, index) => (
-                    <tr key={vendor.id} style={{ backgroundColor: index % 2 === 0 ? colors.white : colors.cream }}>
-                      <td style={{ padding: '12px 16px', color: colors.text }}>{vendor.name}</td>
-                      <td style={{ padding: '12px 16px', color: colors.textMuted }}>{vendor.supplies}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{
-                          backgroundColor: vendor.arrived ? colors.greenBg : colors.redBg,
-                          color: vendor.arrived ? colors.green : colors.red,
-                          padding: '4px 10px', borderRadius: '12px', fontSize: '13px', fontWeight: 'bold'
-                        }}>
-                          {vendor.arrived ? 'Arrived' : 'Not Arrived'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <button onClick={() => handleArrival(vendor.id, vendor.requestId, vendor.arrived)}
-                          style={{
-                            backgroundColor: vendor.arrived ? colors.redBg : colors.greenBg,
-                            color: vendor.arrived ? colors.red : colors.green,
-                            border: `1px solid ${vendor.arrived ? colors.red : colors.green}`,
-                            borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px'
-                          }}>
-                          {vendor.arrived ? 'Undo Arrival' : 'Mark Arrived'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <select
+                value={selectedEventId}
+                onChange={e => setSelectedEventId(e.target.value)}
+                style={{ border: `1px solid ${colors.border}`, borderRadius: '6px', padding: '6px 12px', color: colors.text, backgroundColor: colors.cream, fontSize: '14px' }}
+              >
+                <option value="">-- Choose an event --</option>
+                {events.map(ev => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.name} — {new Date(ev.date).toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
+
+          {selectedEventId && (
+            <>
+              {/* Stats */}
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ backgroundColor: colors.greenBg, border: `1px solid ${colors.green}`, borderRadius: '8px', padding: '16px 24px', flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.green }}>{vendors.filter(v => v.arrived).length}</div>
+                  <div style={{ color: colors.green, fontSize: '13px' }}>Arrived</div>
+                </div>
+                <div style={{ backgroundColor: colors.redBg, border: `1px solid ${colors.red}`, borderRadius: '8px', padding: '16px 24px', flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.red }}>{vendors.filter(v => !v.arrived).length}</div>
+                  <div style={{ color: colors.red, fontSize: '13px' }}>Not Arrived</div>
+                </div>
+                <div style={{ backgroundColor: colors.accentLight, border: `1px solid ${colors.accent}`, borderRadius: '8px', padding: '16px 24px', flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.accent }}>{vendors.length}</div>
+                  <div style={{ color: colors.accent, fontSize: '13px' }}>Total Vendors</div>
+                </div>
+              </div>
+
+              {/* Vendor Table */}
+              <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '8px', overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
+                  <h2 style={{ color: colors.text, margin: 0 }}>Vendor List</h2>
+                </div>
+                {loadingVendors ? (
+                  <p style={{ padding: '20px', color: colors.textMuted }}>Loading vendors...</p>
+                ) : vendors.length === 0 ? (
+                  <p style={{ padding: '20px', color: colors.textMuted }}>No vendors for this event.</p>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: colors.accentLight }}>
+                        <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Vendor Name</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Supplies</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Status</th>
+                        <th style={{ padding: '12px 16px', textAlign: 'left', color: colors.text }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vendors.map((vendor, index) => (
+                        <tr key={vendor.id} style={{ backgroundColor: index % 2 === 0 ? colors.white : colors.cream }}>
+                          <td style={{ padding: '12px 16px', color: colors.text }}>{vendor.name}</td>
+                          <td style={{ padding: '12px 16px', color: colors.textMuted }}>{vendor.supplies}</td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span style={{
+                              backgroundColor: vendor.arrived ? colors.greenBg : colors.redBg,
+                              color: vendor.arrived ? colors.green : colors.red,
+                              padding: '4px 10px', borderRadius: '12px', fontSize: '13px', fontWeight: 'bold'
+                            }}>
+                              {vendor.arrived ? 'Arrived' : 'Not Arrived'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <button onClick={() => handleArrival(vendor.id, vendor.requestId, vendor.arrived)}
+                              style={{
+                                backgroundColor: vendor.arrived ? colors.redBg : colors.greenBg,
+                                color: vendor.arrived ? colors.red : colors.green,
+                                border: `1px solid ${vendor.arrived ? colors.red : colors.green}`,
+                                borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px'
+                              }}>
+                              {vendor.arrived ? 'Undo Arrival' : 'Mark Arrived'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -5,27 +5,27 @@ import { VendorSidebar } from '../components/Sidebar';
 import { getInvoices } from '../services/api';
 
 const styles = {
-  container: { display: 'flex', minHeight: '100vh', backgroundColor: '#FBF7F4' },
-  main: { marginLeft: '240px', padding: '30px', flex: 1 },
+  container: { display: 'flex', height: '100vh', backgroundColor: '#fdf4e9', fontFamily: "'Hanken Grotesk', system-ui, sans-serif", padding: '12px', gap: '12px', boxSizing: 'border-box', overflow: 'hidden' },
+  main: { flex: 1, padding: '20px 24px', overflowY: 'auto' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
-  title: { fontSize: '24px', fontWeight: 'bold', color: '#2C1810' },
-  createBtn: { padding: '10px 20px', backgroundColor: '#C4622D', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+  title: { fontSize: '24px', fontWeight: '800', color: '#241407', fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" },
+  createBtn: { padding: '10px 20px', backgroundColor: '#ff5a2c', color: '#ffffff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
   filterRow: { display: 'flex', gap: '12px', marginBottom: '20px' },
-  select: { padding: '8px 12px', borderRadius: '6px', border: '1px solid #EDE0D9', fontSize: '14px', color: '#2C1810', backgroundColor: '#FFFFFF' },
-  card: { backgroundColor: '#FFFFFF', border: '1px solid #EDE0D9', borderRadius: '10px', padding: '20px', marginBottom: '12px' },
+  select: { padding: '8px 12px', borderRadius: '8px', border: '1px solid #f0e3d2', fontSize: '14px', color: '#241407', backgroundColor: '#fffaf3' },
+  card: { backgroundColor: '#ffffff', border: '1px solid #f0e3d2', borderRadius: '14px', padding: '20px', marginBottom: '12px', boxShadow: '0 2px 8px rgba(27,15,6,0.05)' },
   cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-  cardTitle: { fontWeight: '600', color: '#2C1810', fontSize: '15px' },
-  cardMeta: { color: '#8B6555', fontSize: '13px', marginTop: '4px' },
+  cardTitle: { fontWeight: '700', color: '#241407', fontSize: '15px' },
+  cardMeta: { color: '#8a7a68', fontSize: '13px', marginTop: '4px' },
   badge: (status) => ({
-    backgroundColor: status === 'PAID' ? '#E8F5EE' : status === 'APPROVED' ? '#E8F5EE' : status === 'PENDING_REVIEW' ? '#F5EDE8' : '#FDECEA',
-    color: status === 'PAID' ? '#2D7A4F' : status === 'APPROVED' ? '#2D7A4F' : status === 'PENDING_REVIEW' ? '#C4622D' : '#C0392B',
+    backgroundColor: status === 'PAID' ? '#e7f7ee' : status === 'APPROVED' ? '#e7f7ee' : status === 'PENDING_REVIEW' ? '#ffe7dc' : '#ffe7dc',
+    color: status === 'PAID' ? '#0f7a44' : status === 'APPROVED' ? '#0f7a44' : status === 'PENDING_REVIEW' ? '#ff5a2c' : '#c83e16',
     padding: '3px 10px',
     borderRadius: '20px',
     fontSize: '12px',
-    fontWeight: '500',
+    fontWeight: '600',
   }),
-  empty: { textAlign: 'center', color: '#8B6555', padding: '40px' },
-  notification: { backgroundColor: '#E8F5EE', border: '1px solid #2D7A4F', borderRadius: '6px', padding: '10px 16px', marginBottom: '16px', color: '#2D7A4F', fontSize: '13px' },
+  empty: { textAlign: 'center', color: '#8a7a68', padding: '40px' },
+  notification: { backgroundColor: '#e7f7ee', border: '1px solid #0f7a44', borderRadius: '10px', padding: '10px 16px', marginBottom: '16px', color: '#0f7a44', fontSize: '13px' },
 };
 
 function InvoiceList() {

@@ -33,8 +33,10 @@ function LoginPage() {
           navigate('/vendor/dashboard');
         } else if (data.user.role === 'STAFF') {
           navigate('/staff/dashboard');
+        } else if (data.user.role === 'GUEST') {
+          navigate('/my-events');
         } else {
-          navigate('/login');
+          navigate('/');
         }
       } else {
         setError(data.message || 'Login failed');
@@ -45,48 +47,48 @@ function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#FBF7F4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ backgroundColor: '#FFFFFF', padding: '40px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px', border: '1px solid #EDE0D9' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#fdf4e9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+      <div style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '20px', boxShadow: '0 8px 32px rgba(27,15,6,0.12)', width: '100%', maxWidth: '400px', border: '1px solid #f0e3d2' }}>
 
-        <h2 style={{ color: '#6B2D0E', textAlign: 'center', marginBottom: '24px', fontSize: '24px', fontWeight: 'bold' }}>
+        <h2 style={{ color: '#1b0f06', textAlign: 'center', marginBottom: '24px', fontSize: '26px', fontWeight: '800', fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}>
           Welcome Back
         </h2>
 
-        {error && <div style={{ backgroundColor: '#FDECEA', color: '#C0392B', padding: '10px', borderRadius: '4px', marginBottom: '16px', textAlign: 'center' }}>{error}</div>}
+        {error && <div style={{ backgroundColor: '#ffe7dc', color: '#c83e16', padding: '10px', borderRadius: '10px', marginBottom: '16px', textAlign: 'center' }}>{error}</div>}
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label style={{ display: 'block', color: '#2C1810', marginBottom: '8px', fontSize: '14px' }}>Email Address</label>
+            <label style={{ display: 'block', color: '#241407', marginBottom: '8px', fontSize: '14px', fontWeight: '600' }}>Email Address</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #EDE0D9', outline: 'none', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #f0e3d2', outline: 'none', boxSizing: 'border-box', fontSize: '14px', color: '#241407', background: '#fffaf3' }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', color: '#2C1810', marginBottom: '8px', fontSize: '14px' }}>Password</label>
+            <label style={{ display: 'block', color: '#241407', marginBottom: '8px', fontSize: '14px', fontWeight: '600' }}>Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #EDE0D9', outline: 'none', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #f0e3d2', outline: 'none', boxSizing: 'border-box', fontSize: '14px', color: '#241407', background: '#fffaf3' }}
             />
           </div>
 
           <button
             type="submit"
-            style={{ backgroundColor: '#C4622D', color: '#FFFFFF', padding: '12px', border: 'none', borderRadius: '4px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }}
+            style={{ backgroundColor: '#ff5a2c', color: '#ffffff', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', marginTop: '8px' }}
           >
             Login to Dashboard
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '24px', color: '#8B6555', fontSize: '14px' }}>
-          Don't have an account? <Link to="/register" style={{ color: '#C4622D', textDecoration: 'none', fontWeight: 'bold' }}>Register here</Link>
+        <p style={{ textAlign: 'center', marginTop: '24px', color: '#8a7a68', fontSize: '14px' }}>
+          Don't have an account? <Link to="/register" style={{ color: '#ff5a2c', textDecoration: 'none', fontWeight: '700' }}>Register here</Link>
         </p>
       </div>
     </div>

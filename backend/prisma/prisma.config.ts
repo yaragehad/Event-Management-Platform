@@ -7,7 +7,6 @@ dotenv.config({ path: path.resolve(__dirname, '.env') })
 const connectionString = process.env.DATABASE_URL!
 
 export default defineConfig({
-  earlyAccess: true,
   schema: './prisma/schema.prisma',
   datasource: {
     url: connectionString,

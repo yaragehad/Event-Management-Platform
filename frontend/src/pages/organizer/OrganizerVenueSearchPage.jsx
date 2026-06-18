@@ -6,10 +6,10 @@ import { getAllVenues } from '../../services/venueService'
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 const C = {
-  sidebar: '#6B2D0E', accent: '#C4622D', accentLight: '#F5EDE8',
-  cream: '#FBF7F4', border: '#EDE0D9', text: '#2C1810',
-  textMuted: '#8B6555', white: '#FFFFFF',
-  green: '#2D7A4F', greenBg: '#E8F5EE',
+  sidebar: '#1b0f06', accent: '#ff5a2c', accentLight: '#ffe7dc',
+  cream: '#fdf4e9', border: '#f0e3d2', text: '#241407',
+  textMuted: '#8a7a68', white: '#ffffff',
+  green: '#0f7a44', greenBg: '#e7f7ee',
 }
 
 // ─── Shared input style ───────────────────────────────────────────────────────
@@ -288,6 +288,29 @@ export default function OrganizerVenueSearchPage() {
                     {selectedVenue.amenities.split(',').map((a, i) => (
                       <span key={i} style={{ padding: '3px 10px', background: C.cream, border: `1px solid ${C.border}`, borderRadius: 20, fontSize: 12, color: C.text }}>✓ {a.trim()}</span>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Layout Documents */}
+              {selectedVenue.layoutDocuments?.filter(d => d).length > 0 && (
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Layout Documents</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {selectedVenue.layoutDocuments.filter(d => d).map((url, i) => {
+                      const filename = url.split('/').pop()
+                      const isPdf = filename.toLowerCase().endsWith('.pdf')
+                      return (
+                        <a
+                          key={i} href={url} target="_blank" rel="noreferrer"
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#EEF2FF', borderRadius: 8, textDecoration: 'none' }}
+                        >
+                          <span style={{ fontSize: 18 }}>{isPdf ? '📄' : '🖼'}</span>
+                          <span style={{ flex: 1, color: '#4F46E5', fontSize: 13, fontWeight: 500 }}>{filename}</span>
+                          <span style={{ fontSize: 11, color: '#818CF8', fontWeight: 600 }}>View ↗</span>
+                        </a>
+                      )
+                    })}
                   </div>
                 </div>
               )}

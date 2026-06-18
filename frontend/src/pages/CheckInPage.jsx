@@ -3,9 +3,9 @@ import { useParams } from 'react-router-dom'
 import { Html5Qrcode } from 'html5-qrcode'
 
 const colors = {
-  accent: '#C4622D', accentLight: '#F5EDE8', cream: '#FBF7F4', border: '#EDE0D9',
-  text: '#2C1810', textMuted: '#8B6555', white: '#FFFFFF', green: '#2D7A4F', greenBg: '#E8F5EE',
-  red: '#C0392B', redBg: '#FDECEA', sidebar: '#6B2D0E',
+  accent: '#ff5a2c', accentLight: '#ffe7dc', cream: '#fdf4e9', border: '#f0e3d2',
+  text: '#241407', textMuted: '#8a7a68', white: '#ffffff', green: '#0f7a44', greenBg: '#e7f7ee',
+  red: '#c83e16', redBg: '#ffe7dc', sidebar: '#1b0f06',
 }
 
 const API = 'http://localhost:3001'
@@ -94,7 +94,7 @@ function CheckInPage() {
   }
 
   return (
-    <div style={{ backgroundColor: colors.cream, minHeight: '100vh', fontFamily: 'sans-serif' }}>
+    <div style={{ backgroundColor: colors.cream, minHeight: '100vh', fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
       <div style={{ backgroundColor: colors.sidebar, padding: '16px 32px' }}>
         <h1 style={{ color: colors.white, margin: 0, fontSize: '20px' }}>🎟️ Staff Check-In</h1>
         <p style={{ color: colors.accentLight, margin: '4px 0 0', fontSize: '14px' }}>Scan a guest's QR or confirm by email</p>

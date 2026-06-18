@@ -1,5 +1,6 @@
 const prisma = require('../lib/prismaClient');
 const bcrypt = require('bcrypt');
+const { sendAccountCreationEmail } = require('./emailController');
 
 // GET /api/organizer/dashboard/:id
 // Summary stats: today's events, task breakdown, avg feedback
@@ -314,6 +315,14 @@ const createStakeholderAccount = async (req, res) => {
         data: { userId: user.id, companyName, suppliesOffered, location, contactEmail, contactPhone }
       });
     }
+    
+    // Send email with credentials to the newly created user
+    try {
+      await sendAccountCreationEmail(email, name, role, password);
+    } catch (emailErr) {
+      console.error('Account created but credential email failed:', emailErr);
+    }
+
     res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (err) {
     console.error(err);
@@ -607,6 +616,58 @@ const sendMessage = async (req, res) => {
   }
 };
 
+// ── Task Reminders ─────────────────────────────────────────────────────────────
+const sendTaskReminders = async (req, res) => {
+  try {
+    const organizerId = parseInt(req.params.id);
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999);
+
+    const tasks = await prisma.task.findMany({
+      where: {
+        event: { organizerId },
+        status: { not: 'DONE' },
+        dueDate: { not: null, lte: tomorrow },
+      },
+      include: {
+        event: { select: { name: true } },
+        assignee: { include: { user: { select: { id: true, name: true } } } },
+      },
+    });
+
+    if (tasks.length === 0) {
+      return res.json({ count: 0, message: 'No upcoming or overdue tasks found.' });
+    }
+
+    const notificationData = [];
+    for (const task of tasks) {
+      if (!task.assignee?.user) continue;
+      const isOverdue = new Date(task.dueDate) < now;
+      notificationData.push({
+        userId: task.assignee.user.id,
+        title: isOverdue ? `Overdue Task: ${task.title}` : `Task Due Soon: ${task.title}`,
+        message: `${isOverdue ? 'OVERDUE' : 'Due tomorrow'}: "${task.title}" for event "${task.event.name}". Due: ${new Date(task.dueDate).toLocaleDateString()}.`,
+      });
+    }
+
+    const overdueTasks = tasks.filter(t => new Date(t.dueDate) < now);
+    const dueSoonTasks = tasks.filter(t => new Date(t.dueDate) >= now);
+    notificationData.push({
+      userId: organizerId,
+      title: 'Task Reminder Sent',
+      message: `Reminders sent: ${overdueTasks.length} overdue and ${dueSoonTasks.length} due-soon tasks across your events.`,
+    });
+
+    const created = await prisma.notification.createMany({ data: notificationData });
+    res.json({ count: created.count, message: `Sent ${created.count} reminder notifications.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send reminders' });
+  }
+};
+
 // ── Feedback & Reports ─────────────────────────────────────────────────────────
 const getOrganizerFeedback = async (req, res) => {
   try {
@@ -697,6 +758,8 @@ module.exports = {
   // Day-Of
   getDayOfDashboard,
   sendMessage,
+  // Task Reminders
+  sendTaskReminders,
   // Feedback & Reports
   getOrganizerFeedback,
   getEventReport,

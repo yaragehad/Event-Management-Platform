@@ -21,6 +21,10 @@ import {
   deleteExpense,
   createTask,
   updateTask,
+  sendTaskReminders,
+  getDirectContacts,
+  getDirectThread,
+  sendDirectMessage,
   getOrganizerSourcingRequests,
   createSourcingRequest,
   getOrganizerInvoices,
@@ -30,21 +34,22 @@ import {
   getOrganizerFeedback,
   getEventReport,
 } from '../../services/organizerService'
+import { getBookings, getBookingMessages, sendBookingMessage } from '../../services/venueService'
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 const C = {
-  sidebar: '#6B2D0E',
-  accent: '#C4622D',
-  accentLight: '#F5EDE8',
-  cream: '#FBF7F4',
-  border: '#EDE0D9',
-  text: '#2C1810',
-  textMuted: '#8B6555',
-  white: '#FFFFFF',
-  green: '#2D7A4F',
-  greenBg: '#E8F5EE',
-  red: '#C0392B',
-  redBg: '#FDECEA',
+  sidebar: '#1b0f06',
+  accent: '#ff5a2c',
+  accentLight: '#ffe7dc',
+  cream: '#fdf4e9',
+  border: '#f0e3d2',
+  text: '#241407',
+  textMuted: '#8a7a68',
+  white: '#ffffff',
+  green: '#0f7a44',
+  greenBg: '#e7f7ee',
+  red: '#c83e16',
+  redBg: '#ffe7dc',
 }
 
 // ─── Nav Sections ─────────────────────────────────────────────────────────────
@@ -60,6 +65,7 @@ const NAV_ITEMS = [
   { key: 'venues', icon: '🏛', label: 'Browse Venues', route: '/organizer/venues' },
   { key: 'layout', icon: '✏️', label: 'Layout Designer', route: '/organizer/layout' },
   { key: 'dayof', icon: '📡', label: 'Day-Of Ops' },
+  { key: 'messages', icon: '💬', label: 'Messages' },
   { key: 'feedback', icon: '⭐', label: 'Feedback' },
   { key: 'reports', icon: '📈', label: 'Reports' },
   { key: 'accounts', icon: '👤', label: 'Accounts' },
@@ -331,6 +337,8 @@ function TasksSection({ organizerId }) {
   const [staff, setStaff] = useState([])
   const [form, setForm] = useState({ title: '', description: '', dueDate: '', eventId: '', assigneeId: '' })
   const [saving, setSaving] = useState(false)
+  const [reminderMsg, setReminderMsg] = useState('')
+  const [sendingReminders, setSendingReminders] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -376,6 +384,19 @@ function TasksSection({ organizerId }) {
     } catch { }
   }
 
+  const handleSendReminders = async () => {
+    setSendingReminders(true)
+    try {
+      const res = await sendTaskReminders(organizerId)
+      setReminderMsg(res.data.message)
+      setTimeout(() => setReminderMsg(''), 4000)
+    } catch {
+      setReminderMsg('Failed to send reminders.')
+      setTimeout(() => setReminderMsg(''), 3000)
+    }
+    setSendingReminders(false)
+  }
+
   const thStyle = { padding: '10px 14px', textAlign: 'left', color: C.textMuted, fontWeight: 600, borderBottom: `1px solid ${C.border}` }
 
   return (
@@ -383,8 +404,17 @@ function TasksSection({ organizerId }) {
       <SectionHeader title="Tasks" icon="✅">
         <FilterSelect value={statusFilter} onChange={setStatusFilter} placeholder="All Statuses"
           options={['PENDING', 'IN_PROGRESS', 'DONE'].map(s => ({ value: s, label: s.replace('_', ' ') }))} />
+        <Btn variant="ghost" onClick={handleSendReminders} disabled={sendingReminders}>
+          {sendingReminders ? 'Sending...' : '🔔 Send Reminders'}
+        </Btn>
         <Btn onClick={() => setShowForm(p => !p)}>+ New Task</Btn>
       </SectionHeader>
+
+      {reminderMsg && (
+        <div style={{ background: C.greenBg, border: `1px solid ${C.green}`, borderRadius: 8, padding: '8px 14px', marginBottom: 12, fontSize: 13, color: C.green }}>
+          {reminderMsg}
+        </div>
+      )}
 
       {showForm && (
         <FormCard title="Create New Task" onClose={() => setShowForm(false)}>
@@ -857,20 +887,23 @@ function SourcingSection({ organizerId }) {
   // Form state
   const [showReqForm, setShowReqForm] = useState(false)
   const [events, setEvents] = useState([])
-  const [reqForm, setReqForm] = useState({ eventId: '', itemDetails: '', quantity: '', maxBudget: '' })
+  const [vendors, setVendors] = useState([])
+  const [reqForm, setReqForm] = useState({ eventId: '', vendorId: '', items: '', quantity: '', deliveryDate: '', notes: '' })
   const [savingReq, setSavingReq] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [reqRes, invRes, evRes] = await Promise.all([
+      const [reqRes, invRes, evRes, venRes] = await Promise.all([
         getOrganizerSourcingRequests(organizerId),
         getOrganizerInvoices(organizerId),
         getOrganizerEvents(organizerId),
+        getVendors(),
       ])
       setRequests(reqRes.data)
       setInvoices(invRes.data)
       setEvents(evRes.data)
+      setVendors(venRes.data)
     } catch { }
     setLoading(false)
   }, [organizerId])
@@ -884,12 +917,11 @@ function SourcingSection({ organizerId }) {
       const res = await createSourcingRequest({
         ...reqForm,
         eventId: parseInt(reqForm.eventId),
-        quantity: parseInt(reqForm.quantity),
-        maxBudget: reqForm.maxBudget ? parseFloat(reqForm.maxBudget) : null
+        vendorId: parseInt(reqForm.vendorId)
       })
       setRequests(p => [res.data, ...p])
       setShowReqForm(false)
-      setReqForm({ eventId: '', itemDetails: '', quantity: '', maxBudget: '' })
+      setReqForm({ eventId: '', vendorId: '', items: '', quantity: '', deliveryDate: '', notes: '' })
     } catch { }
     setSavingReq(false)
   }
@@ -931,9 +963,16 @@ function SourcingSection({ organizerId }) {
                   {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
                 </select>
               </Field>
-              <Field label="Item Details *"><input required value={reqForm.itemDetails} onChange={e => setReqForm(p => ({ ...p, itemDetails: e.target.value }))} style={inputStyle} /></Field>
-              <Field label="Quantity *"><input required type="number" value={reqForm.quantity} onChange={e => setReqForm(p => ({ ...p, quantity: e.target.value }))} style={inputStyle} /></Field>
-              <Field label="Max Budget (Optional)"><input type="number" value={reqForm.maxBudget} onChange={e => setReqForm(p => ({ ...p, maxBudget: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Vendor *">
+                <select required value={reqForm.vendorId} onChange={e => setReqForm(p => ({ ...p, vendorId: e.target.value }))} style={inputStyle}>
+                  <option value="">Select vendor</option>
+                  {vendors.map(v => <option key={v.id} value={v.id}>{v.companyName}</option>)}
+                </select>
+              </Field>
+              <Field label="Items Needed *"><input required value={reqForm.items} onChange={e => setReqForm(p => ({ ...p, items: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Quantity *"><input required value={reqForm.quantity} onChange={e => setReqForm(p => ({ ...p, quantity: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Delivery Date *"><input required type="date" value={reqForm.deliveryDate} onChange={e => setReqForm(p => ({ ...p, deliveryDate: e.target.value }))} style={inputStyle} /></Field>
+              <Field label="Notes (Optional)"><input value={reqForm.notes} onChange={e => setReqForm(p => ({ ...p, notes: e.target.value }))} style={inputStyle} /></Field>
             </div>
             <Btn type="submit" disabled={savingReq}>{savingReq ? 'Creating...' : 'Submit Request'}</Btn>
           </form>
@@ -947,16 +986,16 @@ function SourcingSection({ organizerId }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ background: C.cream }}>
-                    {['Item', 'Event', 'Quantity', 'Max Budget', 'Status', 'Vendor'].map(h => <th key={h} style={thStyle}>{h}</th>)}
+                    {['Items', 'Event', 'Quantity', 'Delivery Date', 'Status', 'Vendor'].map(h => <th key={h} style={thStyle}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {requests.map(r => (
                     <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                      <td style={{ padding: '11px 14px', fontWeight: 600, color: C.text }}>{r.itemDetails}</td>
+                      <td style={{ padding: '11px 14px', fontWeight: 600, color: C.text }}>{r.items}</td>
                       <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.event?.name}</td>
                       <td style={{ padding: '11px 14px' }}>{r.quantity}</td>
-                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.maxBudget ? fmtMoney(r.maxBudget) : '—'}</td>
+                      <td style={{ padding: '11px 14px', color: C.textMuted }}>{fmt(r.deliveryDate)}</td>
                       <td style={{ padding: '11px 14px' }}>{statusBadge(r.status)}</td>
                       <td style={{ padding: '11px 14px', color: C.textMuted }}>{r.vendor?.companyName || '—'}</td>
                     </tr>
@@ -1204,6 +1243,507 @@ function DayOfOpsSection({ organizerId }) {
   )
 }
 
+// ─── Messages Section ─────────────────────────────────────────────────────────
+function GuestMessagesTab({ organizerId }) {
+  const [events, setEvents] = useState([])
+  const [eventId, setEventId] = useState('')
+  const [threads, setThreads] = useState([])
+  const [activeGuest, setActiveGuest] = useState(null)
+  const [thread, setThread] = useState([])
+  const [broadcast, setBroadcast] = useState('')
+  const [reply, setReply] = useState('')
+  const [info, setInfo] = useState('')
+  const [broadcasting, setBroadcasting] = useState(false)
+
+  useEffect(() => {
+    getOrganizerEvents(organizerId)
+      .then(r => { setEvents(r.data); if (r.data[0]) setEventId(String(r.data[0].id)) })
+      .catch(() => {})
+  }, [organizerId])
+
+  useEffect(() => {
+    if (eventId) { fetchThreads(); setActiveGuest(null); setThread([]) }
+  }, [eventId])
+
+  const fetchThreads = async () => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/guests/messages/event/${eventId}/threads`)
+      setThreads(await res.json())
+    } catch { }
+  }
+
+  const openThread = async (guestId) => {
+    setActiveGuest(guestId)
+    try {
+      const res = await fetch(`http://localhost:3001/api/guests/messages/thread/${eventId}/${guestId}`)
+      setThread(await res.json())
+      await fetch(`http://localhost:3001/api/guests/messages/seen`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: Number(eventId), guestId, reader: 'ORGANIZER' }),
+      })
+      fetchThreads()
+    } catch { }
+  }
+
+  const handleBroadcast = async () => {
+    if (!broadcast.trim() || !eventId) return
+    setBroadcasting(true)
+    try {
+      await fetch(`http://localhost:3001/api/guests/messages/organizer-broadcast`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: Number(eventId), content: broadcast }),
+      })
+      setBroadcast('')
+      setInfo('Broadcast sent to all guests!')
+      fetchThreads()
+      if (activeGuest) openThread(activeGuest)
+      setTimeout(() => setInfo(''), 3000)
+    } catch { setInfo('Failed to broadcast') }
+    setBroadcasting(false)
+  }
+
+  const handleReply = async () => {
+    if (!reply.trim() || !activeGuest) return
+    try {
+      await fetch(`http://localhost:3001/api/guests/messages/send`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: Number(eventId), guestId: activeGuest, senderRole: 'ORGANIZER', content: reply }),
+      })
+      setReply('')
+      openThread(activeGuest)
+      fetchThreads()
+    } catch { }
+  }
+
+  const activeThread = threads.find(t => t.guestId === activeGuest)
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: C.textMuted }}>Event:</span>
+        <FilterSelect value={eventId} onChange={setEventId} placeholder="Select event"
+          options={events.map(e => ({ value: String(e.id), label: e.name }))} />
+      </div>
+
+      {info && (
+        <div style={{ background: C.greenBg, border: `1px solid ${C.green}`, borderRadius: 8, padding: '8px 14px', marginBottom: 12, fontSize: 13, color: C.green }}>
+          {info}
+        </div>
+      )}
+
+      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: C.text, marginBottom: 8 }}>Broadcast to All Guests</div>
+        <textarea value={broadcast} onChange={e => setBroadcast(e.target.value)} rows={2}
+          placeholder="Send a message to every guest (directions, schedule changes, welcome)..."
+          style={{ ...inputStyle, resize: 'none', marginBottom: 8 }} />
+        <Btn onClick={handleBroadcast} disabled={broadcasting || !broadcast.trim() || !eventId}>
+          {broadcasting ? 'Sending...' : 'Send to All Guests'}
+        </Btn>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 14 }}>
+        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
+            Guests ({threads.length})
+          </div>
+          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+            {threads.length === 0 && <div style={{ padding: 14, fontSize: 13, color: C.textMuted }}>No guests for this event.</div>}
+            {threads.map(t => (
+              <div key={t.guestId} onClick={() => openThread(t.guestId)}
+                style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
+                  background: activeGuest === t.guestId ? C.accentLight : C.white }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{t.name}</span>
+                  {t.unreadFromGuest > 0 && (
+                    <span style={{ background: C.red, color: C.white, borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>
+                      {t.unreadFromGuest}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {t.lastMessage || 'No messages yet'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, display: 'flex', flexDirection: 'column', minHeight: 380 }}>
+          {!activeGuest ? (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted, fontSize: 14 }}>
+              Select a guest to view the conversation
+            </div>
+          ) : (
+            <>
+              <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
+                {activeThread?.name}
+              </div>
+              <div style={{ flex: 1, padding: 14, overflowY: 'auto', maxHeight: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {thread.length === 0 && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>No messages yet.</div>}
+                {thread.map(m => {
+                  const mine = m.senderRole === 'ORGANIZER'
+                  return (
+                    <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
+                      <div style={{ maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
+                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text }}>
+                        <div>{m.content}</div>
+                        <div style={{ fontSize: 10, opacity: 0.75, marginTop: 3, textAlign: 'right' }}>
+                          {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {mine && (m.seenByGuest ? ' · Seen' : ' · Sent')}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
+                <input value={reply} onChange={e => setReply(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleReply()}
+                  placeholder="Type a reply..."
+                  style={{ ...inputStyle, flex: 1 }} />
+                <Btn onClick={handleReply} disabled={!reply.trim()}>Send</Btn>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function VenueMessagesTab({ organizerId, currentUserId }) {
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeBookingId, setActiveBookingId] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [msgsLoading, setMsgsLoading] = useState(false)
+  const [reply, setReply] = useState('')
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    if (!organizerId) return
+    getBookings({ organizerId })
+      .then(r => setBookings(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [organizerId])
+
+  const openBooking = async (bookingId) => {
+    setActiveBookingId(bookingId)
+    setMsgsLoading(true)
+    try {
+      const res = await getBookingMessages(bookingId)
+      setMessages(res.data)
+    } catch { }
+    setMsgsLoading(false)
+  }
+
+  const handleSend = async () => {
+    if (!reply.trim() || !activeBookingId) return
+    setSending(true)
+    try {
+      const res = await sendBookingMessage(activeBookingId, { senderId: currentUserId, content: reply.trim() })
+      setMessages(prev => [...prev, res.data])
+      setReply('')
+    } catch { }
+    setSending(false)
+  }
+
+  const activeBooking = bookings.find(b => b.id === activeBookingId)
+
+  if (loading) return <p style={{ color: C.textMuted }}>Loading bookings...</p>
+  if (bookings.length === 0) return <EmptyState msg="No venue bookings yet." />
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 14 }}>
+      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
+          Bookings ({bookings.length})
+        </div>
+        <div style={{ maxHeight: 460, overflowY: 'auto' }}>
+          {bookings.map(b => (
+            <div key={b.id} onClick={() => openBooking(b.id)}
+              style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
+                background: activeBookingId === b.id ? C.accentLight : C.white }}>
+              <div style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{b.venue?.name || `Venue #${b.venueId}`}</div>
+              <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+                {fmt(b.eventDate)} · {b.status}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, display: 'flex', flexDirection: 'column', minHeight: 380 }}>
+        {!activeBookingId ? (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted, fontSize: 14 }}>
+            Select a booking to view messages
+          </div>
+        ) : (
+          <>
+            <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{activeBooking?.venue?.name}</span>
+              {activeBooking?.status && statusBadge(activeBooking.status)}
+            </div>
+            <div style={{ flex: 1, padding: 14, overflowY: 'auto', maxHeight: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {msgsLoading && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>Loading messages...</div>}
+              {!msgsLoading && messages.length === 0 && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>No messages yet.</div>}
+              {messages.map(m => {
+                const mine = m.senderId === currentUserId
+                return (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
+                    <div>
+                      <div style={{ maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
+                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text }}>
+                        {m.content}
+                      </div>
+                      <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2, textAlign: mine ? 'right' : 'left' }}>
+                        {m.sender?.name} · {new Date(m.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
+              <input value={reply} onChange={e => setReply(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder="Type a message or counter-proposal..."
+                style={{ ...inputStyle, flex: 1 }} />
+              <Btn onClick={handleSend} disabled={sending || !reply.trim()}>
+                {sending ? 'Sending...' : 'Send'}
+              </Btn>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Reusable tab for staff or vendor direct messaging
+function DirectMessagesTab({ organizerId, currentUserId, role }) {
+  const [contacts, setContacts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeId, setActiveId] = useState(null)
+  const [thread, setThread] = useState([])
+  const [threadLoading, setThreadLoading] = useState(false)
+  const [reply, setReply] = useState('')
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    getDirectContacts(organizerId, role)
+      .then(r => setContacts(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [organizerId, role])
+
+  const openThread = async (userId) => {
+    setActiveId(userId)
+    setThreadLoading(true)
+    try {
+      const res = await getDirectThread(currentUserId, userId)
+      setThread(res.data)
+      setContacts(prev => prev.map(c => c.id === userId ? { ...c, unread: 0 } : c))
+    } catch { }
+    setThreadLoading(false)
+  }
+
+  const handleSend = async () => {
+    if (!reply.trim() || !activeId) return
+    setSending(true)
+    try {
+      const res = await sendDirectMessage(currentUserId, activeId, reply.trim())
+      setThread(prev => [...prev, res.data])
+      setReply('')
+      setContacts(prev => prev.map(c => c.id === activeId ? { ...c, lastMessage: reply.trim() } : c))
+    } catch { }
+    setSending(false)
+  }
+
+  const activeContact = contacts.find(c => c.id === activeId)
+
+  if (loading) return <p style={{ color: C.textMuted }}>Loading contacts...</p>
+  if (contacts.length === 0) return <EmptyState msg={`No ${role === 'STAFF' ? 'staff members' : 'vendors'} linked to your events yet.`} />
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 14 }}>
+      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, fontWeight: 700, fontSize: 13, color: C.text }}>
+          {role === 'STAFF' ? 'Staff Members' : 'Vendors'} ({contacts.length})
+        </div>
+        <div style={{ maxHeight: 460, overflowY: 'auto' }}>
+          {contacts.map(c => (
+            <div key={c.id} onClick={() => openThread(c.id)}
+              style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
+                background: activeId === c.id ? C.accentLight : C.white }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{c.name}</span>
+                {c.unread > 0 && (
+                  <span style={{ background: C.red, color: C.white, borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>
+                    {c.unread}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {c.lastMessage || 'No messages yet'}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, display: 'flex', flexDirection: 'column', minHeight: 380 }}>
+        {!activeId ? (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted, fontSize: 14 }}>
+            Select a {role === 'STAFF' ? 'staff member' : 'vendor'} to start messaging
+          </div>
+        ) : (
+          <>
+            <div style={{ padding: '11px 14px', borderBottom: `1px solid ${C.border}` }}>
+              <div style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{activeContact?.name}</div>
+              <div style={{ fontSize: 11, color: C.textMuted }}>{activeContact?.email}</div>
+            </div>
+            <div style={{ flex: 1, padding: 14, overflowY: 'auto', maxHeight: 320, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {threadLoading && <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>Loading...</div>}
+              {!threadLoading && thread.length === 0 && (
+                <div style={{ textAlign: 'center', color: C.textMuted, fontSize: 13 }}>No messages yet. Say hello!</div>
+              )}
+              {thread.map(m => {
+                const mine = m.senderId === currentUserId
+                return (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
+                    <div>
+                      <div style={{ maxWidth: '70%', padding: '8px 12px', borderRadius: 10, fontSize: 13,
+                        background: mine ? C.accent : C.accentLight, color: mine ? C.white : C.text }}>
+                        {m.content}
+                      </div>
+                      <div style={{ fontSize: 10, color: C.textMuted, marginTop: 2, textAlign: mine ? 'right' : 'left' }}>
+                        {m.sender?.name} · {new Date(m.sentAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        {mine && (m.seenByReceiver ? ' · Seen' : ' · Sent')}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
+              <input value={reply} onChange={e => setReply(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder="Type a message..."
+                style={{ ...inputStyle, flex: 1 }} />
+              <Btn onClick={handleSend} disabled={sending || !reply.trim()}>
+                {sending ? 'Sending...' : 'Send'}
+              </Btn>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MessagesSection({ organizerId, currentUserId }) {
+  const [tab, setTab] = useState('guests')
+
+  return (
+    <div>
+      <SectionHeader title="Messages" icon="💬">
+        <div style={{ display: 'flex', background: C.cream, borderRadius: 8, padding: 4, gap: 2 }}>
+          {[
+            { id: 'guests', label: 'Guests' },
+            { id: 'staff', label: 'Staff' },
+            { id: 'vendors', label: 'Vendors' },
+            { id: 'venues', label: 'Venue Owners' },
+          ].map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{
+              padding: '6px 14px', border: 'none', background: tab === t.id ? C.white : 'transparent',
+              borderRadius: 6, fontWeight: 600, fontSize: 13, cursor: 'pointer',
+              color: tab === t.id ? C.text : C.textMuted,
+              boxShadow: tab === t.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+            }}>{t.label}</button>
+          ))}
+        </div>
+      </SectionHeader>
+      {tab === 'guests'  && <GuestMessagesTab organizerId={organizerId} />}
+      {tab === 'staff'   && <DirectMessagesTab organizerId={organizerId} currentUserId={currentUserId} role="STAFF" />}
+      {tab === 'vendors' && <DirectMessagesTab organizerId={organizerId} currentUserId={currentUserId} role="VENDOR" />}
+      {tab === 'venues'  && <VenueMessagesTab  organizerId={organizerId} currentUserId={currentUserId} />}
+    </div>
+  )
+}
+
+// ─── Feedback Section ─────────────────────────────────────────────────────────
+function FeedbackSection({ organizerId }) {
+  const [feedback, setFeedback] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [eventFilter, setEventFilter] = useState('')
+
+  useEffect(() => {
+    getOrganizerFeedback(organizerId)
+      .then(r => setFeedback(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [organizerId])
+
+  const events = [...new Map(feedback.map(f => [f.event.id, f.event])).values()]
+  const filtered = eventFilter ? feedback.filter(f => String(f.event.id) === eventFilter) : feedback
+
+  const avg = (arr, key) => {
+    const vals = arr.filter(f => f[key] != null).map(f => f[key])
+    return vals.length ? (vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(1) : null
+  }
+
+  return (
+    <div>
+      <SectionHeader title="Guest Feedback" icon="⭐">
+        <FilterSelect value={eventFilter} onChange={setEventFilter} placeholder="All Events"
+          options={events.map(e => ({ value: String(e.id), label: e.name }))} />
+      </SectionHeader>
+
+      {loading && <p style={{ color: C.textMuted }}>Loading feedback...</p>}
+      {!loading && filtered.length === 0 && <EmptyState msg="No feedback received yet." />}
+
+      {!loading && filtered.length > 0 && (
+        <div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 24 }}>
+            <StatCard icon="⭐" label="Overall Rating" value={avg(filtered, 'overall') ? `${avg(filtered, 'overall')}/5` : 'N/A'} />
+            <StatCard icon="🍽️" label="Food & Beverage" value={avg(filtered, 'food') ? `${avg(filtered, 'food')}/5` : 'N/A'} />
+            <StatCard icon="🏛️" label="Venue" value={avg(filtered, 'venue') ? `${avg(filtered, 'venue')}/5` : 'N/A'} />
+            <StatCard icon="🗂️" label="Organization" value={avg(filtered, 'organization') ? `${avg(filtered, 'organization')}/5` : 'N/A'} />
+            <StatCard icon="📊" label="Total Reviews" value={filtered.length} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
+            {filtered.map((f, i) => (
+              <div key={f.id || i} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: '16px 18px', boxShadow: '0 1px 4px rgba(107,45,14,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: C.text }}>{f.guestName}</div>
+                    <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{f.event?.name} · {fmt(f.createdAt)}</div>
+                  </div>
+                  <span style={{ fontSize: 16 }}>{'⭐'.repeat(f.overall)}</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: f.comments ? 10 : 0 }}>
+                  {f.food != null && <div style={{ fontSize: 12, color: C.textMuted }}>🍽️ <strong>{f.food}/5</strong> Food</div>}
+                  {f.venue != null && <div style={{ fontSize: 12, color: C.textMuted }}>🏛️ <strong>{f.venue}/5</strong> Venue</div>}
+                  {f.organization != null && <div style={{ fontSize: 12, color: C.textMuted }}>🗂️ <strong>{f.organization}/5</strong> Org</div>}
+                </div>
+                {f.comments && (
+                  <div style={{ fontSize: 13, color: C.textMuted, fontStyle: 'italic', borderTop: `1px solid ${C.border}`, paddingTop: 8 }}>
+                    "{f.comments}"
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Reports Section ──────────────────────────────────────────────────────────
 function ReportsSection({ organizerId }) {
   const [events, setEvents] = useState([])
@@ -1232,6 +1772,59 @@ function ReportsSection({ organizerId }) {
 
   useEffect(() => { loadData(selectedEventId) }, [selectedEventId, loadData])
 
+  const handleExportCSV = () => {
+    if (!reportData) return
+    const { summary, feedback = [], guests = [], sourcingRequests = [], event } = reportData
+    const rows = [
+      [`Event Report: ${event?.name || ''}`],
+      ['Date', event?.date ? new Date(event.date).toLocaleDateString() : '—'],
+      [''],
+      ['=== SUMMARY ==='],
+      ['Total Guests', summary?.totalGuests ?? 0],
+      ['Attending', summary?.totalAttending ?? 0],
+      ['Arrived', summary?.totalArrived ?? 0],
+      ['Planned Budget (EGP)', summary?.totalPlanned ?? 0],
+      ['Actual Spent (EGP)', summary?.totalActual ?? 0],
+      ['Avg Feedback', summary?.avgFeedback || 'N/A'],
+      ['Total Feedback Submissions', summary?.totalFeedback ?? 0],
+      [''],
+      ['=== GUESTS ==='],
+      ['Name', 'Email', 'RSVP Status', 'Checked In'],
+      ...guests.map(g => [
+        g.user?.name || '—',
+        g.user?.email || '—',
+        g.rsvps?.[0]?.status || 'PENDING',
+        g.checkInStatus ? 'Yes' : 'No',
+      ]),
+      [''],
+      ['=== FEEDBACK ==='],
+      ['Guest', 'Overall', 'Food', 'Venue', 'Organization', 'Comments'],
+      ...feedback.map(f => [f.guestName, f.overall, f.food ?? '', f.venue ?? '', f.organization ?? '', f.comments ?? '']),
+      [''],
+      ['=== SOURCING REQUESTS ==='],
+      ['Vendor', 'Items Needed', 'Quantity', 'Delivery Date', 'Delivery Status'],
+      ...sourcingRequests.map(s => [
+        s.vendor?.companyName || '—',
+        s.itemsNeeded || '',
+        s.quantity ?? '',
+        s.deliveryDate ? new Date(s.deliveryDate).toLocaleDateString() : '—',
+        s.delivery?.status || 'N/A',
+      ]),
+    ]
+    const csv = rows.map(r =>
+      Array.isArray(r)
+        ? r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')
+        : `"${r}"`
+    ).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${event?.name || 'event'}-report.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
       <SectionHeader title="Post-Event Reports" icon="📈">
@@ -1239,7 +1832,8 @@ function ReportsSection({ organizerId }) {
           <FilterSelect value={selectedEventId} onChange={setSelectedEventId} placeholder="Select event"
             options={events.map(e => ({ value: String(e.id), label: e.name }))} />
         )}
-        <Btn onClick={() => window.print()}>🖨️ Export Report</Btn>
+        <Btn variant="ghost" onClick={handleExportCSV} disabled={!reportData}>📥 Export CSV</Btn>
+        <Btn onClick={() => window.print()}>🖨️ Print Report</Btn>
       </SectionHeader>
 
       {loading && <p style={{ color: C.textMuted }}>Loading report...</p>}
@@ -1247,24 +1841,62 @@ function ReportsSection({ organizerId }) {
 
       {!loading && reportData && (
         <div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>
-            <StatCard icon="👥" label="Total Attendance" value={reportData.attendance} />
-            <StatCard icon="💰" label="Total Spent" value={fmtMoney(reportData.financials?.spent)} />
-            <StatCard icon="⭐" label="Avg. Feedback" value={reportData.feedbackSummary?.avgRating || 'N/A'} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 24 }}>
+            <StatCard icon="👥" label="Total Guests" value={reportData.summary?.totalGuests} />
+            <StatCard icon="✅" label="Attending" value={reportData.summary?.totalAttending} />
+            <StatCard icon="🚪" label="Arrived" value={reportData.summary?.totalArrived} />
+            <StatCard icon="💰" label="Total Spent" value={fmtMoney(reportData.summary?.totalActual)} />
+            <StatCard icon="📋" label="Planned Budget" value={fmtMoney(reportData.summary?.totalPlanned)} />
+            <StatCard icon="⭐" label="Avg. Feedback" value={reportData.summary?.avgFeedback ? `${reportData.summary.avgFeedback}/5` : 'N/A'} />
           </div>
 
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 10 }}>Feedback Quotes</h3>
-          {reportData.feedbackSummary?.quotes?.length === 0 ? <p style={{ color: C.textMuted, fontSize: 14 }}>No feedback received.</p> : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              {reportData.feedbackSummary?.quotes?.map((q, i) => (
-                <div key={i} style={{ background: C.white, padding: '16px', borderRadius: 12, border: `1px solid ${C.border}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{q.author}</span>
-                    <span style={{ fontSize: 13 }}>{'⭐'.repeat(q.rating)}</span>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 10 }}>Guest Feedback</h3>
+          {!reportData.feedback?.length
+            ? <p style={{ color: C.textMuted, fontSize: 14 }}>No feedback received.</p>
+            : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 }}>
+                {reportData.feedback.map((f, i) => (
+                  <div key={i} style={{ background: C.white, padding: '16px', borderRadius: 12, border: `1px solid ${C.border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{f.guestName}</span>
+                      <span style={{ fontSize: 13 }}>{'⭐'.repeat(f.overall)}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, fontSize: 12, color: C.textMuted, marginBottom: 6, flexWrap: 'wrap' }}>
+                      {f.food != null && <span>🍽️ Food: {f.food}/5</span>}
+                      {f.venue != null && <span>🏛️ Venue: {f.venue}/5</span>}
+                      {f.organization != null && <span>🗂️ Org: {f.organization}/5</span>}
+                    </div>
+                    {f.comments && <div style={{ fontSize: 13, color: C.textMuted, fontStyle: 'italic' }}>"{f.comments}"</div>}
                   </div>
-                  <div style={{ fontSize: 14, color: C.textMuted, fontStyle: 'italic' }}>"{q.comment}"</div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+
+          {reportData.sourcingRequests?.length > 0 && (
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 10 }}>Vendor Sourcing</h3>
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: C.cream }}>
+                      {['Vendor', 'Items', 'Qty', 'Delivery Date', 'Status'].map(h => (
+                        <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: C.textMuted }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportData.sourcingRequests.map((s, i) => (
+                      <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
+                        <td style={{ padding: '10px 14px', fontSize: 13, color: C.text }}>{s.vendor?.companyName || '—'}</td>
+                        <td style={{ padding: '10px 14px', fontSize: 13, color: C.textMuted }}>{s.itemsNeeded}</td>
+                        <td style={{ padding: '10px 14px', fontSize: 13, color: C.textMuted }}>{s.quantity}</td>
+                        <td style={{ padding: '10px 14px', fontSize: 13, color: C.textMuted }}>{fmt(s.deliveryDate)}</td>
+                        <td style={{ padding: '10px 14px' }}>{statusBadge(s.delivery?.status || 'PENDING')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
@@ -1441,17 +2073,21 @@ export default function OrganizerDashboard() {
     : 'O'
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif", background: C.cream }}>
+    <div style={{ display: 'flex', height: '100vh', fontFamily: "'Hanken Grotesk', system-ui, sans-serif", background: C.cream, padding: 12, gap: 12, boxSizing: 'border-box', overflow: 'hidden' }}>
 
-      {/* ── Sidebar (fixed) ───────────────────────────────────────────────── */}
+      {/* ── Sidebar — floating rounded card ──────────────────────────────── */}
       <div style={{
-        width: sidebarWidth, minHeight: '100vh', background: C.sidebar,
-        display: 'flex', flexDirection: 'column', position: 'fixed',
-        top: 0, left: 0, zIndex: 100,
-        overflow: 'hidden',
+        borderRadius: 20, overflow: 'hidden', height: '100%',
+        width: sidebarOpen ? 260 : 0, flexShrink: 0,
         transition: 'width 0.3s ease',
       }}>
-        <div style={{ width: '260px' }}>
+        <style>{`
+          .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        `}</style>
+        <div className="custom-scrollbar" style={{ width: '260px', height: '100%', background: C.sidebar, display: 'flex', flexDirection: 'column', overflowY: 'auto', boxSizing: 'border-box' }}>
 
           {/* Logo with hover dropdown */}
           <div
@@ -1464,10 +2100,11 @@ export default function OrganizerDashboard() {
               style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
             >
               <div style={{
-                width: '38px', height: '38px', background: 'rgba(255,255,255,0.15)',
-                borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '18px', flexShrink: 0,
-              }}>🏛</div>
+                width: '38px', height: '38px', background: C.accent,
+                borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: '18px', color: C.sidebar, flexShrink: 0,
+                fontFamily: "'Bricolage Grotesque', system-ui, sans-serif",
+              }}>E</div>
               <div>
                 <div style={{ color: C.white, fontWeight: '700', fontSize: '16px', whiteSpace: 'nowrap' }}>EventHub</div>
                 <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>Organizer</div>
@@ -1534,7 +2171,7 @@ export default function OrganizerDashboard() {
           </div>
 
           {/* Nav items */}
-          <nav style={{ padding: '1rem 0.75rem', flex: 1 }}>
+          <nav className="custom-scrollbar" style={{ padding: '1rem 0.75rem', flex: 1, overflowY: 'auto' }}>
             {NAV_ITEMS.map(item => {
               const isActive = activeSection === item.key
               return (
@@ -1545,10 +2182,10 @@ export default function OrganizerDashboard() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: '0.75rem',
                     padding: '0.7rem 1rem', borderRadius: '8px', marginBottom: '0.25rem',
-                    cursor: 'pointer', color: isActive ? C.white : 'rgba(255,255,255,0.7)',
-                    background: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
-                    fontWeight: isActive ? '600' : '400', fontSize: '14px',
-                    transition: 'all 0.15s', whiteSpace: 'nowrap',
+                    cursor: 'pointer', color: isActive ? C.white : '#c9b9a8',
+                    background: isActive ? C.accent : 'transparent',
+                    fontWeight: isActive ? '600' : '500', fontSize: '14px',
+                    transition: 'all 0.15s', whiteSpace: 'nowrap', borderRadius: '12px',
                   }}
                   onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
                   onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
@@ -1578,11 +2215,11 @@ export default function OrganizerDashboard() {
         </div>
       </div>
 
-      {/* ── Main content (shifts with margin) ────────────────────────────── */}
+      {/* ── Main content ─────────────────────────────────────────────────── */}
       <div style={{
-        marginLeft: sidebarWidth, flex: 1,
+        flex: 1,
         display: 'flex', flexDirection: 'column',
-        transition: 'margin-left 0.3s ease',
+        overflow: 'hidden', minWidth: 0,
       }}>
 
         {/* ── Top bar ─────────────────────────────────────────────────────── */}
@@ -1702,6 +2339,8 @@ export default function OrganizerDashboard() {
           {activeSection === 'sourcing' && <SourcingSection organizerId={user?.id} />}
           {activeSection === 'guests' && <GuestsSection organizerId={user?.id} />}
           {activeSection === 'dayof' && <DayOfOpsSection organizerId={user?.id} />}
+          {activeSection === 'messages' && <MessagesSection organizerId={user?.id} currentUserId={user?.id} />}
+          {activeSection === 'feedback' && <FeedbackSection organizerId={user?.id} />}
           {activeSection === 'reports' && <ReportsSection organizerId={user?.id} />}
           {activeSection === 'accounts' && <AccountsSection organizerId={user?.id} currentUser={user} />}
         </div>

@@ -32,6 +32,8 @@ const {
   // Day-Of
   getDayOfDashboard,
   sendMessage,
+  // Task Reminders
+  sendTaskReminders,
   // Feedback & Reports
   getOrganizerFeedback,
   getEventReport,
@@ -61,6 +63,7 @@ router.put('/budget/expenses/:expenseId', updateExpense);
 router.delete('/budget/expenses/:expenseId', deleteExpense);
 
 // ── Task Management ────────────────────────────────────────────────────────────
+router.post('/tasks/reminders/:id', sendTaskReminders);
 router.post('/tasks', createTask);
 router.patch('/tasks/:taskId', updateTask);
 

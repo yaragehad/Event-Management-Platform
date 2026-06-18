@@ -34,6 +34,7 @@ const guestRoutes = require('./routes/guestRoutes')
 const emailRoutes = require('./routes/emailRoutes')
 const eventRoutes = require('./routes/eventRoutes')
 const uploadRoutes = require('./routes/uploadRoutes')
+const directMessageRoutes = require('./routes/directMessageRoutes')
 
 app.use('/api/auth', require('./routes/authRoutes'))
 app.use('/api/users', userRoutes)
@@ -53,6 +54,7 @@ app.use('/api/guests', guestRoutes)
 app.use('/api/email', emailRoutes)
 app.use('/api/events', eventRoutes)
 app.use('/api/upload', uploadRoutes)
+app.use('/api/direct-messages', directMessageRoutes)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 
 app.get('/', (req, res) => {

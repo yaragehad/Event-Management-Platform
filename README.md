@@ -387,29 +387,43 @@ This will recreate the schema and run seed again.
 ## Implemented User Journeys
 
 ### Event Organizer
-- [x] ...
-- [x] ...
+- [x] Register and log in to the Organizer Dashboard.
+- [x] Create and manage new events.
+- [x] Search for venues and submit booking requests.
+- [x] Manage event budgets and assign tasks.
+- [x] Manage personal profile details (age, phone, bio, password).
 
 ### Venue Owner
-- [x] ...
+- [x] Log in to the Venue Owner Portal.
+- [x] Manage venue listings, photos, and availability calendars.
+- [x] Review, approve, or decline booking requests.
+- [x] Use the Layout Designer to drag-and-drop elements and export venue floor plans.
 
 ### Vendor
-- [x] ...
+- [x] Access the Vendor Dashboard.
+- [x] Review and respond to event sourcing requests.
+- [x] Track deliveries and manage submitted invoices.
+
 ### Guest
-- [x] ...
+- [x] Access the Guest Portal.
+- [x] Manage RSVPs for upcoming events.
+- [x] Receive and send messages through the messaging system.
+
 ### Staff
-- [x] ...
----
-
-## Assumptions
-...
----
-
-## API Overview
-
-to be updated
+- [x] Log in to the Staff Portal.
+- [x] View assigned tasks for the day of the event.
+- [x] Access the interactive venue layout to assist with setup and day-of operations.
 
 ---
+
+## Assumptions Made
+
+During the implementation, the following assumptions were made to fill in gaps not explicitly defined in the User Journeys document:
+- **Authentication & Roles:** It is assumed that users have single, strictly defined roles (Organizer, Venue Owner, Vendor, Staff, Guest) to simplify authorization logic.
+- **Profile Fields:** Additional standard profile fields (e.g., age, phone number, bio) were added to the `User` model, assuming users need standard account management capabilities.
+- **Layout Designer Coordinates:** Floor plan designs assume a relative coordinate system that scales automatically to PDF exports rather than strictly mapped physical dimensions (like square footage).
+- **Messaging:** Messaging between users is assumed to be direct, plain text messaging without attachments for the initial scope.
+- **Payments:** Any payment or invoicing flows are simulated visually and rely on status updates rather than integration with an actual payment gateway like Stripe.
 
 
 ## Submission Checklist

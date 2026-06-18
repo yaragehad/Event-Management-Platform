@@ -354,14 +354,17 @@ const createStakeholderAccount = async (req, res) => {
 const updateOrganizerProfile = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, email, password } = req.body;
+    const { name, email, password, age, phone, bio } = req.body;
     const data = {};
-    if (name) data.name = name;
-    if (email) data.email = email;
+    if (name !== undefined) data.name = name;
+    if (email !== undefined) data.email = email;
     if (password) data.password = await bcrypt.hash(password, 10);
+    if (age !== undefined) data.age = age === '' ? null : parseInt(age);
+    if (phone !== undefined) data.phone = phone;
+    if (bio !== undefined) data.bio = bio;
     const updated = await prisma.user.update({
       where: { id }, data,
-      select: { id: true, name: true, email: true, role: true }
+      select: { id: true, name: true, email: true, role: true, age: true, phone: true, bio: true }
     });
     res.json(updated);
   } catch (err) {

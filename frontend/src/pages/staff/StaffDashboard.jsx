@@ -48,9 +48,19 @@ const StaffDashboard = () => {
       .finally(() => setLoading(false));
   }, [user]);
 
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
   const pendingTasks = tasks.filter(t => t.status === 'PENDING').length;
   const inProgressTasks = tasks.filter(t => t.status === 'IN_PROGRESS').length;
   const doneTasks = tasks.filter(t => t.status === 'DONE').length;
+
+  const filteredEvents = events.filter(ev => {
+    const d = new Date(ev.date);
+    if (dateFrom && d < new Date(dateFrom)) return false;
+    if (dateTo && d > new Date(dateTo)) return false;
+    return true;
+  });
   const initials = user?.name ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() : 'S';
 
   const currentPath = window.location.pathname;
@@ -158,9 +168,30 @@ const StaffDashboard = () => {
 
               {/* My Events */}
               <h3 style={{ color: colors.text, fontFamily: "'Bricolage Grotesque', system-ui, sans-serif", fontWeight: 700, fontSize: '17px', marginBottom: '14px', marginTop: 0 }}>My Events</h3>
+
+              {/* Date filter bar */}
+              <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '14px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <span style={{ color: colors.text, fontWeight: 600, fontSize: '13px' }}>Filter by date:</span>
+                <label style={{ color: colors.textMuted, fontSize: '13px' }}>From
+                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                    style={{ marginLeft: '6px', border: `1px solid ${colors.border}`, borderRadius: '6px', padding: '4px 8px', color: colors.text, backgroundColor: colors.cream, fontSize: '13px' }} />
+                </label>
+                <label style={{ color: colors.textMuted, fontSize: '13px' }}>To
+                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                    style={{ marginLeft: '6px', border: `1px solid ${colors.border}`, borderRadius: '6px', padding: '4px 8px', color: colors.text, backgroundColor: colors.cream, fontSize: '13px' }} />
+                </label>
+                {(dateFrom || dateTo) && (
+                  <button onClick={() => { setDateFrom(''); setDateTo(''); }}
+                    style={{ background: 'none', border: `1px solid ${colors.border}`, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', color: colors.textMuted, fontSize: '13px' }}>
+                    Clear
+                  </button>
+                )}
+                <span style={{ marginLeft: 'auto', color: colors.textMuted, fontSize: '12px' }}>{filteredEvents.length} of {events.length} events</span>
+              </div>
+
               <div style={{ backgroundColor: colors.white, border: `1px solid ${colors.border}`, borderRadius: '14px', overflow: 'hidden' }}>
-                {events.length === 0 ? (
-                  <p style={{ padding: '20px', color: colors.textMuted }}>No events assigned.</p>
+                {filteredEvents.length === 0 ? (
+                  <p style={{ padding: '20px', color: colors.textMuted }}>{events.length === 0 ? 'No events assigned.' : 'No events match the selected dates.'}</p>
                 ) : (
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
@@ -172,7 +203,7 @@ const StaffDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {events.map((event, index) => (
+                      {filteredEvents.map((event, index) => (
                         <tr key={event.id} style={{ backgroundColor: index % 2 === 0 ? colors.white : colors.cream }}>
                           <td style={{ padding: '12px 16px', color: colors.text, fontWeight: 600 }}>{event.name}</td>
                           <td style={{ padding: '12px 16px', color: colors.textMuted }}>{new Date(event.date).toLocaleDateString()}</td>

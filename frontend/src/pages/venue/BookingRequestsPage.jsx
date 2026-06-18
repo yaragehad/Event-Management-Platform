@@ -50,16 +50,23 @@ function MiniCalendar({ bookings, month, year, onPrev, onNext }) {
         {cells.map((d, i) => {
           if (!d) return <div key={`e-${i}`} />
           const dateStr = new Date(year, month, d).toDateString()
+          const dayBookings = bookings.filter(b => new Date(b.eventDate).toDateString() === dateStr)
           const isToday = dateStr === today
-          const isApproved = approvedDates.has(dateStr)
-          const isBooked = bookedDates.has(dateStr)
+          const isApproved = dayBookings.some(b => b.status === 'APPROVED')
+          const isBooked = dayBookings.length > 0
+          
+          let tooltipTitle = ''
+          if (dayBookings.length > 0) {
+            tooltipTitle = dayBookings.map(b => `${b.venue?.name || 'Venue'} booked by ${b.organizer?.name || 'Organizer'} [${b.status}]`).join('\n')
+          }
+
           return (
-            <div key={d} style={{
+            <div key={d} title={tooltipTitle} style={{
               padding: '6px 2px', borderRadius: '6px', fontSize: '13px', fontWeight: isBooked ? '700' : '400',
               background: isApproved ? COLORS.green : isBooked ? '#FEF9C3' : 'transparent',
               color: isApproved ? COLORS.white : isToday ? COLORS.accent : COLORS.text,
               border: isToday ? `2px solid ${COLORS.accent}` : '2px solid transparent',
-              cursor: isBooked ? 'default' : 'default',
+              cursor: isBooked ? 'help' : 'default',
               position: 'relative',
             }}>
               {d}

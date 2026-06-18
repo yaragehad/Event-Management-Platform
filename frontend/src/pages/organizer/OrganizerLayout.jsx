@@ -147,10 +147,10 @@ function NotificationBell({ userId }) {
 }
 
 const NAV_LINKS = [
-  { to: '/organizer/venues',       icon: '🏛️', label: 'Venue Search'        },
-  { to: '/organizer/bookings/new', icon: '➕', label: 'Create Booking'       },
-  { to: '/organizer/bookings',     icon: '📋', label: 'My Booking Requests'  },
-  { to: '/organizer/dashboard',    icon: '📊', label: 'Back to Dashboard'    },
+  { to: '/organizer/venues',       icon: '🏛️', label: 'Venue Search',       exact: false },
+  { to: '/organizer/bookings/new', icon: '➕', label: 'Create Booking',      exact: true  },
+  { to: '/organizer/bookings',     icon: '📋', label: 'My Booking Requests', exact: true  },
+  { to: '/organizer/dashboard',    icon: '📊', label: 'Back to Dashboard',   exact: false },
 ]
 
 export default function OrganizerLayout({ title, subtitle, children }) {
@@ -204,8 +204,8 @@ export default function OrganizerLayout({ title, subtitle, children }) {
 
           {/* Nav */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
-            {NAV_LINKS.map(({ to, icon, label }) => {
-              const active = pathname === to || pathname.startsWith(to + '/')
+            {NAV_LINKS.map(({ to, icon, label, exact }) => {
+              const active = exact ? pathname === to : (pathname === to || pathname.startsWith(to + '/'))
               return (
                 <Link
                   key={to}

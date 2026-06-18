@@ -1,5 +1,6 @@
 const prisma = require('../lib/prismaClient');
 const bcrypt = require('bcrypt');
+const { sendCredentialsEmail } = require('./emailController');
 
 // GET /api/organizer/dashboard/:id
 // Summary stats: today's events, task breakdown, avg feedback
@@ -301,8 +302,16 @@ const createStakeholderAccount = async (req, res) => {
   try {
     const { name, email, password, role, age, specialty, employmentType, eventId,
       dietaryPreference, companyName, suppliesOffered, location, contactEmail, contactPhone } = req.body;
-    const hashed = await bcrypt.hash(password, 10);
+
+    // For staff/vendor, generate a readable temp password and email it; ignore any organizer-supplied one
+    const rolePrefix = role === 'STAFF' ? 'Staff' : role === 'VENDOR' ? 'Vendor' : null;
+    const plainPassword = rolePrefix
+      ? `${rolePrefix}-${Math.floor(1000 + Math.random() * 9000)}`
+      : password;
+
+    const hashed = await bcrypt.hash(plainPassword, 10);
     const user = await prisma.user.create({ data: { name, email, password: hashed, role, age: age ? parseInt(age) : null } });
+
     if (role === 'STAFF' && eventId) {
       await prisma.staffAssignment.create({
         data: { userId: user.id, eventId: parseInt(eventId), specialty, employmentType }
@@ -314,6 +323,14 @@ const createStakeholderAccount = async (req, res) => {
         data: { userId: user.id, companyName, suppliesOffered, location, contactEmail, contactPhone }
       });
     }
+
+    // Email credentials to the new staff/vendor member (fire-and-forget; don't fail the request on email error)
+    if (rolePrefix) {
+      sendCredentialsEmail(email, name, plainPassword, role).catch(err =>
+        console.error(`[createStakeholderAccount] credentials email failed for ${email}:`, err)
+      );
+    }
+
     res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (err) {
     console.error(err);

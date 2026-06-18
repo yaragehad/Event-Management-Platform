@@ -39,6 +39,21 @@ const lookupGuest = async (req, res) => {
   }
 }
 
+// GET /api/guests/by-user/:userId - find a guest profile by their user id (used after login)
+const getGuestByUserId = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId)
+    const guest = await prisma.guest.findUnique({
+      where: { userId },
+      include: { user: { select: { name: true, email: true } } },
+    })
+    if (!guest) return res.status(404).json({ error: 'Guest profile not found' })
+    res.json({ guestId: guest.id, name: guest.user.name, email: guest.user.email })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch guest by user' })
+  }
+}
+
 // POST /api/guests/register - first-time registration
 const registerGuest = async (req, res) => {
   try {
@@ -436,6 +451,7 @@ const getDayOfDashboard = async (req, res) => {
 module.exports = {
   getGuests,
   getGuestById,
+  getGuestByUserId,
   lookupGuest,
   registerGuest,
   submitRSVP,

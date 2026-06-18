@@ -1,91 +1,117 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+
+const API = 'http://localhost:3001';
+
+const styles = {
+  container: { minHeight: '100vh', backgroundColor: '#FBF7F4', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  card: { backgroundColor: '#FFFFFF', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 20px rgba(107,45,14,0.1)', width: '100%', maxWidth: '400px', border: '1px solid #EDE0D9' },
+  logo: { fontSize: '28px', fontWeight: 'bold', color: '#6B2D0E', textAlign: 'center', marginBottom: '8px' },
+  subtitle: { textAlign: 'center', color: '#8B6555', marginBottom: '30px', fontSize: '14px' },
+  label: { display: 'block', marginBottom: '6px', color: '#2C1810', fontSize: '14px', fontWeight: '500' },
+  input: { width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #EDE0D9', marginBottom: '16px', fontSize: '14px', boxSizing: 'border-box', color: '#2C1810' },
+  button: { width: '100%', padding: '12px', backgroundColor: '#C4622D', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontSize: '15px', fontWeight: '600', cursor: 'pointer' },
+  error: { color: '#C0392B', backgroundColor: '#FDECEA', padding: '10px', borderRadius: '6px', marginBottom: '16px', fontSize: '13px' },
+};
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
-  const { login } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+    setLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const res = await fetch(`${API}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        login(data.user, data.token);
-        if (data.user.role === 'VENUE_OWNER') {
-          navigate('/venue/dashboard');
-        } else if (data.user.role === 'ORGANIZER') {
-          navigate('/organizer/dashboard');
-        } else if (data.user.role === 'STAFF') {
-          navigate('/staff/dashboard');
-        } else {
-          navigate('/login');
-        }
-      } else {
+      const data = await res.json();
+      if (!res.ok) {
         setError(data.message || 'Login failed');
+        setLoading(false);
+        return;
+      }
+
+      // Save the logged-in user + token in context
+      login(data.user, data.token);
+
+      // Route based on role
+      const role = data.user.role;
+      if (role === 'GUEST') {
+        // Guests need their guestId for the dashboard URL
+        try {
+          const gRes = await fetch(`${API}/api/guests/by-user/${data.user.id}`);
+          const gData = await gRes.json();
+          if (gRes.ok && gData.guestId) {
+            navigate(`/my-events?guestId=${gData.guestId}`);
+          } else {
+            setError('No guest profile found for this account.');
+            setLoading(false);
+          }
+        } catch {
+          setError('Could not load your guest profile.');
+          setLoading(false);
+        }
+      } else if (role === 'VENDOR') {
+        navigate('/vendor/dashboard');
+      } else if (role === 'ORGANIZER') {
+        navigate('/organizer/dashboard');
+      } else if (role === 'VENUE_OWNER') {
+        navigate('/venue/dashboard');
+      } else if (role === 'STAFF') {
+        navigate('/staff/dashboard');
+      } else {
+        navigate('/');
       }
     } catch (err) {
-      setError('Cannot connect to server. Is the backend running?');
+      setError('Could not connect to the server.');
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#FBF7F4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ backgroundColor: '#FFFFFF', padding: '40px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px', border: '1px solid #EDE0D9' }}>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <div style={styles.logo}>🎟️ VenueHub</div>
+        <div style={styles.subtitle}>Event Management Platform</div>
 
-        <h2 style={{ color: '#6B2D0E', textAlign: 'center', marginBottom: '24px', fontSize: '24px', fontWeight: 'bold' }}>
-          Welcome Back
-        </h2>
+        {error && <div style={styles.error}>{error}</div>}
 
-        {error && <div style={{ backgroundColor: '#FDECEA', color: '#C0392B', padding: '10px', borderRadius: '4px', marginBottom: '16px', textAlign: 'center' }}>{error}</div>}
+        <form onSubmit={handleLogin}>
+          <label style={styles.label}>Email</label>
+          <input
+            style={styles.input}
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={{ display: 'block', color: '#2C1810', marginBottom: '8px', fontSize: '14px' }}>Email Address</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #EDE0D9', outline: 'none', boxSizing: 'border-box' }}
-            />
-          </div>
+          <label style={styles.label}>Password</label>
+          <input
+            style={styles.input}
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-          <div>
-            <label style={{ display: 'block', color: '#2C1810', marginBottom: '8px', fontSize: '14px' }}>Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #EDE0D9', outline: 'none', boxSizing: 'border-box' }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            style={{ backgroundColor: '#C4622D', color: '#FFFFFF', padding: '12px', border: 'none', borderRadius: '4px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }}
-          >
-            Login to Dashboard
+          <button style={styles.button} type="submit" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-
-        <p style={{ textAlign: 'center', marginTop: '24px', color: '#8B6555', fontSize: '14px' }}>
-          Don't have an account? <Link to="/register" style={{ color: '#C4622D', textDecoration: 'none', fontWeight: 'bold' }}>Register here</Link>
-        </p>
       </div>
     </div>
   );

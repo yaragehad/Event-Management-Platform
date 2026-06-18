@@ -3,6 +3,7 @@ const router = express.Router()
 const {
   getGuests,
   getGuestById,
+  getGuestByUserId,
   lookupGuest,
   registerGuest,
   submitRSVP,
@@ -23,6 +24,9 @@ const {
 router.get('/', getGuests)
 router.get('/lookup', lookupGuest)
 router.post('/register', registerGuest)
+
+// Find guest by their user id (used after login) — keep ABOVE /:id
+router.get('/by-user/:userId', getGuestByUserId)
 
 // RSVP routes
 router.post('/rsvp', submitRSVP)

@@ -2,18 +2,18 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 
 const C = {
-  sidebar: '#1b0f06',
-  accent: '#ff5a2c',
-  accentLight: '#ffe7dc',
-  cream: '#fdf4e9',
-  border: '#f0e3d2',
-  text: '#241407',
-  textMuted: '#8a7a68',
-  white: '#ffffff',
-  green: '#0f7a44',
-  greenBg: '#e7f7ee',
-  red: '#c83e16',
-  redBg: '#ffe7dc',
+  sidebar: '#6B2D0E',
+  accent: '#C4622D',
+  accentLight: '#F5EDE8',
+  cream: '#FBF7F4',
+  border: '#EDE0D9',
+  text: '#2C1810',
+  textMuted: '#8B6555',
+  white: '#FFFFFF',
+  green: '#2D7A4F',
+  greenBg: '#E8F5EE',
+  red: '#C0392B',
+  redBg: '#FDECEA',
 }
 
 const API = 'http://localhost:3001'
@@ -61,6 +61,7 @@ function GuestDashboardPage() {
   const [eventName, setEventName] = useState('')
   const [eventDate, setEventDate] = useState('')
   const [rsvpStatus, setRsvpStatus] = useState('PENDING')
+  const [hasResponded, setHasResponded] = useState(false)
   const [checkedIn, setCheckedIn] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -77,7 +78,7 @@ function GuestDashboardPage() {
       const event = await eventRes.json()
       if (guest.user?.name) setGuestName(guest.user.name)
       const rsvp = guest.rsvps?.find(r => r.eventId === parseInt(eventId))
-      if (rsvp) { setRsvpStatus(rsvp.status); setCheckedIn(!!rsvp.checkedIn) }
+      if (rsvp) { setRsvpStatus(rsvp.status); setCheckedIn(!!rsvp.checkedIn); setHasResponded(true) }
       if (event.name) setEventName(event.name)
       if (event.date) setEventDate(event.date)
     } catch (err) {
@@ -89,6 +90,8 @@ function GuestDashboardPage() {
   const qs = `?guestId=${guestId}`
   const isAttending = rsvpStatus === 'ATTENDING'
   const canFeedback = isAttending && checkedIn
+  // "Update RSVP" only once they've actually responded with a real choice (not just a pending placeholder)
+  const hasRealResponse = hasResponded && rsvpStatus !== 'PENDING'
 
   const rsvpLabel = rsvpStatus === 'ATTENDING' ? 'Attending'
     : rsvpStatus === 'NOT_ATTENDING' ? 'Not Attending'
@@ -102,7 +105,7 @@ function GuestDashboardPage() {
 
   const actions = [
     { label: 'View Invitation', desc: 'See full event details', href: `/invitation/${eventId}${qs}`, icon: '📋', iconBg: C.accentLight },
-    { label: rsvpStatus === 'PENDING' ? 'RSVP Now' : 'Update RSVP', desc: 'Confirm your attendance', href: `/rsvp/${eventId}${qs}`, icon: '✅', iconBg: C.accentLight },
+    { label: hasRealResponse ? 'Update RSVP' : 'RSVP Now', desc: hasRealResponse ? 'Change your response' : 'Confirm your attendance', href: `/rsvp/${eventId}${qs}`, icon: '✅', iconBg: C.accentLight },
     ...(isAttending ? [
       { label: 'My Check-In QR', desc: 'Show this at the entrance', href: `/my-qr/${eventId}${qs}`, icon: '📱', iconBg: C.greenBg },
       { label: 'Message Organizer', desc: 'Ask a question or get updates', href: `/guest-chat/${eventId}${qs}`, icon: '💬', iconBg: C.accentLight },
@@ -126,35 +129,42 @@ function GuestDashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: C.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+      <div style={{ minHeight: '100vh', background: C.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
         <p style={{ color: C.textMuted }}>Loading your dashboard...</p>
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: C.cream, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", padding: 12, gap: 12, boxSizing: 'border-box' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: C.cream, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
 
       {sidebarOpen && (
-        <div style={{ width: 220, height: 'calc(100vh - 24px)', background: C.sidebar, color: C.white, padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 4, borderRadius: 20, position: 'sticky', top: 0, alignSelf: 'flex-start', overflowY: 'auto', boxSizing: 'border-box', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 20, borderBottom: '1px solid rgba(255,90,44,0.25)', marginBottom: 16, flexShrink: 0 }}>
-            <div style={{ width: 32, height: 32, background: C.accent, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, color: C.sidebar, flexShrink: 0, fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}>G</div>
-            <span style={{ color: '#ffffff', fontWeight: 800, fontSize: 17, fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}>GuestHub</span>
+        <div style={{ width: 220, background: C.sidebar, color: C.white, padding: '20px 0', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+          <div style={{ padding: '0 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: 12 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.white }}>VenueHub</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Guest Portal</div>
           </div>
-          <div style={{ color: '#6b574a', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, flexShrink: 0 }}>Menu</div>
           {NAV_ITEMS.map((item, i) => (
             item.href
-              ? <a key={i} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', textDecoration: 'none', color: '#c9b9a8', fontSize: 14, background: 'transparent', fontWeight: 400, borderRadius: 11 }}>
+              ? <a key={i} href={item.href} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 20px', textDecoration: 'none',
+                  color: C.white, fontSize: 14, background: 'transparent', fontWeight: 400,
+                }}>
                   <span>{item.icon}</span> {item.label}
                 </a>
-              : <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', color: C.white, fontWeight: 600, fontSize: 14, background: C.accent, borderRadius: 11 }}>
+              : <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 20px', color: C.white, fontWeight: 600,
+                  fontSize: 14, background: 'rgba(255,255,255,0.15)',
+                }}>
                   <span>{item.icon}</span> {item.label}
                 </div>
           ))}
         </div>
       )}
 
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, overflow: 'auto' }}>
 
         <div style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
           <button

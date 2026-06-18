@@ -1,48 +1,72 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
+
+const API = 'http://localhost:3001';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
-  const { login } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+    setLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const res = await fetch(`${API}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        login(data.user, data.token);
-        if (data.user.role === 'VENUE_OWNER') {
-          navigate('/venue/dashboard');
-        } else if (data.user.role === 'ORGANIZER') {
-          navigate('/organizer/dashboard');
-        } else if (data.user.role === 'VENDOR') {
-          navigate('/vendor/dashboard');
-        } else if (data.user.role === 'STAFF') {
-          navigate('/staff/dashboard');
-        } else if (data.user.role === 'GUEST') {
-          navigate('/my-events');
-        } else {
-          navigate('/');
-        }
-      } else {
+      const data = await res.json();
+      if (!res.ok) {
         setError(data.message || 'Login failed');
+        setLoading(false);
+        return;
+      }
+
+      // Save the logged-in user + token in context
+      login(data.user, data.token);
+
+      // Route based on role
+      const role = data.user.role;
+      if (role === 'GUEST') {
+        // Guests need their guestId for the dashboard URL
+        try {
+          const gRes = await fetch(`${API}/api/guests/by-user/${data.user.id}`);
+          const gData = await gRes.json();
+          if (gRes.ok && gData.id) {
+            navigate(`/my-events?guestId=${gData.id}`);
+          } else {
+            setError('No guest profile found for this account.');
+            setLoading(false);
+          }
+        } catch {
+          setError('Could not load your guest profile.');
+          setLoading(false);
+        }
+      } else if (role === 'VENDOR') {
+        navigate('/vendor/dashboard');
+      } else if (role === 'ORGANIZER') {
+        navigate('/organizer/dashboard');
+      } else if (role === 'VENUE_OWNER') {
+        navigate('/venue/dashboard');
+      } else if (role === 'STAFF') {
+        navigate('/staff/dashboard');
+      } else {
+        navigate('/');
       }
     } catch (err) {
-      setError('Cannot connect to server. Is the backend running?');
+      setError('Could not connect to the server.');
+      setLoading(false);
     }
   };
 
@@ -81,9 +105,10 @@ function LoginPage() {
 
           <button
             type="submit"
+            disabled={loading}
             style={{ backgroundColor: '#ff5a2c', color: '#ffffff', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', marginTop: '8px' }}
           >
-            Login to Dashboard
+            {loading ? 'Logging in...' : 'Login to Dashboard'}
           </button>
         </form>
 

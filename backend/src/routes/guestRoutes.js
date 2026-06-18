@@ -25,6 +25,9 @@ router.get('/', getGuests)
 router.get('/lookup', lookupGuest)
 router.post('/register', registerGuest)
 
+// Find guest by their user id (used after login) — keep ABOVE /:id
+router.get('/by-user/:userId', getGuestByUserId)
+
 // RSVP routes
 router.post('/rsvp', submitRSVP)
 router.patch('/rsvp/:id', updateRSVP)

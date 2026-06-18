@@ -398,7 +398,55 @@ const sendFeedbackThankYou = async (req, res) => {
   }
 }
 
-// Send an email with login credentials when a stakeholder account is created
+// Send login credentials to a newly created staff or vendor account
+const sendCredentialsEmail = async (email, name, plainPassword, role) => {
+  const roleLabel = role === 'STAFF' ? 'Staff Member' : 'Vendor'
+  const loginLink = 'http://localhost:3000/login'
+  await getTransporter().sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Welcome — your ${roleLabel.toLowerCase()} account is ready`,
+    html: `
+      <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#FBF7F4;">
+        <div style="background:linear-gradient(135deg,#6B2D0E 0%,#C4622D 100%);padding:44px 32px;text-align:center;">
+          <p style="color:#F5EDE8;margin:0 0 8px;font-size:14px;letter-spacing:2px;text-transform:uppercase;">Account Created</p>
+          <h1 style="color:#ffffff;margin:0;font-size:30px;">Welcome, ${name}!</h1>
+          <p style="color:#F5EDE8;margin:12px 0 0;font-size:15px;">${roleLabel}</p>
+        </div>
+        <div style="padding:32px;">
+          <h2 style="color:#2C1810;margin:0 0 8px;">Hi ${name}! 👋</h2>
+          <p style="color:#8B6555;font-size:15px;line-height:1.6;margin:0 0 4px;">
+            Your account has been created on the Event Management Platform. Use the details below to log in.
+          </p>
+
+          <a href="${loginLink}"
+             style="display:block;margin:28px 0 8px;background:#C4622D;color:#ffffff;text-align:center;padding:16px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:16px;">
+            Log In Now →
+          </a>
+
+          <div style="background:#ffffff;border:1px solid #EDE0D9;border-radius:12px;padding:20px;margin:24px 0;">
+            <p style="margin:0 0 12px;color:#2C1810;font-weight:bold;font-size:15px;">🔑 Your login details</p>
+            <p style="margin:0 0 6px;color:#8B6555;font-size:14px;">Email: <strong style="color:#2C1810;">${email}</strong></p>
+            <p style="margin:0;color:#8B6555;font-size:14px;">Password: <strong style="color:#2C1810;">${plainPassword}</strong></p>
+          </div>
+
+          <p style="color:#8B6555;font-size:14px;line-height:1.6;">
+            We recommend changing your password after your first login. ✨
+          </p>
+
+          <p style="color:#B89B8C;margin-top:24px;font-size:12px;">
+            If the button doesn't work, copy this link: ${loginLink}
+          </p>
+        </div>
+        <div style="background:#6B2D0E;padding:20px 32px;text-align:center;">
+          <p style="color:#F5EDE8;margin:0;font-size:13px;">This is an automated message — please do not reply.</p>
+        </div>
+      </div>
+    `,
+  })
+}
+
+// Send an email with login credentials when a stakeholder account is created (teammate's version)
 const sendAccountCreationEmail = async (email, name, role, plainPassword) => {
   try {
     const loginLink = `http://localhost:3000/login`
@@ -424,7 +472,7 @@ const sendAccountCreationEmail = async (email, name, role, plainPassword) => {
         </div>
       `,
     }
-    await transporter.sendMail(mailOptions)
+    await getTransporter().sendMail(mailOptions)
   } catch (err) {
     console.error('Failed to send account creation email:', err)
     throw err
@@ -439,5 +487,6 @@ module.exports = {
   sendFeedbackLinks,
   notifyBroadcast,
   sendFeedbackThankYou,
+  sendCredentialsEmail,
   sendAccountCreationEmail,
 }

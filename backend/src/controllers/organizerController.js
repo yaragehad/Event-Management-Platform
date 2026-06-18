@@ -1,6 +1,6 @@
 const prisma = require('../lib/prismaClient');
 const bcrypt = require('bcrypt');
-const { sendAccountCreationEmail } = require('./emailController');
+const { sendCredentialsEmail } = require('./emailController');
 
 // GET /api/organizer/dashboard/:id
 // Summary stats: today's events, task breakdown, avg feedback
@@ -302,25 +302,45 @@ const createStakeholderAccount = async (req, res) => {
   try {
     const { name, email, password, role, age, specialty, employmentType, eventId,
       dietaryPreference, companyName, suppliesOffered, location, contactEmail, contactPhone } = req.body;
-    const hashed = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { name, email, password: hashed, role, age: age ? parseInt(age) : null } });
-    if (role === 'STAFF' && eventId) {
-      await prisma.staffAssignment.create({
-        data: { userId: user.id, eventId: parseInt(eventId), specialty, employmentType }
-      });
-    } else if (role === 'GUEST') {
-      await prisma.guest.create({ data: { userId: user.id, dietaryPreference } });
-    } else if (role === 'VENDOR') {
-      await prisma.vendor.create({
-        data: { userId: user.id, companyName, suppliesOffered, location, contactEmail, contactPhone }
-      });
-    }
-    
-    // Send email with credentials to the newly created user
-    try {
-      await sendAccountCreationEmail(email, name, role, password);
-    } catch (emailErr) {
-      console.error('Account created but credential email failed:', emailErr);
+
+    // For staff/vendor, generate a readable temp password and email it; ignore any organizer-supplied one
+    const rolePrefix = role === 'STAFF' ? 'Staff' : role === 'VENDOR' ? 'Vendor' : null;
+    const plainPassword = rolePrefix
+      ? `${rolePrefix}-${Math.floor(1000 + Math.random() * 9000)}`
+      : password;
+
+    const hashed = await bcrypt.hash(plainPassword, 10);
+
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({ data: { name, email, password: hashed, role, age: age ? parseInt(age) : null } });
+
+      if (role === 'STAFF' && eventId) {
+        await tx.staffAssignment.create({
+          data: { userId: newUser.id, eventId: parseInt(eventId), specialty, employmentType }
+        });
+      } else if (role === 'GUEST') {
+        await tx.guest.create({ data: { userId: newUser.id, dietaryPreference } });
+      } else if (role === 'VENDOR') {
+        await tx.vendor.create({
+          data: {
+            userId: newUser.id,
+            companyName: companyName || '',
+            suppliesOffered: suppliesOffered || '',
+            location: location || '',
+            contactEmail: contactEmail || email,
+            contactPhone: contactPhone || null,
+          }
+        });
+      }
+
+      return newUser;
+    });
+
+    // Email credentials to the new staff/vendor member (fire-and-forget; don't fail the request on email error)
+    if (rolePrefix) {
+      sendCredentialsEmail(email, name, plainPassword, role).catch(err =>
+        console.error(`[createStakeholderAccount] credentials email failed for ${email}:`, err)
+      );
     }
 
     res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });

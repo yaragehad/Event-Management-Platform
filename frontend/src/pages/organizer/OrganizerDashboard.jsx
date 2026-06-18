@@ -1356,6 +1356,9 @@ function GuestMessagesTab({ organizerId }) {
   const [followUp, setFollowUp] = useState('')
   const [reply, setReply] = useState('')
   const [info, setInfo] = useState('')
+  const activeGuestRef = useRef(null)
+  const eventIdRef = useRef('')
+  const threadBottomRef = useRef(null)
 
   useEffect(() => {
     fetch('http://localhost:3001/api/events')
@@ -1365,18 +1368,47 @@ function GuestMessagesTab({ organizerId }) {
   }, [])
 
   useEffect(() => {
-    if (eventId) { fetchThreads(); setActiveGuest(null); setThread([]) }
+    eventIdRef.current = eventId
+    if (eventId) { fetchThreads(); setActiveGuest(null); activeGuestRef.current = null; setThread([]) }
   }, [eventId])
+
+  // Poll thread list every 5s so unread badges and last-message previews stay live
+  useEffect(() => {
+    if (!eventId) return
+    const timer = setInterval(() => { if (eventIdRef.current) fetchThreads() }, 5000)
+    return () => clearInterval(timer)
+  }, [eventId])
+
+  // Poll active conversation every 3s so guest replies appear without refreshing
+  useEffect(() => {
+    if (!activeGuest || !eventId) return
+    const timer = setInterval(() => refreshThread(activeGuest), 3000)
+    return () => clearInterval(timer)
+  }, [activeGuest, eventId])
+
+  useEffect(() => {
+    threadBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [thread])
 
   const fetchThreads = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/api/guests/messages/event/${eventId}/threads`)
-      setThreads(await res.json())
-    } catch { setInfo('Failed to load guests') }
+      const res = await fetch(`http://localhost:3001/api/guests/messages/event/${eventIdRef.current}/threads`)
+      const data = await res.json()
+      if (Array.isArray(data)) setThreads(data)
+    } catch { }
+  }
+
+  const refreshThread = async (guestId) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/guests/messages/thread/${eventIdRef.current}/${guestId}`)
+      const data = await res.json()
+      if (Array.isArray(data)) setThread(data)
+    } catch { }
   }
 
   const openThread = async (guestId) => {
     setActiveGuest(guestId)
+    activeGuestRef.current = guestId
     try {
       const res = await fetch(`http://localhost:3001/api/guests/messages/thread/${eventId}/${guestId}`)
       setThread(await res.json())
@@ -1512,6 +1544,7 @@ function GuestMessagesTab({ organizerId }) {
                     )
                   })
                 }
+                <div ref={threadBottomRef} />
               </div>
               <div style={{ display: 'flex', gap: 8, padding: 16, borderTop: `1px solid ${C.border}` }}>
                 <input value={reply} onChange={e => setReply(e.target.value)}
